@@ -9,15 +9,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-<<<<<<< Updated upstream
     <list default="true" id="e2f4d1f4-9add-49a7-8159-b11283790909" name="Changes" comment="Start">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/script.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/script.js" afterDir="false" />
     </list>
-=======
-    <list default="true" id="e2f4d1f4-9add-49a7-8159-b11283790909" name="Changes" comment="Start" />
->>>>>>> Stashed changes
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -94,12 +90,8 @@
       <option name="presentableId" value="Default" />
       <updated>1699969945430</updated>
       <workItem from="1699969945921" duration="2668000" />
-<<<<<<< Updated upstream
       <workItem from="1700060205160" duration="11524000" />
-      <workItem from="1700076559562" duration="1502000" />
-=======
-      <workItem from="1700060205160" duration="11592000" />
->>>>>>> Stashed changes
+      <workItem from="1700076559562" duration="1717000" />
     </task>
     <task id="LOCAL-00001" summary="Start">
       <created>1700059988538</created>
