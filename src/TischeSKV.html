@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sandersdorfer Karnevalsverein e.V. - Tischreservierung</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f8f8f8;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 80%;
+      margin: 20px auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    header {
+      background-color: royalblue;
+      color: #fff;
+      padding: 10px 0;
+      border-radius: 8px 8px 0 0;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    header h2 {
+      margin: 5px 0;
+      font-size: 18px;
+    }
+
+    button {
+      background-color: royalblue;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      margin: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #1d3b7a;
+    }
+
+    #tischAusgabe {
+      margin-bottom: 20px;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Sandersdorfer Karnevalsverein e.V.</h1>
+    <h2>Tischreservierung</h2>
+  </header>
+
+  <p id="tischInfo">Hallo, aktuell haben unsere Tische folgende Sitzplätze:</p>
+
+  <div id="tischAusgabe"></div>
+
+  <button onclick="changePlätze()">Sitzplatzanzahl ändern</button>
+  <button onclick="berechneReservierung()">Reservierung berechnen</button>
+  <button onclick="alleAktionenAusgeben()">Alle Reservierungen anzeigen</button>
+  <button onclick="berechneExport()">Plätze exportieren</button>
+  <button onclick="alleExportsAusgeben()">Alle Exports</button>
+  <button onclick="verarbeiteImport()">Plätze importieren</button>
+
+  <script>
+    var tisch = [
+      [1, 18],
+      [2, 18],
+      [3, 18],
+      [4, 18],
+      [5, 18],
+      [6, 12],
+      [7, 18],
+      [8, 24],
+      [9, 24],
+      [10, 24],
+      [11, 24],
+      [12, 18],
+      [13, 12],
+      [14, 18],
+      [15, 18],
+      [16, 18],
+      [17, 18],
+      [18, 0],
+      [19, 0],
+      [20, 0]
+    ]
+
+    var alleAktionen = "";
+    var alleExportCodes ="";
+
+    function printTischArray(arr) {
+      sortTischArrayNr(arr);
+      var output = "";
+      for (var i = 0; i < arr.length; i++) {
+        for (var j = 0; j < arr[i].length; j++) {
+          if (j === 0) {
+            output += "Tisch ";
+          }
+          output += arr[i][j];
+
+          if (j === 1) {
+            output += " Plätze";
+          } else {
+            output += ": ";
+          }
+        }
+
+        output += "<br>";
+      }
+
+      document.getElementById("tischAusgabe").innerHTML = output;
+    }
+
+    function sortTischArrayPlace(arr) {
+      arr.sort(function (a, b) {
+        return b[1] - a[1];
+      });
+    }
+
+    function sortTischArrayNr(arr) {
+      arr.sort(function (a, b) {
+        return a[0] - b[0];
+      });
+    }
+
+    function changePlätze() {
+      var tnr = prompt("Bitte Tischnummer eingeben:");
+      var plaetze = prompt("Bitte neue Sitzplatzanzahl eingeben:");
+
+      if (tnr > 0 && tnr <= tisch.length) {
+        tisch[tnr - 1][1] = parseInt(plaetze);
+      } else {
+        alert("Ungültige Tischnummer!");
+      }
+
+      printTischArray(tisch);
+    }
+
+    function berechneReservierung() {
+      var name = prompt("Bitte gib den Namen des Kunden ein:")
+      var cards = prompt("Bitte gib die Anzahl der reservierten Karten an:");
+
+      sortTischArrayPlace(tisch);
+      reservierteKarten(tisch, parseInt(cards), name);
+
+      printTischArray(tisch);
+      var now = new Date().toLocaleString();
+      alleExportCodes += now + "\n" + berechneExportohneAusgabe() + "\n\n";
+    }
+
+    function reservierteKarten(t, c, n) {
+      var restCards = c;
+      var alertMessage = "";
+
+      // Erstelle ein Datum mit Uhrzeit
+      var now = new Date();
+      var dateAndTime = now.toLocaleString();
+
+      for (var i = 0; i < t.length; i++) {
+        if (c === t[i][1]) {
+          alertMessage += n + " - " + dateAndTime + "\nTisch " + t[i][0] + ": " + c + " Karten";
+          t[i][1] = 0;
+          alert(alertMessage);
+          console.log(alertMessage);
+          alleAktionen += alertMessage + "\n";
+          return;
+        }
+      }
+
+      if (t[0][1] < restCards) {
+        var counter = 0;
+        alertMessage += n + " - " + dateAndTime + "\n";
+        do {
+          if (t[counter][1] < restCards) {
+            alertMessage += "Tisch " + t[counter][0] + ": " + t[counter][1] + " Karten\n";
+            restCards -= t[counter][1];
+            t[counter][1] = 0;
+          } else {
+            alertMessage += "Tisch " + t[counter][0] + ": " + restCards + " Karten\n";
+            t[counter][1] -= restCards;
+            restCards = 0;
+          }
+          counter++;
+        } while (restCards > 0 && counter < t.length);
+      } else {
+        alertMessage += n + " - " + dateAndTime + "\nTisch " + t[0][0] + ": " + restCards + " Karten\n";
+        t[0][1] -= restCards;
+      }
+
+      alert(alertMessage);
+      console.log(alertMessage);
+      alleAktionen += alertMessage + "\n";
+    }
+
+
+
+
+    function berechneExport() {
+      var exportString = "";
+      for (var i = 0; i < tisch.length; i++) {
+        exportString += tisch[i][0] + ":" + tisch[i][1];
+        if (i < tisch.length - 1) {
+          exportString += ",";
+        }
+      }
+
+      var exportMessage = "Bitte speichere dir folgenden Code, wenn du demnächst weitere Reservierungen berechnen möchtest:\n\n" + exportString;
+
+      // Erstelle einen unsichtbaren Textbereich zum Kopieren
+      var textArea = document.createElement("textarea");
+      textArea.value = exportString;
+      document.body.appendChild(textArea);
+
+      // Selektiere den Text im Textbereich
+      textArea.select();
+
+      try {
+        // Kopiere den ausgewählten Text
+        document.execCommand("copy");
+        alert(exportMessage + "\n\nCode wurde in die Zwischenablage kopiert!");
+      } catch (err) {
+        console.error("Kopieren fehlgeschlagen: ", err);
+        alert(exportMessage + "\n\nCode konnte nicht in die Zwischenablage kopiert werden. Du kannst den Code manuell kopieren.");
+      }
+
+      // Entferne den Textbereich
+      document.body.removeChild(textArea);
+    }
+
+    function berechneExportohneAusgabe() {
+      var exportString = "";
+      for (var i = 0; i < tisch.length; i++) {
+        exportString += tisch[i][0] + ":" + tisch[i][1];
+        if (i < tisch.length - 1) {
+          exportString += ",";
+        }
+      }
+
+      return exportString;
+    }
+
+    function verarbeiteImport() {
+      var importCode = prompt("Bitte gib deinen Importcode ein:");
+
+      if (importCode) {
+        verarbeiteImportCode(importCode);
+      }
+    }
+
+    function verarbeiteImportCode(tischString) {
+      var tischTeile = tischString.split(",");
+      for (var i = 0; i < tischTeile.length; i++) {
+        var tischInfo = tischTeile[i].split(":");
+        var tischNummer = parseInt(tischInfo[0]);
+        var karten = parseInt(tischInfo[1]);
+        tisch[tischNummer - 1][1] = karten;
+      }
+
+      printTischArray(tisch);
+    }
+
+    function alleAktionenAusgeben(){
+      alert(alleAktionen);
+    }
+
+    function alleExportsAusgeben(){
+      alert(alleExportCodes);
+    }
+
+
+    // Initialausgabe
+    printTischArray(tisch);
+
+  </script>
+</div>
+
+</body>
+</html>

@@ -10,9 +10,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2f4d1f4-9add-49a7-8159-b11283790909" name="Changes" comment="Start">
+      <change afterPath="$PROJECT_DIR$/src/TischeSKV.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/script.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/script.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -22,9 +21,9 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="HTML File" />
         <option value="CSS File" />
         <option value="JavaScript File" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
@@ -92,6 +91,7 @@
       <workItem from="1699969945921" duration="2668000" />
       <workItem from="1700060205160" duration="11524000" />
       <workItem from="1700076559562" duration="1717000" />
+      <workItem from="1700078319889" duration="152000" />
     </task>
     <task id="LOCAL-00001" summary="Start">
       <created>1700059988538</created>
