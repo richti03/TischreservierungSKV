@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="javafx" name="TischreservierungSKV">
+    <output-path>$PROJECT_DIR$/out/artifacts/TischreservierungSKV</output-path>
+    <root id="root">
+      <element id="archive" name="TischreservierungSKV.jar">
+        <element id="module-output" name="TischreservierungSKV" />
+      </element>
+    </root>
+  </artifact>
+</component>
