@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Tischverwaltung</title>
+</head>
+<body>
+
+<div class="container">
+    <h1>Tischverwaltung</h1>
+    <p id="tischInfo">Hallo, aktuell haben unsere Tische folgende Sitzplätze:</p>
+
+    <div id="tischAusgabe"></div>
+
+    <button onclick="changePlätze()">Sitzplatzanzahl ändern</button>
+    <button onclick="berechneReservierung()">Reservierung berechnen</button>
+    <button onclick="berechneExport()">Plätze exportieren</button>
+    <button onclick="verarbeiteImport()">Plätze importieren</button>
+
+    <script src="script.js"></script>
+</div>
+
+</body>
+</html>
