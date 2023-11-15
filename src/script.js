@@ -22,6 +22,7 @@ var tisch = [
 ]
 
 var alleAktionen = "";
+var alleExportCodes ="";
 
 function printTischArray(arr) {
     sortTischArrayNr(arr);
@@ -79,26 +80,32 @@ function berechneReservierung() {
     reservierteKarten(tisch, parseInt(cards), name);
 
     printTischArray(tisch);
+    var now = new Date().toLocaleString();
+    alleExportCodes += now + "\n" + berechneExportohneAusgabe() + "\n\n";
 }
 
 function reservierteKarten(t, c, n) {
     var restCards = c;
     var alertMessage = "";
 
+    // Erstelle ein Datum mit Uhrzeit
+    var now = new Date();
+    var dateAndTime = now.toLocaleString();
+
     for (var i = 0; i < t.length; i++) {
         if (c === t[i][1]) {
-            alertMessage += n + "\nTisch " + t[i][0] + ": " + c + " Karten";
+            alertMessage += n + " - " + dateAndTime + "\nTisch " + t[i][0] + ": " + c + " Karten";
             t[i][1] = 0;
             alert(alertMessage);
             console.log(alertMessage);
-            alleAktionen += alertMessage +"\n";
+            alleAktionen += alertMessage + "\n";
             return;
         }
     }
 
     if (t[0][1] < restCards) {
         var counter = 0;
-        alertMessage += n + "\n";
+        alertMessage += n + " - " + dateAndTime + "\n";
         do {
             if (t[counter][1] < restCards) {
                 alertMessage += "Tisch " + t[counter][0] + ": " + t[counter][1] + " Karten\n";
@@ -112,14 +119,15 @@ function reservierteKarten(t, c, n) {
             counter++;
         } while (restCards > 0 && counter < t.length);
     } else {
-        alertMessage += n + "\nTisch " + t[0][0] + ": " + restCards + " Karten\n";
+        alertMessage += n + " - " + dateAndTime + "\nTisch " + t[0][0] + ": " + restCards + " Karten\n";
         t[0][1] -= restCards;
     }
 
     alert(alertMessage);
-    console.log(alertMessage)
-    alleAktionen += alertMessage +"\n";
+    console.log(alertMessage);
+    alleAktionen += alertMessage + "\n";
 }
+
 
 
 
@@ -132,7 +140,39 @@ function berechneExport() {
         }
     }
 
-    alert("Bitte speichere dir folgenden Code, wenn du demnächst weitere Reservierungen berechnen möchtest:\n\n" + exportString);
+    var exportMessage = "Bitte speichere dir folgenden Code, wenn du demnächst weitere Reservierungen berechnen möchtest:\n\n" + exportString;
+
+    // Erstelle einen unsichtbaren Textbereich zum Kopieren
+    var textArea = document.createElement("textarea");
+    textArea.value = exportString;
+    document.body.appendChild(textArea);
+
+    // Selektiere den Text im Textbereich
+    textArea.select();
+
+    try {
+        // Kopiere den ausgewählten Text
+        document.execCommand("copy");
+        alert(exportMessage + "\n\nCode wurde in die Zwischenablage kopiert!");
+    } catch (err) {
+        console.error("Kopieren fehlgeschlagen: ", err);
+        alert(exportMessage + "\n\nCode konnte nicht in die Zwischenablage kopiert werden. Du kannst den Code manuell kopieren.");
+    }
+
+    // Entferne den Textbereich
+    document.body.removeChild(textArea);
+}
+
+function berechneExportohneAusgabe() {
+    var exportString = "";
+    for (var i = 0; i < tisch.length; i++) {
+        exportString += tisch[i][0] + ":" + tisch[i][1];
+        if (i < tisch.length - 1) {
+            exportString += ",";
+        }
+    }
+
+    return exportString;
 }
 
 function verarbeiteImport() {
@@ -157,6 +197,10 @@ function verarbeiteImportCode(tischString) {
 
 function alleAktionenAusgeben(){
     alert(alleAktionen);
+}
+
+function alleExportsAusgeben(){
+    alert(alleExportCodes);
 }
 
 
