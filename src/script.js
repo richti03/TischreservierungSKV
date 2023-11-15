@@ -19,7 +19,9 @@ var tisch = [
     [18, 0],
     [19, 0],
     [20, 0]
-];
+]
+
+var alleAktionen = "";
 
 function printTischArray(arr) {
     sortTischArrayNr(arr);
@@ -70,28 +72,33 @@ function changePlätze() {
 }
 
 function berechneReservierung() {
+    var name = prompt("Bitte gib den Namen des Kunden ein:")
     var cards = prompt("Bitte gib die Anzahl der reservierten Karten an:");
 
     sortTischArrayPlace(tisch);
-    reservierteKarten(tisch, parseInt(cards));
+    reservierteKarten(tisch, parseInt(cards), name);
 
     printTischArray(tisch);
 }
 
-function reservierteKarten(t, c) {
+function reservierteKarten(t, c, n) {
     var restCards = c;
     var alertMessage = "";
 
     for (var i = 0; i < t.length; i++) {
         if (c === t[i][1]) {
-            alertMessage += "Tisch " + t[i][0] + ": " + c + " Karten\n";
+            alertMessage += n + "\nTisch " + t[i][0] + ": " + c + " Karten";
             t[i][1] = 0;
+            alert(alertMessage);
+            console.log(alertMessage);
+            alleAktionen += alertMessage +"\n";
             return;
         }
     }
 
     if (t[0][1] < restCards) {
         var counter = 0;
+        alertMessage += n + "\n";
         do {
             if (t[counter][1] < restCards) {
                 alertMessage += "Tisch " + t[counter][0] + ": " + t[counter][1] + " Karten\n";
@@ -105,11 +112,13 @@ function reservierteKarten(t, c) {
             counter++;
         } while (restCards > 0 && counter < t.length);
     } else {
-        alertMessage += "Tisch " + t[0][0] + ": " + restCards + " Karten\n";
+        alertMessage += n + "\nTisch " + t[0][0] + ": " + restCards + " Karten\n";
         t[0][1] -= restCards;
     }
 
     alert(alertMessage);
+    console.log(alertMessage)
+    alleAktionen += alertMessage +"\n";
 }
 
 
@@ -123,7 +132,7 @@ function berechneExport() {
         }
     }
 
-    alert("Bitte speichere dir folgenden Code, wenn du demnächst weitere Reservierungen berechnen möchtest:\n" + exportString);
+    alert("Bitte speichere dir folgenden Code, wenn du demnächst weitere Reservierungen berechnen möchtest:\n\n" + exportString);
 }
 
 function verarbeiteImport() {
@@ -144,6 +153,10 @@ function verarbeiteImportCode(tischString) {
     }
 
     printTischArray(tisch);
+}
+
+function alleAktionenAusgeben(){
+    alert(alleAktionen);
 }
 
 

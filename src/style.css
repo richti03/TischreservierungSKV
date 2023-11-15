@@ -1,34 +1,51 @@
 body {
     font-family: 'Arial', sans-serif;
-    background-color: #f0f0f0;
+    background-color: #f8f8f8;
     margin: 0;
     padding: 0;
 }
 
 .container {
-    max-width: 800px;
-    margin: 50px auto;
+    max-width: 80%;
+    margin: 20px auto;
     background-color: #fff;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
 }
 
-h1 {
-    color: #333;
+header {
+    background-color: royalblue;
+    color: #fff;
+    padding: 10px 0;
+    border-radius: 8px 8px 0 0;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+header h2 {
+    margin: 5px 0;
+    font-size: 18px;
 }
 
 button {
-    padding: 10px;
-    margin-top: 10px;
-    background-color: #4caf50;
+    background-color: royalblue;
     color: #fff;
     border: none;
+    padding: 10px;
+    margin: 5px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 16px;
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #1d3b7a;
+}
+
+#tischAusgabe {
+    margin-bottom: 20px;
 }
