@@ -34,7 +34,16 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Möchtest du die Sitzplatzanzahl eines Tisches ändern? (j/n)");
+        System.out.println("Importcode? (i)");
         String antwort = scanner.next();
+
+        if (antwort.equalsIgnoreCase("i")){
+            System.out.println("Bitte gib deinen Importcode ein:");
+            scanner.nextLine();
+            String importCode = scanner.nextLine();
+
+            verarbeiteImport(importCode, tisch);
+        }
 
         if (antwort.equalsIgnoreCase("j")) {
             do {
@@ -86,19 +95,26 @@ public class Main {
             }
 
         } while (moreCards.equalsIgnoreCase("j"));
+
+        System.out.println("");
+        System.out.println("Bitte speichere dir folgenden Code, wenn du demnächst weitere Reservierungen berechnen möchtest:");
+        berechneExport(tisch);
     }
 
     public static void printTischArray(int[][] arr) {
         sortTischArrayNr(arr);
+        System.out.println("");
         for (int i = 0; i < arr.length; i++) {
             for (int j = 0; j < arr[i].length; j++) {
                 if (j == 0) {
                     System.out.print("Tisch ");
                 }
-                System.out.print(arr[i][j] + " ");
+                System.out.print(arr[i][j]);
 
                 if (j == 1) {
-                    System.out.print("Plätze");
+                    System.out.print(" Plätze");
+                } else {
+                    System.out.print(": ");
                 }
             }
 
@@ -122,6 +138,7 @@ public class Main {
         for (int i = 0; i < t.length; i++){
             if (c == t[i][1]){
                 System.out.println("Tisch " + t[i][0] + ": " + c + " Karten");
+                System.out.println("");
                 t[i][1] = 0;
                 return;
             }
@@ -145,5 +162,30 @@ public class Main {
             System.out.println("Tisch " + t[0][0] + ": " + restCards + " Karten");
             t[0][1] -= restCards;
         }
+
+        System.out.println("");
+    }
+
+    public static void berechneExport(int[][] tisch) {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < tisch.length; i++) {
+            result.append(tisch[i][0]).append(":").append(tisch[i][1]);
+            if (i < tisch.length - 1) {
+                result.append(",");
+            }
+        }
+        System.out.println(result.toString());
+    }
+
+    public static void verarbeiteImport(String tischString, int[][] tisch) {
+        String[] tischTeile = tischString.split(",");
+        for (int i = 0; i < tischTeile.length; i++) {
+            String[] tischInfo = tischTeile[i].split(":");
+            int tischNummer = Integer.parseInt(tischInfo[0]);
+            int karten = Integer.parseInt(tischInfo[1]);
+            tisch[tischNummer - 1][1] = karten;
+        }
+
+        printTischArray(tisch);
     }
 }
