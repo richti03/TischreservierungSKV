@@ -10,13 +10,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2f4d1f4-9add-49a7-8159-b11283790909" name="Changes" comment="Start">
-      <change afterPath="$PROJECT_DIR$/src/TischeSKV.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings">
+    <execution />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -92,6 +94,8 @@
       <workItem from="1700060205160" duration="11524000" />
       <workItem from="1700076559562" duration="1717000" />
       <workItem from="1700078319889" duration="152000" />
+      <workItem from="1704385795981" duration="19000" />
+      <workItem from="1705925317115" duration="14000" />
     </task>
     <task id="LOCAL-00001" summary="Start">
       <created>1700059988538</created>
