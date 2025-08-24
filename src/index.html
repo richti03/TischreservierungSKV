@@ -17,14 +17,69 @@
 
     <p id="tischInfo">Hallo, aktuell haben unsere Tische folgende Sitzplätze:</p>
 
-    <div id="tischAusgabe"></div>
+    <div class="content">
+        <div id="tischAusgabe"></div>
+        <div id="reservationview">
+            <label for="table-select">Tisch:</label>
+            <select id="table-select">
+                <option selected disabled>Bitte Tisch auswählen.</option>
+            </select>
+            <button id="btn-add-table" type="button">Tisch hinzufügen</button>
+            <button id="btn-remove-table" type="button">Tisch entfernen</button>
 
-    <button onclick="changePlätze()">Sitzplatzanzahl ändern</button>
-    <button onclick="berechneReservierung()">Reservierung berechnen</button>
-    <button onclick="alleAktionenAusgeben()">Alle Reservierungen anzeigen</button>
-    <button onclick="berechneExport()">Plätze exportieren</button>
-    <button onclick="alleExportsAusgeben()">Alle Exports</button>
-    <button onclick="verarbeiteImport()">Plätze importieren</button>
+            <div class="table-wrap">
+                <table class="table">
+                    <colgroup>
+                        <col style="width:40%">
+                        <col style="width:5%">
+                        <col style="width:40%">
+                        <col style="width:15%">
+                    </colgroup>
+
+                    <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Karten</th>
+                        <th scope="col">Notizen</th>
+                        <th scope="col">Aktionen</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <!-- Wird generiert -->
+                    <!-- Beispiel:
+                    <tr>
+                      <td>Max Mustermann</td>
+                      <td>2</td>
+                      <td>Weiter Karten an Tisch 5</td>
+                      <td class="actions">
+                        <button class="btn">Bearbeiten</button>
+                        <button class="btn btn--ghost">Löschen</button>
+                      </td>
+                    </tr>
+                    -->
+                    </tbody>
+
+                    <tfoot>
+                    <tr>
+                        <!-- Footer über volle Breite -->
+                        <td colspan="4">
+                            Verfügbare Karten an dem Tisch: <strong id="available-cards">-</strong>
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <button id="btn-book" type="button">Reservierung berechnen</button>
+    <button id="btn-change-seats" type="button">Sitzplatzanzahl ändern</button>
+    <button id="btn-export-seats" type="button">Sitzplätze exportieren (JSON)</button>
+    <button id="btn-import-seats" type="button">Sitzplätze importieren</button>
+    <button id="btn-export-res" type="button">Reservierungen exportieren (JSON)</button>
+    <button id="btn-import-res" type="button">Reservierungen importieren</button>
 
     <script src="script.js"></script>
 </div>
