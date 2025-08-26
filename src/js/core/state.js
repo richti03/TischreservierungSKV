@@ -1,0 +1,107 @@
+// ---------------------------------------------
+// Core State & Utils (DOM-frei)
+// ---------------------------------------------
+
+// Globale Zustände
+export let tisch = [
+    [1, 18], [2, 18], [3, 18], [4, 18], [5, 18], [6, 18], [7, 18],
+    [8, 24], [9, 24], [10, 24], [11, 24],
+    [12, 18], [13, 18], [14, 12], [15, 18], [16, 18], [17, 18]
+];
+
+export let alleAktionen = "";
+export let alleExportCodes = "";
+
+// Reservierungen: { [tischnr]: [{ id, bookingId, name, cards, notes, ts }] }
+export let reservationsByTable = {};
+export let lastReservationsFilename = null;
+export function setLastReservationsFilename(name) { lastReservationsFilename = name || null; }
+
+console.log("[INIT] App gestartet. Ausgangsdaten (Tische):", JSON.parse(JSON.stringify(tisch)));
+
+// ---- Helpers (DOM-frei) ----
+export function sortTischArrayPlace(arr) { arr.sort((a, b) => b[1] - a[1]); }
+export function sortTischArrayNr(arr)    { arr.sort((a, b) => a[0] - b[0]); }
+
+export function findIndexByTableNumber(num) { return tisch.findIndex(([n]) => n === num); }
+export function getSeatsByTableNumber(num)  { const i = findIndexByTableNumber(num); return i >= 0 ? tisch[i][1] : null; }
+export function setSeatsByTableNumber(num, seats) { const i = findIndexByTableNumber(num); if (i >= 0) tisch[i][1] = seats; }
+
+export function ensureBucket(nr) { if (!reservationsByTable[nr]) reservationsByTable[nr] = []; }
+export function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+export function genBookingId() { return "B" + uid(); }
+
+export function escapeHtml(str) {
+    if (typeof str !== "string") return str;
+    return str
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+}
+
+// „Tischwunsch: Tisch X“ immer normalisieren
+export function normalizeWishNote(note) {
+    if (!note) return "";
+    const re = /tischwunsch.*?\(?tisch\s*(\d+)\)?/i;
+    const m = note.match(re);
+    if (m) return `Tischwunsch: Tisch ${m[1]}`;
+    return note;
+}
+
+export function noteToHtml(note) {
+    if (!note) return "";
+    return escapeHtml(normalizeWishNote(note)).replace(/\n/g, "<br>");
+}
+
+export function buildSplitInfoText(bookingId, currentTable) {
+    if (!bookingId) return "";
+    const parts = [];
+    for (const key of Object.keys(reservationsByTable)) {
+        const tableNr = parseInt(key, 10);
+        if (!Number.isInteger(tableNr) || tableNr === currentTable) continue;
+        const arr = reservationsByTable[tableNr] || [];
+        for (const r of arr) {
+            if (r.bookingId === bookingId) parts.push(`Tisch ${tableNr} (${r.cards})`);
+        }
+    }
+    return parts.length ? `Weitere Plätze: ${parts.join(", ")}` : "";
+}
+
+export function fileTimestamp() {
+    const d = new Date(), p = n => String(n).padStart(2,"0");
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}`;
+}
+
+export function downloadJSON(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    console.log("[DOWNLOAD] JSON:", filename, data);
+}
+
+export function pickJSONFile(cb) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json,.json";
+    input.addEventListener("change", async () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        try {
+            const text = await file.text();
+            const obj = JSON.parse(text);
+            console.log("[UPLOAD] JSON geladen:", file.name, obj);
+            // NEU: Dateiname als 2. Argument übergeben
+            cb(obj, file.name);
+        } catch (e) {
+            console.error("[UPLOAD] Fehlerhafte JSON:", e);
+            alert("Ungültige oder beschädigte JSON-Datei.");
+        }
+    }, { once: true });
+    input.click();
+}
+
