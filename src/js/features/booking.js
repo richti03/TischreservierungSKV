@@ -1,13 +1,13 @@
 // Reservierung berechnen + Verteilung
 
 import {
-    tisch, alleExportCodes, sortTischArrayPlace, ensureBucket, genBookingId, uid,
+    tisch, alleExportCodes, sortTischArrayPlace, ensureBucket, nextBookingId, uid,
     setSeatsByTableNumber, findIndexByTableNumber, reservationsByTable
 } from "../core/state.js";
-import {printTischArray, setSelectedTableNr, renderReservationsForSelectedTable} from "../ui/tableView.js";
+import { printTischArray, setSelectedTableNr, renderReservationsForSelectedTable } from "../ui/tableView.js";
 
 export function berechneReservierung() {
-    const name = prompt("Bitte gib den Namen des Kunden ein:");
+    const name  = prompt("Bitte gib den Namen des Kunden ein:");
     const cards = parseInt(prompt("Bitte gib die Anzahl der reservierten Karten an:"));
     let preferredNr = parseInt(prompt("Tischwunsch (optional): Tischnummer eingeben oder leer lassen:"));
     if (!Number.isInteger(preferredNr)) preferredNr = null;
@@ -37,9 +37,8 @@ export function reservierteKarten(t, c, n, preferredNr) {
     let rest = c;
     const usedTables = [];
 
-    const now = new Date();
-    const iso = now.toISOString();
-    const bookingId = genBookingId();
+    const iso = new Date().toISOString();
+    const bookingId = nextBookingId();
 
     const wishNoteText = () => Number.isInteger(preferredNr) ? `Tischwunsch: Tisch ${preferredNr}` : "";
 
@@ -52,14 +51,7 @@ export function reservierteKarten(t, c, n, preferredNr) {
                 const take = Math.min(wAvail, rest);
                 t[wIdx][1] -= take;
                 ensureBucket(preferredNr);
-                reservationsByTable[preferredNr].push({
-                    id: uid(),
-                    bookingId,
-                    name: n,
-                    cards: take,
-                    notes: wishNoteText(),
-                    ts: iso
-                });
+                reservationsByTable[preferredNr].push({ id: uid(), bookingId, name: n, cards: take, notes: wishNoteText(), ts: iso });
                 usedTables.push(preferredNr);
                 rest -= take;
             }
@@ -73,48 +65,24 @@ export function reservierteKarten(t, c, n, preferredNr) {
             const exactTable = t[exactIdx][0];
             t[exactIdx][1] = 0;
             ensureBucket(exactTable);
-            reservationsByTable[exactTable].push({
-                id: uid(),
-                bookingId,
-                name: n,
-                cards: rest,
-                notes: wishNoteText(),
-                ts: iso
-            });
+            reservationsByTable[exactTable].push({ id: uid(), bookingId, name: n, cards: rest, notes: wishNoteText(), ts: iso });
             usedTables.push(exactTable);
             rest = 0;
         } else {
             let counter = 0;
             while (rest > 0 && counter < t.length) {
                 const [tableNr, avail] = t[counter];
-                if (avail <= 0) {
-                    counter++;
-                    continue;
-                }
+                if (avail <= 0) { counter++; continue; }
                 if (avail < rest) {
                     t[counter][1] = 0;
                     ensureBucket(tableNr);
-                    reservationsByTable[tableNr].push({
-                        id: uid(),
-                        bookingId,
-                        name: n,
-                        cards: avail,
-                        notes: wishNoteText(),
-                        ts: iso
-                    });
+                    reservationsByTable[tableNr].push({ id: uid(), bookingId, name: n, cards: avail, notes: wishNoteText(), ts: iso });
                     usedTables.push(tableNr);
                     rest -= avail;
                 } else {
                     t[counter][1] = avail - rest;
                     ensureBucket(tableNr);
-                    reservationsByTable[tableNr].push({
-                        id: uid(),
-                        bookingId,
-                        name: n,
-                        cards: rest,
-                        notes: wishNoteText(),
-                        ts: iso
-                    });
+                    reservationsByTable[tableNr].push({ id: uid(), bookingId, name: n, cards: rest, notes: wishNoteText(), ts: iso });
                     usedTables.push(tableNr);
                     rest = 0;
                 }
@@ -123,7 +91,7 @@ export function reservierteKarten(t, c, n, preferredNr) {
         }
     }
 
-    let msg = `${n} - ${now.toLocaleString()}\n`;
+    let msg = `${n}\n`;
     usedTables.forEach(tn => {
         const sum = (reservationsByTable[tn] || []).filter(r => r.bookingId === bookingId)
             .reduce((s, r) => s + (r.cards || 0), 0);
@@ -131,7 +99,7 @@ export function reservierteKarten(t, c, n, preferredNr) {
     });
 
     alert(msg.trim());
-    console.log("[BOOKING] Reservierung erfasst:", {name: n, gesamt: c, usedTables, bookingId});
+    console.log("[BOOKING] Reservierung erfasst:", { name:n, gesamt:c, usedTables, bookingId });
     window.alleAktionen = (window.alleAktionen || "") + msg + "\n";
     return usedTables;
 }

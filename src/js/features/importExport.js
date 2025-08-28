@@ -1,8 +1,8 @@
 import {
     tisch, reservationsByTable, sortTischArrayNr, downloadJSON, pickJSONFile, fileTimestamp,
-    lastReservationsFilename, setLastReservationsFilename
+    lastReservationsFilename, setLastReservationsFilename,
+    nextBookingId, bumpBookingSeqFromExisting
 } from "../core/state.js";
-
 import { printTischArray, updateFooter, renderReservationsForSelectedTable } from "../ui/tableView.js";
 
 /* Hilfen */
@@ -36,7 +36,7 @@ function setFreeSeatsFromMap(newFreeMap) {
     sortTischArrayNr(tisch);
 }
 
-/* SEATS Export/Import (unverändert) */
+/* SEATS Export/Import */
 export function exportSeatsJSON() {
     sortTischArrayNr(tisch);
     const data = {
@@ -76,19 +76,18 @@ export function importSeatsJSON() {
     });
 }
 
-/* RESERVATIONS Export/Import – mit korrekter Neuberechnung der freien Plätze */
+/* RESERVATIONS Export/Import – mit korrekter Neuberechnung der freien Plätze + Dateiname + SOLD-Flag */
 export function exportReservationsJSON() {
     const data = {
         version: 1,
         type: "reservations",
         exportedAt: new Date().toISOString(),
+        // reservationsByTable enthält nun auch das Feld `sold` in den Einträgen
         reservationsByTable
     };
-    // Wenn zuvor ein Reservierungsfile importiert wurde, den gleichen Namen verwenden
     const filename = lastReservationsFilename || `reservierungen_${fileTimestamp()}.json`;
     downloadJSON(data, filename);
 }
-
 
 export function importReservationsJSON() {
     pickJSONFile((obj, filename) => {
@@ -100,8 +99,8 @@ export function importReservationsJSON() {
 
         // 1) Bestehende Kapazität je Tisch ermitteln:
         //    capacity = currentFree + sum(existingReservations)
-        const currentFree = getFreeSeatsMap();                 // ⇒ { [tischnr]: freie Plätze (alt) }
-        const oldSums = sumCardsByTable(reservationsByTable);  // ⇒ { [tischnr]: belegte Karten (alt) }
+        const currentFree = getFreeSeatsMap();
+        const oldSums = sumCardsByTable(reservationsByTable);
         const capacity = {};
         const allOldTables = new Set([
             ...Object.keys(currentFree).map(n => parseInt(n, 10)),
@@ -113,7 +112,7 @@ export function importReservationsJSON() {
             capacity[nr] = free + occ;
         }
 
-        // 2) Neue Reservierungen normalisieren
+        // 2) Neue Reservierungen normalisieren (bookingId beibehalten oder fortlaufend vergeben; SOLD-Flag übernehmen)
         const next = {};
         for (const key of Object.keys(src)) {
             const nr = parseInt(key, 10);
@@ -122,17 +121,21 @@ export function importReservationsJSON() {
             if (!Array.isArray(arr)) continue;
             next[nr] = arr.map(r => ({
                 id: r.id || (crypto?.randomUUID?.() || Math.random().toString(36).slice(2)),
-                bookingId: r.bookingId || ("B" + Math.random().toString(36).slice(2)),
+                bookingId: r.bookingId ? String(r.bookingId) : nextBookingId(),
                 name: String(r.name || "").trim(),
                 cards: parseInt(r.cards) || 0,
                 notes: typeof r.notes === "string" ? r.notes : "",
-                ts: r.ts || new Date().toISOString()
+                ts: r.ts || new Date().toISOString(),
+                sold: !!r.sold, // <— SOLD-Flag
             })).filter(r => r.name && r.cards > 0);
         }
 
-        // 3) Import anwenden: reservationsByTable vollständig ersetzen (in-place)
+        // 3) Import anwenden (in-place ersetzen)
         for (const k of Object.keys(reservationsByTable)) delete reservationsByTable[k];
         for (const k of Object.keys(next)) reservationsByTable[k] = next[k];
+
+        // 3b) Sequenz anpassen an höchste vorhandene bookingId
+        bumpBookingSeqFromExisting(reservationsByTable);
 
         // 4) Neue Belegungssummen und daraus neue freie Plätze berechnen
         const newSums = sumCardsByTable(reservationsByTable);
@@ -166,4 +169,3 @@ export function importReservationsJSON() {
         console.log("[IMPORT] Neue freie Plätze:", newFree);
     });
 }
-
