@@ -1,4 +1,4 @@
-// Verschieben/Tauschen-Modal – Prüfen → Vorschau → Ausführen (mit Reservierungs-Vorschau)
+// Verschieben/Tauschen-Modal – Prüfen → Vorschau → Ausführen (mit Reservierungs-Vorschau, SOLD-Handling)
 
 import {
     tisch, reservationsByTable,
@@ -162,21 +162,25 @@ function renderSourceTable() {
     ensureBucket(moveState.sourceNr);
     const list = reservationsByTable[moveState.sourceNr];
     const rows = list.map(r => {
-        const checked = (r.id === moveState.preselectId) ? "checked" : "";
-        const disabled = checked ? "" : "disabled";
+        const checked = (r.id === moveState.preselectId) && !r.sold ? "checked" : "";
+        const disBySold = r.sold ? "disabled" : "";
+        const disabled = (checked || r.sold) ? "" : "disabled"; // Menge nur enabled wenn ausgewählt & nicht sold
         const split = buildSplitInfoText(r.bookingId, moveState.sourceNr);
         const notesHtml = noteToHtml(r.notes) + (split ? `<div style="font-size:12px;opacity:.75;">${escapeHtml(split)}</div>` : "");
         const bid = r.bookingId ? String(r.bookingId) : "—";
+        const soldClass = r.sold ? ' class="is-sold"' : '';
+        const checkboxAttr = r.sold ? 'disabled title="Als verkauft markiert – nicht verschiebbar."' : '';
+        const amountAttr   = r.sold ? 'disabled' : (checked ? '' : 'disabled');
         return `
-      <tr data-id="${r.id}">
-        <td><input type="checkbox" class="mm-src-check" ${checked}></td>
+      <tr data-id="${r.id}"${soldClass}>
+        <td><input type="checkbox" class="mm-src-check" ${checked} ${checkboxAttr}></td>
         <td>
           ${escapeHtml(r.name)}
           <div style="font-size:12px;opacity:.7;">Buchung-ID: ${escapeHtml(bid)}</div>
         </td>
         <td>${r.cards}</td>
         <td>${notesHtml}</td>
-        <td><input type="number" class="mm-src-amt" min="1" max="${r.cards}" value="${r.cards}" ${disabled}></td>
+        <td><input type="number" class="mm-src-amt" min="1" max="${r.cards}" value="${r.cards}" ${amountAttr}></td>
       </tr>`;
     }).join("");
     srcTable.querySelector("tbody").innerHTML = rows;
@@ -192,20 +196,29 @@ function renderTargetTable() {
         ensureBucket(moveState.targetNr);
         const list = reservationsByTable[moveState.targetNr];
         rows = list.map(r => {
-            const dis = (moveState.mode === "swap") ? "" : "disabled";
+            const disForMode = (moveState.mode === "swap") ? "" : "disabled";
+            const disBySold  = r.sold ? "disabled" : "";
+            const combinedDis = (moveState.mode === "swap" ? (r.sold ? "disabled" : "") : "disabled");
             const split = buildSplitInfoText(r.bookingId, moveState.targetNr);
             const notesHtml = noteToHtml(r.notes) + (split ? `<div style="font-size:12px;opacity:.75;">${escapeHtml(split)}</div>` : "");
             const bid = r.bookingId ? String(r.bookingId) : "—";
+            const soldClass = r.sold ? ' class="is-sold"' : '';
+            const checkboxAttr = (moveState.mode === "swap")
+                ? (r.sold ? 'disabled title="Als verkauft markiert – nicht tauschbar."' : '')
+                : 'disabled';
+            const amountAttr = (moveState.mode === "swap")
+                ? (r.sold ? 'disabled' : 'disabled') // Menge bleibt standardmäßig disabled, wird nur bei Auswahl enabled; sold bleibt disabled
+                : 'disabled';
             return `
-        <tr data-id="${r.id}">
-          <td><input type="checkbox" class="mm-tgt-check" ${dis}></td>
+        <tr data-id="${r.id}"${soldClass}>
+          <td><input type="checkbox" class="mm-tgt-check" ${checkboxAttr}></td>
           <td>
             ${escapeHtml(r.name)}
             <div style="font-size:12px;opacity:.7;">Buchung-ID: ${escapeHtml(bid)}</div>
           </td>
           <td>${r.cards}</td>
           <td>${notesHtml}</td>
-          <td><input type="number" class="mm-tgt-amt" min="1" max="${r.cards}" value="${r.cards}" ${dis}></td>
+          <td><input type="number" class="mm-tgt-amt" min="1" max="${r.cards}" value="${r.cards}" disabled></td>
         </tr>`;
         }).join("");
         if (list.length === 0) rows = `<tr><td colspan="5">Keine Reservierungen an Tisch ${moveState.targetNr}.</td></tr>`;
@@ -224,7 +237,7 @@ function updateTotals() {
     srcTable.querySelectorAll("tbody tr").forEach(tr => {
         const check = tr.querySelector(".mm-src-check");
         const amt = tr.querySelector(".mm-src-amt");
-        if (check && check.checked && amt) {
+        if (check && check.checked && !check.disabled && amt) {
             const v = parseInt(amt.value);
             const mx = parseInt(amt.getAttribute("max"));
             if (Number.isInteger(v) && v >= 1 && v <= mx) lr += v;
@@ -237,16 +250,13 @@ function updateTotals() {
         tgtTable.querySelectorAll("tbody tr").forEach(tr => {
             const check = tr.querySelector(".mm-tgt-check");
             const amt = tr.querySelector(".mm-tgt-amt");
-            if (check && checked( check ) && amt && !amt.disabled) {
+            if (check && check.checked && !check.disabled && amt && !amt.disabled) {
                 const v = parseInt(amt.value);
                 const mx = parseInt(amt.getAttribute("max"));
                 if (Number.isInteger(v) && v >= 1 && v <= mx) rl += v;
             }
         });
     }
-    // kleine Guard-Fix (kein checked helper oben):
-    function checked(input){ return !!(input && input.checked); }
-
     if (totalRL) totalRL.textContent = rl;
 
     if (el) el.classList.toggle("modal--swap", moveState.mode === "swap");
@@ -269,22 +279,32 @@ function updateTotals() {
 function collectSelections() {
     const { srcTable, tgtTable } = refs();
     const srcSel = [];
+    const srcList = reservationsByTable[moveState.sourceNr] || [];
+    const srcById = Object.fromEntries(srcList.map(r => [r.id, r]));
+
     srcTable.querySelectorAll("tbody tr").forEach(tr => {
         const id = tr.getAttribute("data-id");
+        const rec = srcById[id];
+        if (!rec || rec.sold) return; // SOLD: nie auswählen
         const check = tr.querySelector(".mm-src-check");
         const amtEl = tr.querySelector(".mm-src-amt");
-        if (check && check.checked) {
+        if (check && check.checked && !check.disabled) {
             const amt = parseInt(amtEl.value), mx = parseInt(amtEl.getAttribute("max"));
             if (Number.isInteger(amt) && amt >= 1 && amt <= mx) srcSel.push({ id, amount: amt });
         }
     });
+
     const tgtSel = [];
     if (moveState.mode === "swap") {
+        const tgtList = reservationsByTable[moveState.targetNr] || [];
+        const tgtById = Object.fromEntries(tgtList.map(r => [r.id, r]));
         tgtTable.querySelectorAll("tbody tr").forEach(tr => {
             const id = tr.getAttribute("data-id");
+            const rec = tgtById[id];
+            if (!rec || rec.sold) return; // SOLD: nie auswählen
             const check = tr.querySelector(".mm-tgt-check");
             const amtEl = tr.querySelector(".mm-tgt-amt");
-            if (check && check.checked && amtEl && !amtEl.disabled) {
+            if (check && check.checked && !check.disabled && amtEl && !amtEl.disabled) {
                 const amt = parseInt(amtEl.value), mx = parseInt(amtEl.getAttribute("max"));
                 if (Number.isInteger(amt) && amt >= 1 && amt <= mx) tgtSel.push({ id, amount: amt });
             }
@@ -303,7 +323,7 @@ function mergeInto(list, rec, amount) {
         list[idx].cards += amount;
         list[idx].ts = new Date().toISOString();
     } else {
-        list.push({ id: uid(), bookingId: rec.bookingId, name: rec.name, cards: amount, notes: rec.notes || "", ts: new Date().toISOString() });
+        list.push({ id: uid(), bookingId: rec.bookingId, name: rec.name, cards: amount, notes: rec.notes || "", ts: new Date().toISOString(), sold: !!rec.sold });
     }
 }
 
@@ -365,7 +385,8 @@ function renderPreviewReservations(afterSrc, afterTgt, fromNr, toNr) {
             const split = buildSplitInfoTextFromAll(afterSrc, afterTgt, fromNr, toNr, r.bookingId, fromNr);
             const notesHtml = noteToHtml(r.notes) + (split ? `<div style="font-size:12px;opacity:.75;">${escapeHtml(split)}</div>` : "");
             const bid = r.bookingId ? String(r.bookingId) : "—";
-            return `<tr>
+            const soldClass = r.sold ? ' class="is-sold"' : '';
+            return `<tr${soldClass}>
           <td>${escapeHtml(r.name)}<div style="font-size:12px;opacity:.7;">Buchung-ID: ${escapeHtml(bid)}</div></td>
           <td>${r.cards}</td>
           <td>${notesHtml}</td>
@@ -379,7 +400,8 @@ function renderPreviewReservations(afterSrc, afterTgt, fromNr, toNr) {
             const split = buildSplitInfoTextFromAll(afterSrc, afterTgt, fromNr, toNr, r.bookingId, toNr);
             const notesHtml = noteToHtml(r.notes) + (split ? `<div style="font-size:12px;opacity:.75;">${escapeHtml(split)}</div>` : "");
             const bid = r.bookingId ? String(r.bookingId) : "—";
-            return `<tr>
+            const soldClass = r.sold ? ' class="is-sold"' : '';
+            return `<tr${soldClass}>
           <td>${escapeHtml(r.name)}<div style="font-size:12px;opacity:.7;">Buchung-ID: ${escapeHtml(bid)}</div></td>
           <td>${r.cards}</td>
           <td>${notesHtml}</td>
@@ -444,7 +466,7 @@ function runPreview() {
 
 function applyMoveOrSwap() {
     if (!moveState.previewOk) return alert("Bitte zuerst erfolgreich prüfen.");
-    const { srcTable, tgtTable } = refs();
+    const { srcTable } = refs();
     const targetNr = moveState.targetNr;
 
     // Auswahl erneut lesen (soll dem entsprechen, was geprüft wurde)
@@ -464,12 +486,13 @@ function applyMoveOrSwap() {
     // Quelle -> Ziel
     srcSel.forEach(sel => {
         const rec = srcById[sel.id]; if (!rec) return;
+        if (rec.sold) return; // Hard guard
         const moveAmt = Math.min(sel.amount, rec.cards);
         rec.cards -= moveAmt;
         if (moveAmt > 0) {
             let idx = tgtList.findIndex(r => r.bookingId === rec.bookingId && r.name === rec.name);
             if (idx >= 0) { tgtList[idx].cards += moveAmt; tgtList[idx].ts = new Date().toISOString(); }
-            else { tgtList.push({ id: uid(), bookingId: rec.bookingId, name: rec.name, cards: moveAmt, notes: rec.notes || "", ts: new Date().toISOString() }); }
+            else { tgtList.push({ id: uid(), bookingId: rec.bookingId, name: rec.name, cards: moveAmt, notes: rec.notes || "", ts: new Date().toISOString(), sold: !!rec.sold }); }
         }
     });
     for (let i = srcList.length - 1; i >= 0; i--) if (srcList[i].cards <= 0) srcList.splice(i, 1);
@@ -478,12 +501,13 @@ function applyMoveOrSwap() {
     if (moveState.mode === "swap") {
         tgtSel.forEach(sel => {
             const rec = tgtById[sel.id]; if (!rec) return;
+            if (rec.sold) return; // Hard guard
             const moveAmt = Math.min(sel.amount, rec.cards);
             rec.cards -= moveAmt;
             if (moveAmt > 0) {
                 let idx = srcList.findIndex(r => r.bookingId === rec.bookingId && r.name === rec.name);
                 if (idx >= 0) { srcList[idx].cards += moveAmt; srcList[idx].ts = new Date().toISOString(); }
-                else { srcList.push({ id: uid(), bookingId: rec.bookingId, name: rec.name, cards: moveAmt, notes: rec.notes || "", ts: new Date().toISOString() }); }
+                else { srcList.push({ id: uid(), bookingId: rec.bookingId, name: rec.name, cards: moveAmt, notes: rec.notes || "", ts: new Date().toISOString(), sold: !!rec.sold }); }
             }
         });
         for (let i = tgtList.length - 1; i >= 0; i--) if (tgtList[i].cards <= 0) tgtList.splice(i, 1);
@@ -528,8 +552,10 @@ function wireModalEvents() {
     srcTable?.addEventListener("change", e => {
         const tr = e.target.closest("tr[data-id]"); if (!tr) return;
         if (e.target.classList.contains("mm-src-check")) {
+            const checkbox = e.target;
             const amt = tr.querySelector(".mm-src-amt");
-            amt.disabled = !e.target.checked;
+            const isDisabled = checkbox.disabled;
+            if (!isDisabled) amt.disabled = !checkbox.checked;
             updateTotals(); resetPreview();
         }
     });
@@ -539,8 +565,10 @@ function wireModalEvents() {
         if (moveState.mode !== "swap") return;
         const tr = e.target.closest("tr[data-id]"); if (!tr) return;
         if (e.target.classList.contains("mm-tgt-check")) {
+            const checkbox = e.target;
             const amt = tr.querySelector(".mm-tgt-amt");
-            amt.disabled = !e.target.checked;
+            const isDisabled = checkbox.disabled;
+            if (!isDisabled) amt.disabled = !checkbox.checked;
             updateTotals(); resetPreview();
         }
     });

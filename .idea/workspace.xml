@@ -10,15 +10,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2f4d1f4-9add-49a7-8159-b11283790909" name="Changes" comment="Start">
-      <change afterPath="$PROJECT_DIR$/src/js/features/searchModal.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/js/core/state.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/core/state.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/js/events/actions.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/events/actions.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/js/features/booking.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/features/booking.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/js/features/importExport.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/features/importExport.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/js/features/modalMoveSwap.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/features/modalMoveSwap.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/features/searchModal.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/features/searchModal.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/features/tablesCrud.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/features/tablesCrud.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/main.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/js/ui/tableView.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/ui/tableView.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/style.css" afterDir="false" />
@@ -150,7 +147,7 @@
       <workItem from="1755949250364" duration="1281000" />
       <workItem from="1755950723010" duration="4549000" />
       <workItem from="1756220511993" duration="7035000" />
-      <workItem from="1756386765220" duration="3595000" />
+      <workItem from="1756386765220" duration="7689000" />
     </task>
     <task id="LOCAL-00001" summary="Start">
       <created>1700059988538</created>

@@ -76,12 +76,13 @@ export function importSeatsJSON() {
     });
 }
 
-/* RESERVATIONS Export/Import – mit korrekter Neuberechnung der freien Plätze + Dateiname */
+/* RESERVATIONS Export/Import – mit korrekter Neuberechnung der freien Plätze + Dateiname + SOLD-Flag */
 export function exportReservationsJSON() {
     const data = {
         version: 1,
         type: "reservations",
         exportedAt: new Date().toISOString(),
+        // reservationsByTable enthält nun auch das Feld `sold` in den Einträgen
         reservationsByTable
     };
     const filename = lastReservationsFilename || `reservierungen_${fileTimestamp()}.json`;
@@ -111,7 +112,7 @@ export function importReservationsJSON() {
             capacity[nr] = free + occ;
         }
 
-        // 2) Neue Reservierungen normalisieren (bookingId beibehalten oder fortlaufend vergeben)
+        // 2) Neue Reservierungen normalisieren (bookingId beibehalten oder fortlaufend vergeben; SOLD-Flag übernehmen)
         const next = {};
         for (const key of Object.keys(src)) {
             const nr = parseInt(key, 10);
@@ -124,7 +125,8 @@ export function importReservationsJSON() {
                 name: String(r.name || "").trim(),
                 cards: parseInt(r.cards) || 0,
                 notes: typeof r.notes === "string" ? r.notes : "",
-                ts: r.ts || new Date().toISOString()
+                ts: r.ts || new Date().toISOString(),
+                sold: !!r.sold, // <— SOLD-Flag
             })).filter(r => r.name && r.cards > 0);
         }
 

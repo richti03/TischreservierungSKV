@@ -1,9 +1,9 @@
-// Globales Buchungs-Suchmodal (Name/BookingID) mit Aktionen
-// Spalten: Name (+ Booking-ID), Tisch, Plätze, Notizen, Aktionen
+// Globales Buchungs-Suchmodal (Name/BookingID) mit Aktionen – Icon-Buttons + Tooltips
+// Notizen zeigen jetzt auch Split-Info ("Weitere Plätze ...")
 
 import {
     reservationsByTable, ensureBucket, escapeHtml, noteToHtml,
-    getSeatsByTableNumber, setSeatsByTableNumber
+    getSeatsByTableNumber, setSeatsByTableNumber, buildSplitInfoText
 } from "../core/state.js";
 import { printTischArray, renderReservationsForSelectedTable, setSelectedTableNr } from "../ui/tableView.js";
 import { openMoveModal } from "./modalMoveSwap.js";
@@ -26,7 +26,7 @@ function ensureSearchModal() {
       <div class="modal__body">
         <div class="bk-search-bar" style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
           <input id="bk-search-input" type="search" placeholder="Suche nach Name oder Booking-ID (z. B. 'Müller' oder '007')" style="flex:1; padding:10px 12px; font-size:14px;">
-          <button id="bk-search-clear" class="btn btn--ghost" type="button">Leeren</button>
+          <button id="bk-search-clear" class="btn btn--ghost" type="button" title="Suche leeren" aria-label="Suche leeren">Leeren</button>
         </div>
         <div class="table-wrap">
           <table class="table table--compact" id="bk-search-table" style="width:100%;">
@@ -36,7 +36,7 @@ function ensureSearchModal() {
                 <th style="width:110px;">Tisch</th>
                 <th style="width:90px;">Plätze</th>
                 <th>Notizen</th>
-                <th style="width:460px;">Aktionen</th>
+                <th style="width:320px;">Aktionen</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -45,7 +45,7 @@ function ensureSearchModal() {
       </div>
       <footer class="modal__footer">
         <div style="margin-left:auto;">
-          <button class="btn btn--ghost" id="bk-search-cancel" type="button">Schließen</button>
+          <button class="btn btn--ghost" id="bk-search-cancel" type="button" title="Schließen" aria-label="Schließen">Schließen</button>
         </div>
       </footer>
     </div>
@@ -53,6 +53,32 @@ function ensureSearchModal() {
     document.body.appendChild(wrap.firstElementChild);
     return document.getElementById("bookingSearchModal");
 }
+
+/* -------- Icons & Icon-Buttons ---------- */
+function icon(name) {
+    const common = 'class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+    switch (name) {
+        case "edit":   return `<svg ${common}><path d="M12 20h9"/><path d="M16.5 3.5A2.121 2.121 0 1 1 19.5 6.5L7 19l-4 1 1-4 12.5-12.5z"/></svg>`;
+        case "move":   return `<svg ${common}><polyline points="5 12 9 8 5 4"/><line x1="9" y1="8" x2="15" y2="8"/><polyline points="19 12 15 16 19 20"/><line x1="15" y1="16" x2="9" y2="16"/></svg>`;
+        case "sold":   return `<svg ${common}><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>`;
+        case "unsold": return `<svg ${common}><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`; // rotate-ccw (Undo)
+        case "trash":  return `<svg ${common}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>`;
+        default:       return "";
+    }
+}
+function iconBtn({ action, title, ghost=false }) {
+    const cls = `btn icon-btn ${ghost ? "btn--ghost" : ""}`.trim();
+    const aria = title.replace(/"/g, "'");
+    const svg = (
+        action === "edit"   ? icon("edit")   :
+            action === "move"   ? icon("move")   :
+                action === "sold"   ? icon("sold")   :
+                    action === "unsold" ? icon("unsold") :
+                        action === "delete" ? icon("trash")  : ""
+    );
+    return `<button class="${cls}" data-action="${action}" title="${aria}" aria-label="${aria}">${svg}</button>`;
+}
+/* ---------------------------------------- */
 
 // Datensatz für die Tabelle vorbereiten (flatten)
 function collectRows() {
@@ -97,15 +123,20 @@ function renderTable(filter = "") {
 
     tbody.innerHTML = rows.map(r => {
         const bid = r.bookingId || "—";
-        const notesHtml = noteToHtml(r.notes);
+        const baseNotes = noteToHtml(r.notes);
+        const splitInfo = buildSplitInfoText(r.bookingId, r.tableNr);
+        const splitHtml = splitInfo ? `<div style="font-size:12px;opacity:.75;">${escapeHtml(splitInfo)}</div>` : "";
+        const notesHtml = baseNotes + splitHtml;
+
         const soldClass = r.sold ? ' class="is-sold"' : "";
+
         const actions = r.sold
-            ? `<button class="btn" data-action="unsold">Verkauf rückgängig</button>`
+            ? iconBtn({ action:"unsold", title:"Verkauf rückgängig" })
             : [
-                `<button class="btn" data-action="edit">Bearbeiten</button>`,
-                `<button class="btn" data-action="move">Verschieben</button>`,
-                `<button class="btn" data-action="sold">Als verkauft markieren</button>`,
-                `<button class="btn btn--ghost" data-action="delete">Löschen</button>`
+                iconBtn({ action:"edit",   title:"Bearbeiten" }),
+                iconBtn({ action:"move",   title:"Verschieben" }),
+                iconBtn({ action:"sold",   title:"Als verkauft markieren" }),
+                iconBtn({ action:"delete", title:"Löschen", ghost:true })
             ].join(" ");
 
         return `

@@ -1,36 +1,80 @@
-import { tisch, findIndexByTableNumber } from "../core/state.js";
-import { printTischArray, setSelectedTableNr } from "../ui/tableView.js";
+import {
+    tisch, findIndexByTableNumber, reservationsByTable, sortTischArrayNr
+} from "../core/state.js";
+import { printTischArray, setSelectedTableNr, renderReservationsForSelectedTable } from "../ui/tableView.js";
 
-export function tischHinzufuegen() {
-    const tnr = parseInt(prompt("Neue Tischnummer eingeben:"));
-    if (!Number.isInteger(tnr) || tnr <= 0) return alert("Ungültige Tischnummer.");
+/** kleinste freie positive Tischnummer (1,2,3, … Lücken werden gefüllt) */
+function findNextAvailableTableNumber() {
+    const used = new Set(tisch.map(([n]) => n));
+    let n = 1;
+    while (used.has(n)) n++;
+    return n;
+}
 
-    const seats = parseInt(prompt(`Sitzplatzanzahl für Tisch ${tnr} eingeben:`));
-    if (!Number.isInteger(seats) || seats < 0) return alert("Ungültige Sitzplatzanzahl.");
-
-    const idx = findIndexByTableNumber(tnr);
-    if (idx >= 0) {
-        if (!confirm(`Tisch ${tnr} existiert bereits. Plätze auf ${seats} setzen?`)) return;
-        tisch[idx][1] = seats;
-    } else {
-        tisch.push([tnr, seats]);
+/** häufigster Sitzplatzwert als Standard (Fallback: 18) */
+function getMostCommonSeats() {
+    if (!tisch.length) return 18;
+    const counts = new Map();
+    for (const [, seats] of tisch) counts.set(seats, (counts.get(seats) || 0) + 1);
+    let bestSeats = 18, bestCount = -1;
+    for (const [seats, cnt] of counts.entries()) {
+        if (cnt > bestCount) { bestCount = cnt; bestSeats = seats; }
     }
-    printTischArray(tisch);
-    setSelectedTableNr(tnr);
+    return Number.isInteger(bestSeats) ? bestSeats : 18;
 }
 
+/** Nächstmöglichen Tisch automatisch hinzufügen (ohne Prompt) */
+export function tischHinzufuegen() {
+    const nr = findNextAvailableTableNumber();
+    const seats = getMostCommonSeats();
+
+    tisch.push([nr, seats]);
+    sortTischArrayNr(tisch);
+    if (!reservationsByTable[nr]) reservationsByTable[nr] = [];
+
+    printTischArray(tisch);
+    setSelectedTableNr(nr);
+
+    console.log("[TABLES] Tisch hinzugefügt:", { nr, seats });
+}
+
+/** Letzten (höchsten) Tisch entfernen. Falls Reservierungen vorhanden: Sicherheitsabfrage. */
 export function tischEntfernen() {
-    const tnr = parseInt(prompt("Welche Tischnummer soll entfernt werden?"));
-    if (!Number.isInteger(tnr)) return alert("Ungültige Tischnummer.");
+    if (!tisch.length) {
+        alert("Es gibt keine Tische zu entfernen.");
+        return;
+    }
 
-    const idx = findIndexByTableNumber(tnr);
-    if (idx < 0) return alert(`Tisch ${tnr} wurde nicht gefunden.`);
+    // Höchste Tischnummer finden
+    const maxNr = Math.max(...tisch.map(([n]) => n));
+    const idx = findIndexByTableNumber(maxNr);
+    if (idx < 0) return;
 
-    if (!confirm(`Tisch ${tnr} wirklich entfernen?`)) return;
+    const resCount = (reservationsByTable[maxNr]?.length) || 0;
+    if (resCount > 0) {
+        const ok = confirm(`Am Tisch ${maxNr} existieren ${resCount} Reservierung(en). Wirklich entfernen? Diese Reservierungen gehen verloren.`);
+        if (!ok) return;
+    }
+
+    // Entfernen
     tisch.splice(idx, 1);
+    delete reservationsByTable[maxNr];
+
     printTischArray(tisch);
+
+    // Neue Auswahl: auf den neuen höchsten Tisch springen (falls vorhanden)
+    if (tisch.length) {
+        const newMax = Math.max(...tisch.map(([n]) => n));
+        setSelectedTableNr(newMax);
+    } else {
+        // Keine Tische mehr → Tabelle leeren
+        renderReservationsForSelectedTable();
+    }
+
+    console.log("[TABLES] Tisch entfernt:", { removed: maxNr });
 }
 
+/** Plätze ändern (bestehend – bleibt erhalten) */
 export function changePlätze() {
     const tnr = parseInt(prompt("Bitte Tischnummer eingeben:"));
     const plaetze = parseInt(prompt("Bitte neue Sitzplatzanzahl eingeben:"));

@@ -73,6 +73,36 @@ export function updateFooter() {
     strong.textContent = Number.isInteger(val) ? val : "—";
 }
 
+/* -------- Icons & Icon-Buttons (inline SVG) ---------- */
+function icon(name) {
+    const common = 'class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+    switch (name) {
+        case "edit":   return `<svg ${common}><path d="M12 20h9"/><path d="M16.5 3.5A2.121 2.121 0 1 1 19.5 6.5L7 19l-4 1 1-4 12.5-12.5z"/></svg>`;
+        case "note":   return `<svg ${common}><path d="M3 7a4 4 0 0 1 4-4h7l7 7v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7z"/><path d="M14 3v6h6"/></svg>`;
+        case "move":   return `<svg ${common}><polyline points="5 12 9 8 5 4"/><line x1="9" y1="8" x2="15" y2="8"/><polyline points="19 12 15 16 19 20"/><line x1="15" y1="16" x2="9" y2="16"/></svg>`;
+        case "sold":   return `<svg ${common}><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>`;
+        case "unsold": return `<svg ${common}><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
+        case "trash":  return `<svg ${common}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>`;
+        default:       return "";
+    }
+}
+function iconBtn({ action, id, title, ghost=false, disabled=false, extraClass="" }) {
+    const cls = `btn icon-btn ${ghost ? "btn--ghost" : ""} ${extraClass}`.trim();
+    const aria = title.replace(/"/g, "'");
+    const dis = disabled ? "disabled" : "";
+    const svg = (
+        action === "edit"   ? icon("edit")   :
+            action === "note"   ? icon("note")   :
+                action === "move"   ? icon("move")   :
+                    action === "sold"   ? icon("sold")   :
+                        action === "unsold" ? icon("unsold") :
+                            action === "delete" ? icon("trash")  : ""
+    );
+    return `<button class="${cls}" data-action="${action}" data-id="${id}" title="${aria}" aria-label="${aria}" ${dis}>${svg}</button>`;
+}
+
+/* ----------------------------------------------------- */
+
 export function renderReservationsForSelectedTable() {
     const nr = getSelectedTableNr();
     const tbody = getReservationTbody();
@@ -97,15 +127,18 @@ export function renderReservationsForSelectedTable() {
         const splitInfo = buildSplitInfoText(r.bookingId, nr);
         const splitInfoHtml = splitInfo ? `<div style="font-size:12px; opacity:.75;">${escapeHtml(splitInfo)}</div>` : "";
         const soldClass = r.sold ? ' class="is-sold"' : "";
-        const actions = r.sold
-            ? `<button class="btn" data-action="unsold" data-id="${r.id}">Verkauf rückgängig</button>`
-            : [
-                `<button class="btn" data-action="edit"      data-id="${r.id}">Bearbeiten</button>`,
-                `<button class="btn" data-action="note"      data-id="${r.id}">Notiz</button>`,
-                `<button class="btn" data-action="move"      data-id="${r.id}">Verschieben</button>`,
-                `<button class="btn" data-action="sold"      data-id="${r.id}">Als verkauft markieren</button>`,
-                `<button class="btn btn--ghost" data-action="delete" data-id="${r.id}">Löschen</button>`
+
+        let actionsHtml = "";
+        if (r.sold) {
+            actionsHtml = iconBtn({ action:"unsold", id:r.id, title:"Verkauf rückgängig" });
+        } else {
+            actionsHtml = [
+                iconBtn({ action:"edit",   id:r.id, title:"Bearbeiten" }),
+                iconBtn({ action:"move",   id:r.id, title:"Verschieben" }),
+                iconBtn({ action:"sold",   id:r.id, title:"Als verkauft markieren" }),
+                iconBtn({ action:"delete", id:r.id, title:"Löschen", ghost:true })
             ].join(" ");
+        }
 
         return `
       <tr data-id="${r.id}"${soldClass}>
@@ -115,7 +148,7 @@ export function renderReservationsForSelectedTable() {
         </td>
         <td>${r.cards}</td>
         <td>${baseNotes}${splitInfoHtml}</td>
-        <td class="actions" style="display:flex;gap:6px;flex-wrap:wrap;">${actions}</td>
+        <td class="actions" style="display:flex;gap:6px;flex-wrap:wrap;">${actionsHtml}</td>
       </tr>`;
     }).join("");
 
