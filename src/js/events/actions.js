@@ -30,14 +30,18 @@ export function onReservationTableClick(e) {
         list.splice(idx, 1);
         renderReservationsForSelectedTable();
         console.log("[DELETE] Entfernt:", rec);
+        return;
     }
 
     if (action === "note") {
+        if (rec.sold) return alert("Diese Buchung ist als verkauft markiert und kann nicht bearbeitet werden.");
         const txt = prompt(`Notiz für "${rec.name}" (Tisch ${fromNr}):`, rec.notes || "");
         if (txt !== null) { rec.notes = txt; renderReservationsForSelectedTable(); console.log("[NOTE] Aktualisiert:", rec); }
+        return;
     }
 
     if (action === "edit") {
+        if (rec.sold) return alert("Diese Buchung ist als verkauft markiert und kann nicht bearbeitet werden.");
         const newCount = parseInt(prompt(`Kartenanzahl für "${rec.name}" an Tisch ${fromNr} ändern:`, rec.cards));
         if (!Number.isInteger(newCount) || newCount <= 0) return alert("Ungültige Anzahl.");
         const delta = newCount - rec.cards;
@@ -48,7 +52,26 @@ export function onReservationTableClick(e) {
         rec.cards = newCount;
         renderReservationsForSelectedTable();
         console.log("[EDIT] Neu:", rec.cards, "Delta:", delta);
+        return;
     }
 
-    if (action === "move") openMoveModal(fromNr, rec.id);
+    if (action === "move") {
+        if (rec.sold) return alert("Diese Buchung ist als verkauft markiert und kann nicht verschoben werden.");
+        openMoveModal(fromNr, rec.id);
+        return;
+    }
+
+    if (action === "sold") {
+        rec.sold = true;
+        renderReservationsForSelectedTable();
+        console.log("[SOLD] Markiert als verkauft:", rec);
+        return;
+    }
+
+    if (action === "unsold") {
+        rec.sold = false;
+        renderReservationsForSelectedTable();
+        console.log("[SOLD] Verkauf rückgängig:", rec);
+        return;
+    }
 }

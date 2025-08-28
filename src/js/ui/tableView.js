@@ -92,21 +92,30 @@ export function renderReservationsForSelectedTable() {
     }
 
     const rows = list.map(r => {
-        const ts = new Date(r.ts).toLocaleString();
+        const bid = r.bookingId ? String(r.bookingId) : "—";
         const baseNotes = noteToHtml(r.notes);
         const splitInfo = buildSplitInfoText(r.bookingId, nr);
         const splitInfoHtml = splitInfo ? `<div style="font-size:12px; opacity:.75;">${escapeHtml(splitInfo)}</div>` : "";
+        const soldClass = r.sold ? ' class="is-sold"' : "";
+        const actions = r.sold
+            ? `<button class="btn" data-action="unsold" data-id="${r.id}">Verkauf rückgängig</button>`
+            : [
+                `<button class="btn" data-action="edit"      data-id="${r.id}">Bearbeiten</button>`,
+                `<button class="btn" data-action="note"      data-id="${r.id}">Notiz</button>`,
+                `<button class="btn" data-action="move"      data-id="${r.id}">Verschieben</button>`,
+                `<button class="btn" data-action="sold"      data-id="${r.id}">Als verkauft markieren</button>`,
+                `<button class="btn btn--ghost" data-action="delete" data-id="${r.id}">Löschen</button>`
+            ].join(" ");
+
         return `
-      <tr data-id="${r.id}">
-        <td>${escapeHtml(r.name)}<div style="font-size:12px; opacity:.7;">${ts}</div></td>
+      <tr data-id="${r.id}"${soldClass}>
+        <td>
+          ${escapeHtml(r.name)}
+          <div style="font-size:12px; opacity:.7;">Buchung-ID: ${escapeHtml(bid)}</div>
+        </td>
         <td>${r.cards}</td>
         <td>${baseNotes}${splitInfoHtml}</td>
-        <td class="actions">
-          <button class="btn" data-action="edit"      data-id="${r.id}">Bearbeiten</button>
-          <button class="btn" data-action="note"      data-id="${r.id}">Notiz</button>
-          <button class="btn" data-action="move"      data-id="${r.id}">Verschieben</button>
-          <button class="btn btn--ghost" data-action="delete" data-id="${r.id}">Löschen</button>
-        </td>
+        <td class="actions" style="display:flex;gap:6px;flex-wrap:wrap;">${actions}</td>
       </tr>`;
     }).join("");
 

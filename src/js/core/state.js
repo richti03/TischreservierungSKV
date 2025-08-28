@@ -14,10 +14,37 @@ export let alleExportCodes = "";
 
 // Reservierungen: { [tischnr]: [{ id, bookingId, name, cards, notes, ts }] }
 export let reservationsByTable = {};
+
+// ---------- Booking-ID Sequenz ----------
+export let lastBookingSeq = 0; // höchste vergebene Nummer (001 => 1, ...)
+
+export function nextBookingId() {
+    lastBookingSeq = Math.max(0, lastBookingSeq) + 1;
+    return String(lastBookingSeq).padStart(3, "0");
+}
+
+// Kompatibilität, falls irgendwo noch genBookingId() genutzt wird
+export function genBookingId() { return nextBookingId(); }
+
+/** Setzt lastBookingSeq >= höchste vorhandene numerische bookingId in map */
+export function bumpBookingSeqFromExisting(map) {
+    let maxFound = lastBookingSeq;
+    for (const key of Object.keys(map || {})) {
+        const arr = map[key] || [];
+        for (const r of arr) {
+            const raw = String(r.bookingId ?? "");
+            const m = raw.match(/^(\d{1,})$/);
+            if (!m) continue;
+            const num = parseInt(m[1], 10);
+            if (Number.isInteger(num)) maxFound = Math.max(maxFound, num);
+        }
+    }
+    lastBookingSeq = Math.max(lastBookingSeq, maxFound);
+}
+
+// ---------- Merker für zuletzt importierten Reservierungs-Dateinamen ----------
 export let lastReservationsFilename = null;
 export function setLastReservationsFilename(name) { lastReservationsFilename = name || null; }
-
-console.log("[INIT] App gestartet. Ausgangsdaten (Tische):", JSON.parse(JSON.stringify(tisch)));
 
 // ---- Helpers (DOM-frei) ----
 export function sortTischArrayPlace(arr) { arr.sort((a, b) => b[1] - a[1]); }
@@ -29,7 +56,6 @@ export function setSeatsByTableNumber(num, seats) { const i = findIndexByTableNu
 
 export function ensureBucket(nr) { if (!reservationsByTable[nr]) reservationsByTable[nr] = []; }
 export function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-export function genBookingId() { return "B" + uid(); }
 
 export function escapeHtml(str) {
     if (typeof str !== "string") return str;
@@ -41,7 +67,7 @@ export function escapeHtml(str) {
         .replaceAll("'","&#039;");
 }
 
-// „Tischwunsch: Tisch X“ immer normalisieren
+// „Tischwunsch: Tisch X“ normalisieren
 export function normalizeWishNote(note) {
     if (!note) return "";
     const re = /tischwunsch.*?\(?tisch\s*(\d+)\)?/i;
@@ -95,7 +121,7 @@ export function pickJSONFile(cb) {
             const text = await file.text();
             const obj = JSON.parse(text);
             console.log("[UPLOAD] JSON geladen:", file.name, obj);
-            // NEU: Dateiname als 2. Argument übergeben
+            // Dateiname als 2. Argument übergeben
             cb(obj, file.name);
         } catch (e) {
             console.error("[UPLOAD] Fehlerhafte JSON:", e);
@@ -105,3 +131,4 @@ export function pickJSONFile(cb) {
     input.click();
 }
 
+console.log("[INIT] App gestartet. Ausgangsdaten (Tische):", JSON.parse(JSON.stringify(tisch)));

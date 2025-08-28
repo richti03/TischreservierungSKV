@@ -166,10 +166,14 @@ function renderSourceTable() {
         const disabled = checked ? "" : "disabled";
         const split = buildSplitInfoText(r.bookingId, moveState.sourceNr);
         const notesHtml = noteToHtml(r.notes) + (split ? `<div style="font-size:12px;opacity:.75;">${escapeHtml(split)}</div>` : "");
+        const bid = r.bookingId ? String(r.bookingId) : "—";
         return `
       <tr data-id="${r.id}">
         <td><input type="checkbox" class="mm-src-check" ${checked}></td>
-        <td>${escapeHtml(r.name)}</td>
+        <td>
+          ${escapeHtml(r.name)}
+          <div style="font-size:12px;opacity:.7;">Buchung-ID: ${escapeHtml(bid)}</div>
+        </td>
         <td>${r.cards}</td>
         <td>${notesHtml}</td>
         <td><input type="number" class="mm-src-amt" min="1" max="${r.cards}" value="${r.cards}" ${disabled}></td>
@@ -191,10 +195,14 @@ function renderTargetTable() {
             const dis = (moveState.mode === "swap") ? "" : "disabled";
             const split = buildSplitInfoText(r.bookingId, moveState.targetNr);
             const notesHtml = noteToHtml(r.notes) + (split ? `<div style="font-size:12px;opacity:.75;">${escapeHtml(split)}</div>` : "");
+            const bid = r.bookingId ? String(r.bookingId) : "—";
             return `
         <tr data-id="${r.id}">
           <td><input type="checkbox" class="mm-tgt-check" ${dis}></td>
-          <td>${escapeHtml(r.name)}</td>
+          <td>
+            ${escapeHtml(r.name)}
+            <div style="font-size:12px;opacity:.7;">Buchung-ID: ${escapeHtml(bid)}</div>
+          </td>
           <td>${r.cards}</td>
           <td>${notesHtml}</td>
           <td><input type="number" class="mm-tgt-amt" min="1" max="${r.cards}" value="${r.cards}" ${dis}></td>
@@ -229,13 +237,16 @@ function updateTotals() {
         tgtTable.querySelectorAll("tbody tr").forEach(tr => {
             const check = tr.querySelector(".mm-tgt-check");
             const amt = tr.querySelector(".mm-tgt-amt");
-            if (check && check.checked && amt && !amt.disabled) {
+            if (check && checked( check ) && amt && !amt.disabled) {
                 const v = parseInt(amt.value);
                 const mx = parseInt(amt.getAttribute("max"));
                 if (Number.isInteger(v) && v >= 1 && v <= mx) rl += v;
             }
         });
     }
+    // kleine Guard-Fix (kein checked helper oben):
+    function checked(input){ return !!(input && input.checked); }
+
     if (totalRL) totalRL.textContent = rl;
 
     if (el) el.classList.toggle("modal--swap", moveState.mode === "swap");
@@ -335,7 +346,7 @@ function buildSplitInfoTextFromAll(afterSrc, afterTgt, fromNr, toNr, bookingId, 
         if (!Array.isArray(list) || tn === currentTable) continue;
         for (const r of list) if (r.bookingId === bookingId) parts.push(`Tisch ${tn} (${r.cards})`);
     }
-    // Falls ein Tisch bisher keine Liste hatte (z. B. leer), aber simuliert wurde:
+    // Falls ein Tisch bisher keine Liste hatte, aber durch Simulation entstanden:
     if (!reservationsByTable[fromNr] && fromNr !== currentTable) {
         for (const r of afterSrc) if (r.bookingId === bookingId) parts.push(`Tisch ${fromNr} (${r.cards})`);
     }
@@ -353,7 +364,12 @@ function renderPreviewReservations(afterSrc, afterTgt, fromNr, toNr) {
         ? afterSrc.map(r => {
             const split = buildSplitInfoTextFromAll(afterSrc, afterTgt, fromNr, toNr, r.bookingId, fromNr);
             const notesHtml = noteToHtml(r.notes) + (split ? `<div style="font-size:12px;opacity:.75;">${escapeHtml(split)}</div>` : "");
-            return `<tr><td>${escapeHtml(r.name)}</td><td>${r.cards}</td><td>${notesHtml}</td></tr>`;
+            const bid = r.bookingId ? String(r.bookingId) : "—";
+            return `<tr>
+          <td>${escapeHtml(r.name)}<div style="font-size:12px;opacity:.7;">Buchung-ID: ${escapeHtml(bid)}</div></td>
+          <td>${r.cards}</td>
+          <td>${notesHtml}</td>
+        </tr>`;
         }).join("")
         : `<tr><td colspan="3">Keine Reservierungen an Tisch ${fromNr}.</td></tr>`;
 
@@ -362,7 +378,12 @@ function renderPreviewReservations(afterSrc, afterTgt, fromNr, toNr) {
         ? afterTgt.map(r => {
             const split = buildSplitInfoTextFromAll(afterSrc, afterTgt, fromNr, toNr, r.bookingId, toNr);
             const notesHtml = noteToHtml(r.notes) + (split ? `<div style="font-size:12px;opacity:.75;">${escapeHtml(split)}</div>` : "");
-            return `<tr><td>${escapeHtml(r.name)}</td><td>${r.cards}</td><td>${notesHtml}</td></tr>`;
+            const bid = r.bookingId ? String(r.bookingId) : "—";
+            return `<tr>
+          <td>${escapeHtml(r.name)}<div style="font-size:12px;opacity:.7;">Buchung-ID: ${escapeHtml(bid)}</div></td>
+          <td>${r.cards}</td>
+          <td>${notesHtml}</td>
+        </tr>`;
         }).join("")
         : `<tr><td colspan="3">Keine Reservierungen an Tisch ${toNr}.</td></tr>`;
 }
@@ -413,7 +434,7 @@ function runPreview() {
 
     // Sichtbarkeit + Button-State
     prevWrap.style.display = "grid";
-    moveState.previewOk = (srcOk && tgtOk);        // <— blockiert Ausführen, wenn eine Seite < 0
+    moveState.previewOk = (srcOk && tgtOk);        // blockiert Ausführen, wenn eine Seite < 0
     btnApply.disabled = !moveState.previewOk;
 
     console.log("[MODAL/PREVIEW]", { fromNr, toNr, lr, rl, srcFreeOld, srcFreeNew, tgtFreeOld, tgtFreeNew, srcOk, tgtOk, srcSel, tgtSel });

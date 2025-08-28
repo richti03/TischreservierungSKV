@@ -120,3 +120,21 @@ tfoot td{
 .btn--ghost{
     background:transparent;
 }
+
+/* Sanfte Markierung für "verkauft" */
+.table tr.is-sold td {
+    background: rgba(239, 68, 68, 0.10); /* soft red */
+}
+
+/* Optional: leicht abgerundete Zellen für bessere Optik */
+.table tr.is-sold td:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+.table tr.is-sold td:last-child  { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+
+/* Mehr Platz in Aktionsspalte (global als Fallback) */
+.table td.actions { gap: 6px; flex-wrap: wrap; }
+
+/* Großes Modal */
+.modal--xl .modal__dialog {
+    max-width: 1100px;  /* schön breit für die Suchtabelle */
+    width: 96vw;
+}
