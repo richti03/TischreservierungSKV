@@ -40,12 +40,9 @@ export function reservierteKarten(t, c, n, preferredNr) {
     const iso = new Date().toISOString();
     const bookingId = nextBookingId();
 
-    let wishNoteText = () => {
-        if (!Number.isInteger(preferredNr) && !(preferredNr === null)) {
-            return preferredNr === 0 ? "Tischwunsch: Stehplatz" : `Tischwunsch: Tisch ${preferredNr}`;
-        } else {
-            return "";
-        }
+    const wishNoteText = () => {
+        if (!Number.isInteger(preferredNr)) return "";
+        return preferredNr === 0 ? "Tischwunsch: Stehplatz" : `Tischwunsch: Tisch ${preferredNr}`;
     };
 
     // Wunsch zuerst
