@@ -31,7 +31,10 @@ function setFreeSeatsFromMap(newFreeMap) {
         const free = Math.max(parseInt(newFreeMap[nr] ?? 0), 0);
         const idx = tisch.findIndex(([n]) => n === nr);
         if (idx >= 0) tisch[idx][1] = free;
-        else tisch.push([nr, free]);
+        else {
+            const defaultPosition = nr === 0 ? "standing" : "middle";
+            tisch.push([nr, free, defaultPosition, null]);
+        }
     }
     sortTischArrayNr(tisch);
 }
@@ -66,7 +69,11 @@ export function importSeatsJSON() {
             const nr = parseInt(e.table), seats = parseInt(e.seats);
             if (!Number.isInteger(nr) || !Number.isInteger(seats)) continue;
             const idx = tisch.findIndex(([n]) => n === nr);
-            if (idx >= 0) tisch[idx][1] = seats; else tisch.push([nr, seats]);
+            if (idx >= 0) tisch[idx][1] = seats;
+            else {
+                const defaultPosition = nr === 0 ? "standing" : "middle";
+                tisch.push([nr, seats, defaultPosition, null]);
+            }
         }
         sortTischArrayNr(tisch);
         printTischArray(tisch);

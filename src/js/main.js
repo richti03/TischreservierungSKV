@@ -6,6 +6,7 @@ import { changePlätze, tischHinzufuegen, tischEntfernen } from "./features/tabl
 import { exportSeatsJSON, importSeatsJSON, exportReservationsJSON, importReservationsJSON } from "./features/importExport.js";
 import { onReservationTableClick } from "./events/actions.js";
 import { openBookingSearchModal } from "./features/searchModal.js"; // optional
+import { setupInternalPlanSync, openInternalPlanTab} from "./features/internalPlanSync.js";
 
 // Select-Change
 const selectEl = document.getElementById("table-select");
@@ -21,13 +22,14 @@ if (selectEl) {
 
 // Hauptbuttons (IDs vorausgesetzt)
 const $ = id => document.getElementById(id);
-$("btn-book")           ?.addEventListener("click", berechneReservierung);
-$("btn-change-seats")   ?.addEventListener("click", changePlätze);
-$("btn-export-seats")   ?.addEventListener("click", exportSeatsJSON);
-$("btn-import-seats")   ?.addEventListener("click", importSeatsJSON);
-$("btn-export-res")     ?.addEventListener("click", exportReservationsJSON);
-$("btn-import-res")     ?.addEventListener("click", importReservationsJSON);
-$("btn-search-bookings")?.addEventListener("click", openBookingSearchModal);
+$("btn-book")              ?.addEventListener("click", berechneReservierung);
+$("btn-change-seats")      ?.addEventListener("click", changePlätze);
+$("btn-export-seats")      ?.addEventListener("click", exportSeatsJSON);
+$("btn-import-seats")      ?.addEventListener("click", importSeatsJSON);
+$("btn-export-res")        ?.addEventListener("click", exportReservationsJSON);
+$("btn-import-res")        ?.addEventListener("click", importReservationsJSON);
+$("btn-search-bookings")   ?.addEventListener("click", openBookingSearchModal);
+$("btn-open-internal-plan")?.addEventListener("click", openInternalPlanTab);
 
 // NEU: Tische automatisch hinzufügen/entfernen
 $("btn-add-table")      ?.addEventListener("click", tischHinzufuegen);
@@ -54,6 +56,7 @@ window.tischEntfernen         = window.tischEntfernen         || tischEntfernen;
 window.openBookingSearchModal = window.openBookingSearchModal || openBookingSearchModal;
 
 // Initiales Rendering
+setupInternalPlanSync()
 printTischArray();
 updateFooter();
 renderReservationsForSelectedTable();

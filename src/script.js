@@ -32,6 +32,15 @@ function ensureBucket(nr) { if (!reservationsByTable[nr]) reservationsByTable[nr
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 function genBookingId() { return "B" + uid(); }
 
+
+function tableLabel(tableNr) {
+    const num = Number(tableNr);
+    if (Number.isInteger(num)) {
+        return num === 0 ? "Stehplätze" : `Tisch ${num}`;
+    }
+    return `Tisch ${tableNr}`;
+}
+
 function getSelectedTableNr() {
     var select = document.getElementById("table-select");
     return select ? parseInt(select.value) : NaN;
@@ -67,7 +76,12 @@ function normalizeWishNote(note) {
     // Alte Varianten in "Tischwunsch berücksichtigt (Tisch X)" oder ähnliches umwandeln
     const re = /tischwunsch.*?\(?tisch\s*(\d+)\)?/i;
     const m = note.match(re);
-    if (m) return `Tischwunsch: Tisch ${m[1]}`;
+    if (m) {
+        const num = parseInt(m[1], 10);
+        if (Number.isInteger(num)) {
+            return num === 0 ? "Tischwunsch: Stehplatz" : `Tischwunsch: Tisch ${num}`;
+        }
+    }
     return note;
 }
 
@@ -145,7 +159,7 @@ function buildSplitInfoText(bookingId, currentTable) {
         const arr = reservationsByTable[tableNr] || [];
         for (const r of arr) {
             if (r.bookingId === bookingId) {
-                parts.push(`Tisch ${tableNr} (${r.cards})`);
+                parts.push(`${tableLabel(tableNr)} (${r.cards})`);
             }
         }
     }
@@ -414,7 +428,11 @@ function importSeatsJSON() {
             if (!Number.isInteger(nr) || !Number.isInteger(seats)) continue;
 
             const idx = findIndexByTableNumber(nr);
-            if (idx >= 0) tisch[idx][1] = seats; else tisch.push([nr, seats]);
+            if (idx >= 0) tisch[idx][1] = seats;
+            else {
+                const defaultPosition = nr === 0 ? "standing" : "middle";
+                tisch.push([nr, seats, defaultPosition, null]);
+            }
         }
 
         printTischArray(tisch);

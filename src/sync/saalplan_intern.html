@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Saalplan – Weißes Layout (Fixe Zeichenfläche)</title>
+    <style>
+        :root {
+            --line: #111;
+            --muted: #666;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, sans-serif;
+            background: #fff;
+            color: #111
+        }
+
+        .frame {
+
+            height: 100%;
+            border: 2px solid var(--line);
+            margin: 24px auto;
+            padding: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+        }
+
+        h1 {
+            margin: 0;
+            text-align: center;
+            font-size: 20px
+        }
+
+        .main-area {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 10px; /* weniger Abstand nach unten */
+        }
+
+        .col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            justify-content: center
+        }
+
+        .parkett-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .parkett {
+            width: 220px;
+            height: 240px;
+            border: 2px solid var(--line);
+            display: grid;
+            place-items: center;
+        }
+
+        .bottom-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 6px;
+            padding: 0 40px; /* enger am Parkett */
+        }
+
+        .table {
+            position: relative;
+            background: #fff;
+            border: 2px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .label {
+            font-size: 11px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .label.vertical {
+            transform: rotate(-90deg);
+            white-space: nowrap;
+        }
+
+        .chair {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border: 1px solid var(--line);
+            background: #fff
+        }
+
+        .chair:hover {
+            background: #f3f3f3
+        }
+
+        .side-top {
+            top: -8px
+        }
+
+        .side-bottom {
+            bottom: -8px
+        }
+
+        .side-left {
+            left: -8px
+        }
+
+        .side-right {
+            right: -8px
+        }
+    </style>
+</head>
+<body>
+<div class="frame">
+    <h1>Saalplan</h1>
+
+    <div class="main-area">
+        <div class="col" id="leftCol"></div>
+        <div class="parkett-wrapper">
+            <div class="parkett" id="parkett">
+                <p>PARKETT</p>
+                <div class="standing" id="standing">
+                    <p>Stehplätze</p>
+                    <p>0/76</p>
+                </div>
+            </div>
+        </div>
+        <div class="col" id="rightCol"></div>
+    </div>
+
+    <div class="bottom-row" id="bottomRow"></div>
+</div>
+
+<script>
+    const CHANNEL_NAME = "skv-internal-plan";
+
+    const leftCol = document.getElementById('leftCol');
+    const rightCol = document.getElementById('rightCol');
+    const bottomRow = document.getElementById('bottomRow');
+    const standingEl = document.getElementById('standing');
+    const frame = document.querySelector('.frame');
+
+    const TABLE_THICKNESS = 32;
+    const PX_PER_SEAT = 7.5;
+    const PARKETT_WIDTH = 220;
+    const FRAME_EXTRA_WIDTH = 100;
+
+    let channel = null;
+
+    function ensureChannel() {
+        if (!('BroadcastChannel' in window)) {
+            console.warn('[SYNC] BroadcastChannel wird nicht unterstützt.');
+            return null;
+        }
+        if (!channel) {
+            channel = new BroadcastChannel(CHANNEL_NAME);
+            channel.addEventListener('message', onChannelMessage);
+            window.addEventListener('beforeunload', () => {
+                try {
+                    channel?.close();
+                } catch (err) {
+                    console.warn('[SYNC] Kanal konnte nicht geschlossen werden:', err);
+                }
+            }, {once: true});
+        }
+        return channel;
+    }
+
+    function onChannelMessage(event) {
+        const data = event?.data;
+        if (!data || typeof data !== 'object') return;
+        if (data.type === 'state' && data.payload) {
+            renderPlan(data.payload);
+        }
+    }
+
+    function clearChildren(el) {
+        if (!el) return;
+        while (el.firstChild) el.removeChild(el.firstChild);
+    }
+
+    function getHorizontalLength(table) {
+        const totalSeats = Math.max(parseInt(table?.total, 10) || 0, 0);
+        return totalSeats * PX_PER_SEAT;
+    }
+
+    function makeTableEl(table, orientation) {
+        const length = getHorizontalLength(table);
+        const thickness = TABLE_THICKNESS;
+        const totalSeats = Math.max(parseInt(table?.total, 10) || 0, 0);
+
+        const el = document.createElement('div');
+        if (orientation === 'horizontal') {
+            el.style.width = length + 'px';
+            el.style.height = thickness + 'px';
+        } else {
+            el.style.width = thickness + 'px';
+            el.style.height = length + 'px';
+        }
+        el.className = `table ${orientation}`;
+        el.dataset.table = table.nr;
+
+        const titleParts = [`Tisch ${table.nr}`];
+        titleParts.push(`Frei: ${table.free}`);
+        titleParts.push(`Reserviert: ${table.reserved}`);
+        if (table.sold) titleParts.push(`Verkauft: ${table.sold}`);
+        el.title = titleParts.join(' · ');
+
+        const label = document.createElement('div');
+        label.className = 'label';
+        label.textContent = 'Tisch ' + table.nr;
+        if (orientation === 'vertical') label.classList.add('vertical');
+        el.appendChild(label);
+
+        if (totalSeats > 0) {
+            const perSide = Math.max(Math.round(totalSeats / 2), 1);
+            const span = perSide > 1 ? (length - 12) / (perSide - 1) : 0;
+            const isHorizontal = orientation === 'horizontal';
+
+            for (let i = 0; i < perSide; i++) {
+                const chairA = document.createElement('div');
+                const chairB = document.createElement('div');
+                chairA.className = 'chair ' + (isHorizontal ? 'side-top' : 'side-left');
+                chairB.className = 'chair ' + (isHorizontal ? 'side-bottom' : 'side-right');
+                if (isHorizontal) {
+                    chairA.style.left = chairB.style.left = (i * span) + 'px';
+                } else {
+                    chairA.style.top = chairB.style.top = (i * span) + 'px';
+                }
+                el.appendChild(chairA);
+                el.appendChild(chairB);
+            }
+        }
+
+        return el;
+    }
+
+    // Hilfsfunktion: optionalen Gang (breiteren Abstand) neben einem Tisch setzen
+    function applyGangDaneben(el, where) {
+        const EXTRA = 40; // px – bei Bedarf anpassen
+        if (!el || !where) return;
+        switch (where) {
+            case 'oben':
+                el.style.marginTop = EXTRA + 'px';
+                break;
+            case 'unten':
+                el.style.marginBottom = EXTRA + 'px';
+                break;
+            case 'links':
+                el.style.marginLeft = EXTRA + 'px';
+                break;
+            case 'rechts':
+                el.style.marginRight = EXTRA + 'px';
+                break;
+        }
+    }
+
+    function updateStandingInfo(table) {
+        if (!standingEl) return;
+        const lines = standingEl.querySelectorAll('p');
+        if (!table) {
+            if (lines[1]) lines[1].textContent = '0/0';
+            standingEl.removeAttribute('title');
+            return;
+        }
+        const reserved = `${table.reserved}/${table.total}`;
+        if (lines[1]) lines[1].textContent = reserved;
+        else {
+            const p = document.createElement('p');
+            p.textContent = reserved;
+            standingEl.appendChild(p);
+        }
+        const parts = [`Frei: ${table.free}`, `Reserviert: ${table.reserved}`];
+        if (table.sold) parts.push(`Verkauft: ${table.sold}`);
+        standingEl.title = parts.join(' · ');
+    }
+
+    function renderPlan(payload) {
+        const tables = Array.isArray(payload?.tables) ? payload.tables : [];
+        const leftTables = tables.filter(t => t.position === 'left').sort((a, b) => a.nr - b.nr);
+        const rightTables = tables.filter(t => t.position === 'right').sort((a, b) => a.nr - b.nr);
+        const bottomTables = tables.filter(t => !['left', 'right', 'standing'].includes(t.position)).sort((a, b) => a.nr - b.nr);
+        const standingTable = tables.find(t => t.position === 'standing');
+
+        if (frame) {
+            const longestLeft = leftTables.length ? Math.max(...leftTables.map(getHorizontalLength)) : 0;
+            const longestRight = rightTables.length ? Math.max(...rightTables.map(getHorizontalLength)) : 0;
+            const computedWidth = longestLeft + longestRight + PARKETT_WIDTH + FRAME_EXTRA_WIDTH;
+            frame.style.width = computedWidth + 'px';
+        }
+
+        clearChildren(leftCol);
+        leftTables.forEach(cfg => {
+            const el = makeTableEl(cfg, 'horizontal');
+            if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+            leftCol?.appendChild(el);
+        });
+
+        clearChildren(bottomRow);
+        bottomTables.forEach(cfg => {
+            const el = makeTableEl(cfg, 'vertical');
+            if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+            bottomRow?.appendChild(el);
+        });
+
+        clearChildren(rightCol);
+        if (rightCol) {
+            rightCol.style.display = 'flex';
+            rightCol.style.flexDirection = 'column-reverse';
+            rightTables.forEach(cfg => {
+                const el = makeTableEl(cfg, 'horizontal');
+                if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+                rightCol.appendChild(el);
+            });
+        }
+
+
+        updateStandingInfo(standingTable);
+    }
+
+    const bc = ensureChannel();
+    if (bc) {
+        bc.postMessage({type: 'request_state'});
+    }
+</script>
+</body>
+</html>

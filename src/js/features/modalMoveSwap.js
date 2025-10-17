@@ -3,7 +3,7 @@
 import {
     tisch, reservationsByTable,
     ensureBucket, getSeatsByTableNumber, setSeatsByTableNumber,
-    sortTischArrayNr, uid, escapeHtml, noteToHtml, buildSplitInfoText
+    sortTischArrayNr, uid, escapeHtml, noteToHtml, buildSplitInfoText, tableLabel
 } from "../core/state.js";
 import { printTischArray, setSelectedTableNr } from "../ui/tableView.js";
 
@@ -364,14 +364,14 @@ function buildSplitInfoTextFromAll(afterSrc, afterTgt, fromNr, toNr, bookingId, 
         const tn = parseInt(key, 10);
         const list = (tn === fromNr) ? afterSrc : (tn === toNr ? afterTgt : reservationsByTable[tn]);
         if (!Array.isArray(list) || tn === currentTable) continue;
-        for (const r of list) if (r.bookingId === bookingId) parts.push(`Tisch ${tn} (${r.cards})`);
+        for (const r of list) if (r.bookingId === bookingId) parts.push(`${tableLabel(tn)} (${r.cards})`);
     }
     // Falls ein Tisch bisher keine Liste hatte, aber durch Simulation entstanden:
     if (!reservationsByTable[fromNr] && fromNr !== currentTable) {
-        for (const r of afterSrc) if (r.bookingId === bookingId) parts.push(`Tisch ${fromNr} (${r.cards})`);
+        for (const r of afterSrc) if (r.bookingId === bookingId) parts.push(`${tableLabel(fromNr)} (${r.cards})`);
     }
     if (!reservationsByTable[toNr] && toNr !== currentTable) {
-        for (const r of afterTgt) if (r.bookingId === bookingId) parts.push(`Tisch ${toNr} (${r.cards})`);
+        for (const r of afterTgt) if (r.bookingId === bookingId) parts.push(`${tableLabel(toNr)} (${r.cards})`);
     }
     return parts.length ? `Weitere Plätze: ${parts.join(", ")}` : "";
 }

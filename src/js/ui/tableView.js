@@ -5,6 +5,7 @@ import {
     sortTischArrayNr, getSeatsByTableNumber, ensureBucket,
     buildSplitInfoText, escapeHtml, noteToHtml
 } from "../core/state.js";
+import { broadcastInternalPlanState } from "../features/internalPlanSync.js";
 
 export function getReservationTbody() {
     return document.querySelector('#reservationview table tbody');
@@ -35,6 +36,7 @@ export function printTischArray(arr = tisch) {
     if (outEl) outEl.innerHTML = output;
     renderTableSelect();
     console.log("[UI] Tische neu gerendert.");
+    broadcastInternalPlanState("tables-render")
 }
 
 export function renderTableSelect(preserveSelection = true) {
@@ -117,6 +119,7 @@ export function renderReservationsForSelectedTable() {
 
     if (!Number.isInteger(nr)) {
         tbody.innerHTML = `<tr><td colspan="4">Bitte oben einen Tisch auswählen.</td></tr>`;
+        broadcastInternalPlanState("reservations-render")
         return;
     }
 
@@ -125,6 +128,7 @@ export function renderReservationsForSelectedTable() {
 
     if (!list || list.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4">Keine Reservierungen für Tisch ${nr}.</td></tr>`;
+        broadcastInternalPlanState("reservations-render")
         return;
     }
 
@@ -160,4 +164,5 @@ export function renderReservationsForSelectedTable() {
     }).join("");
 
     tbody.innerHTML = rows;
+    broadcastInternalPlanState("reservations-render")
 }
