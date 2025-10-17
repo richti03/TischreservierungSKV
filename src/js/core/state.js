@@ -5,7 +5,7 @@
 // Globale Zustände (Tisch 0 sind Stehplätze)
 export let tisch = [
     //[nummer, plätze, position, gangDaneben]
-    [0, 76, "stand", null],
+    [0, 76, "standing", null],
     [1, 18, "left", null],
     [2, 18, "left", null],
     [3, 18, "left", null],

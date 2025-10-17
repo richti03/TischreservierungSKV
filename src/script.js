@@ -428,7 +428,11 @@ function importSeatsJSON() {
             if (!Number.isInteger(nr) || !Number.isInteger(seats)) continue;
 
             const idx = findIndexByTableNumber(nr);
-            if (idx >= 0) tisch[idx][1] = seats; else tisch.push([nr, seats]);
+            if (idx >= 0) tisch[idx][1] = seats;
+            else {
+                const defaultPosition = nr === 0 ? "standing" : "middle";
+                tisch.push([nr, seats, defaultPosition, null]);
+            }
         }
 
         printTischArray(tisch);

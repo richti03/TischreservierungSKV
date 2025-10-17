@@ -163,6 +163,9 @@ tfoot td{
 .modal__close{ font-size:20px; line-height:1; padding:6px 10px; border:0; background:transparent; cursor:pointer; color:#334155; }
 .modal__body{ padding:16px 18px; overflow:auto; }
 .modal__controls{ margin-bottom:12px; font-size:14px; display:flex; align-items:center; gap:16px; color:#334155; }
+.modal__hint{ margin-bottom:12px; font-size:14px; color:#475569; }
+.modal__table-scroll{ max-height:60vh; overflow:auto; border:1px solid #e2e8f0; border-radius:10px; background:#fff; }
+.modal__table-scroll table{ width:100%; }
 .mm-hint{ opacity:.8; }
 .modal__grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
 .modal__col{ background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:12px; }
@@ -172,6 +175,7 @@ tfoot td{
 .table--compact tbody td{ padding:8px 10px; border-bottom:1px solid #f1f5f9; vertical-align:top; }
 .table--compact tbody tr:hover td{ background:#fafafa; }
 .table--compact input[type="number"]{ width:120px; padding:6px 8px; border:1px solid #e2e8f0; border-radius:8px; }
+.table--compact select{ width:100%; padding:6px 8px; border:1px solid #e2e8f0; border-radius:8px; background:#fff; }
 
 .modal__footer{
     display:flex; align-items:center; justify-content:space-between; padding:12px 18px; background:#f8fafc; border-top:1px solid #e5e7eb;
