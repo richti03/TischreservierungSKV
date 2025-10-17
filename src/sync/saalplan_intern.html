@@ -157,6 +157,12 @@
     const rightCol = document.getElementById('rightCol');
     const bottomRow = document.getElementById('bottomRow');
     const standingEl = document.getElementById('standing');
+    const frame = document.querySelector('.frame');
+
+    const TABLE_THICKNESS = 32;
+    const PX_PER_SEAT = 7.5;
+    const PARKETT_WIDTH = 220;
+    const FRAME_EXTRA_WIDTH = 100;
 
     let channel = null;
 
@@ -192,10 +198,15 @@
         while (el.firstChild) el.removeChild(el.firstChild);
     }
 
-    function makeTableEl(table, orientation) {
+    function getHorizontalLength(table) {
         const totalSeats = Math.max(parseInt(table?.total, 10) || 0, 0);
-        const length = totalSeats * 7.5;
-        const thickness = 32;
+        return totalSeats * PX_PER_SEAT;
+    }
+
+    function makeTableEl(table, orientation) {
+        const length = getHorizontalLength(table);
+        const thickness = TABLE_THICKNESS;
+        const totalSeats = Math.max(parseInt(table?.total, 10) || 0, 0);
 
         const el = document.createElement('div');
         if (orientation === 'horizontal') {
@@ -289,6 +300,13 @@
         const rightTables = tables.filter(t => t.position === 'right').sort((a, b) => a.nr - b.nr);
         const bottomTables = tables.filter(t => !['left', 'right', 'standing'].includes(t.position)).sort((a, b) => a.nr - b.nr);
         const standingTable = tables.find(t => t.position === 'standing');
+
+        if (frame) {
+            const longestLeft = leftTables.length ? Math.max(...leftTables.map(getHorizontalLength)) : 0;
+            const longestRight = rightTables.length ? Math.max(...rightTables.map(getHorizontalLength)) : 0;
+            const computedWidth = longestLeft + longestRight + PARKETT_WIDTH + FRAME_EXTRA_WIDTH;
+            frame.style.width = computedWidth + 'px';
+        }
 
         clearChildren(leftCol);
         leftTables.forEach(cfg => {
