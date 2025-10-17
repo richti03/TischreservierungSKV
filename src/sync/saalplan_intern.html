@@ -22,7 +22,7 @@
         }
 
         .frame {
-            width: 550px;
+
             height: 100%;
             border: 2px solid var(--line);
             margin: 24px auto;
@@ -151,66 +151,102 @@
 </div>
 
 <script>
-    const leftTables = [
-        {id: 1, seats: 18}, {id: 2, seats: 18}, {id: 3, seats: 18}, {id: 4, seats: 18}, {id: 5, seats: 18}
-    ];
+    const CHANNEL_NAME = "skv-internal-plan";
 
-    const bottomTables = [
-        {id: 6, seats: 18}, {id: 7, seats: 18},
-        {id: 8, seats: 24}, {id: 9, seats: 24}, {id: 10, seats: 24}, {id: 11, seats: 24},
-        {id: 12, seats: 18}, {id: 13, seats: 18}
-    ];
+    const leftCol = document.getElementById('leftCol');
+    const rightCol = document.getElementById('rightCol');
+    const bottomRow = document.getElementById('bottomRow');
+    const standingEl = document.getElementById('standing');
 
-    // Rechts: breiter Gang zwischen 16 und 17 -> an 16 "oben" mehr Abstand
-    const rightTables = [
-        {id: 14, seats: 12}, {id: 15, seats: 18}, {id: 16, seats: 18, gangDaneben: 'oben'}, {id: 17, seats: 18}
-    ];
+    let channel = null;
+
+    function ensureChannel() {
+        if (!('BroadcastChannel' in window)) {
+            console.warn('[SYNC] BroadcastChannel wird nicht unterstützt.');
+            return null;
+        }
+        if (!channel) {
+            channel = new BroadcastChannel(CHANNEL_NAME);
+            channel.addEventListener('message', onChannelMessage);
+            window.addEventListener('beforeunload', () => {
+                try {
+                    channel?.close();
+                } catch (err) {
+                    console.warn('[SYNC] Kanal konnte nicht geschlossen werden:', err);
+                }
+            }, {once: true});
+        }
+        return channel;
+    }
+
+    function onChannelMessage(event) {
+        const data = event?.data;
+        if (!data || typeof data !== 'object') return;
+        if (data.type === 'state' && data.payload) {
+            renderPlan(data.payload);
+        }
+    }
+
+    function clearChildren(el) {
+        if (!el) return;
+        while (el.firstChild) el.removeChild(el.firstChild);
+    }
 
     function makeTableEl(table, orientation) {
-        const baseLength = 80;
-        const length = baseLength + (table.seats - 12) * 3;
+        const totalSeats = Math.max(parseInt(table?.total, 10) || 0, 0);
+        const length = totalSeats * 7.5;
         const thickness = 32;
 
-        const t = document.createElement('div');
+        const el = document.createElement('div');
         if (orientation === 'horizontal') {
-            t.style.width = length + 'px';
-            t.style.height = thickness + 'px';
+            el.style.width = length + 'px';
+            el.style.height = thickness + 'px';
         } else {
-            t.style.width = thickness + 'px';
-            t.style.height = length + 'px';
+            el.style.width = thickness + 'px';
+            el.style.height = length + 'px';
         }
-        t.className = `table ${orientation}`;
-        t.setAttribute('data-table', table.id);
+        el.className = `table ${orientation}`;
+        el.dataset.table = table.nr;
 
-        const lab = document.createElement('div');
-        lab.className = 'label';
-        lab.textContent = "Tisch " + table.id;
-        if (orientation === 'vertical') lab.classList.add('vertical');
-        t.appendChild(lab);
+        const titleParts = [`Tisch ${table.nr}`];
+        titleParts.push(`Frei: ${table.free}`);
+        titleParts.push(`Reserviert: ${table.reserved}`);
+        if (table.sold) titleParts.push(`Verkauft: ${table.sold}`);
+        el.title = titleParts.join(' · ');
 
-        const perSide = table.seats / 2;
-        const isHorizontal = (orientation === 'horizontal');
-        const span = (length - 12) / (perSide - 1);
+        const label = document.createElement('div');
+        label.className = 'label';
+        label.textContent = 'Tisch ' + table.nr;
+        if (orientation === 'vertical') label.classList.add('vertical');
+        el.appendChild(label);
 
-        for (let i = 0; i < perSide; i++) {
-            const c1 = document.createElement('div');
-            const c2 = document.createElement('div');
-            c1.className = 'chair ' + (isHorizontal ? 'side-top' : 'side-left');
-            c2.className = 'chair ' + (isHorizontal ? 'side-bottom' : 'side-right');
-            if (isHorizontal) {
-                c1.style.left = c2.style.left = (i * span) + 'px';
-            } else {
-                c1.style.top = c2.style.top = (i * span) + 'px';
+        if (totalSeats > 0) {
+            const perSide = Math.max(Math.round(totalSeats / 2), 1);
+            const span = perSide > 1 ? (length - 12) / (perSide - 1) : 0;
+            const isHorizontal = orientation === 'horizontal';
+
+            for (let i = 0; i < perSide; i++) {
+                const chairA = document.createElement('div');
+                const chairB = document.createElement('div');
+                chairA.className = 'chair ' + (isHorizontal ? 'side-top' : 'side-left');
+                chairB.className = 'chair ' + (isHorizontal ? 'side-bottom' : 'side-right');
+                if (isHorizontal) {
+                    chairA.style.left = chairB.style.left = (i * span) + 'px';
+                } else {
+                    chairA.style.top = chairB.style.top = (i * span) + 'px';
+                }
+                el.appendChild(chairA);
+                el.appendChild(chairB);
             }
-            t.appendChild(c1);
-            t.appendChild(c2);
         }
-        return t;
+
+        return el;
     }
 
     // Hilfsfunktion: optionalen Gang (breiteren Abstand) neben einem Tisch setzen
     function applyGangDaneben(el, where) {
         const EXTRA = 40; // px – bei Bedarf anpassen
+        if (!el || !where) return;
         switch (where) {
             case 'oben':
                 el.style.marginTop = EXTRA + 'px';
@@ -227,31 +263,66 @@
         }
     }
 
-    // Links vom Parkett: Tische 1-5 (horizontale Tische, Spalte von oben nach unten)
-    const leftCol = document.getElementById('leftCol');
-    leftTables.forEach(cfg => {
-        const el = makeTableEl(cfg, 'horizontal');
-        if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
-        leftCol.appendChild(el);
-    });
+    function updateStandingInfo(table) {
+        if (!standingEl) return;
+        const lines = standingEl.querySelectorAll('p');
+        if (!table) {
+            if (lines[1]) lines[1].textContent = '0/0';
+            standingEl.removeAttribute('title');
+            return;
+        }
+        const reserved = `${table.reserved}/${table.total}`;
+        if (lines[1]) lines[1].textContent = reserved;
+        else {
+            const p = document.createElement('p');
+            p.textContent = reserved;
+            standingEl.appendChild(p);
+        }
+        const parts = [`Frei: ${table.free}`, `Reserviert: ${table.reserved}`];
+        if (table.sold) parts.push(`Verkauft: ${table.sold}`);
+        standingEl.title = parts.join(' · ');
+    }
 
-    // Unterhalb: Tische 6-13 (vertikale Tische, Reihe links -> rechts)
-    const bottomRow = document.getElementById('bottomRow');
-    bottomTables.forEach((cfg, idx) => {
-        const el = makeTableEl(cfg, 'vertical');
-        if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
-        bottomRow.appendChild(el);
-    });
+    function renderPlan(payload) {
+        const tables = Array.isArray(payload?.tables) ? payload.tables : [];
+        const leftTables = tables.filter(t => t.position === 'left').sort((a, b) => a.nr - b.nr);
+        const rightTables = tables.filter(t => t.position === 'right').sort((a, b) => a.nr - b.nr);
+        const bottomTables = tables.filter(t => !['left', 'right', 'standing'].includes(t.position)).sort((a, b) => a.nr - b.nr);
+        const standingTable = tables.find(t => t.position === 'standing');
 
-    // Rechts vom Parkett: Tische 14-17 (horizontale Tische, Spalte von unten nach oben)
-    const rightCol = document.getElementById('rightCol');
-    rightCol.style.display = 'flex';
-    rightCol.style.flexDirection = 'column-reverse';
-    rightTables.forEach(cfg => {
-        const el = makeTableEl(cfg, 'horizontal');
-        if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
-        rightCol.appendChild(el);
-    });
+        clearChildren(leftCol);
+        leftTables.forEach(cfg => {
+            const el = makeTableEl(cfg, 'horizontal');
+            if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+            leftCol?.appendChild(el);
+        });
+
+        clearChildren(bottomRow);
+        bottomTables.forEach(cfg => {
+            const el = makeTableEl(cfg, 'vertical');
+            if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+            bottomRow?.appendChild(el);
+        });
+
+        clearChildren(rightCol);
+        if (rightCol) {
+            rightCol.style.display = 'flex';
+            rightCol.style.flexDirection = 'column-reverse';
+            rightTables.forEach(cfg => {
+                const el = makeTableEl(cfg, 'horizontal');
+                if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+                rightCol.appendChild(el);
+            });
+        }
+
+
+        updateStandingInfo(standingTable);
+    }
+
+    const bc = ensureChannel();
+    if (bc) {
+        bc.postMessage({type: 'request_state'});
+    }
 </script>
 </body>
 </html>
