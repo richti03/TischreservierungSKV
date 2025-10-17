@@ -2,9 +2,9 @@
 // Core State & Utils (DOM-frei)
 // ---------------------------------------------
 
-// Globale Zustände
+// Globale Zustände (Tisch 0 sind Stehplätze)
 export let tisch = [
-    [1, 18], [2, 18], [3, 18], [4, 18], [5, 18], [6, 18], [7, 18],
+    [0, 76], [1, 18], [2, 18], [3, 18], [4, 18], [5, 18], [6, 18], [7, 18],
     [8, 24], [9, 24], [10, 24], [11, 24],
     [12, 18], [13, 18], [14, 12], [15, 18], [16, 18], [17, 18]
 ];
@@ -47,7 +47,19 @@ export let lastReservationsFilename = null;
 export function setLastReservationsFilename(name) { lastReservationsFilename = name || null; }
 
 // ---- Helpers (DOM-frei) ----
-export function sortTischArrayPlace(arr) { arr.sort((a, b) => b[1] - a[1]); }
+export function sortTischArrayPlace(arr) {
+    // Schritt 1: nach zweitem Wert sortieren (absteigend)
+    arr.sort((a, b) => b[1] - a[1]);
+
+    // Schritt 2: Elemente mit a[0] === 0 nach hinten verschieben
+    arr.sort((a, b) => {
+        if (a[0] === 0 && b[0] !== 0) return 1;
+        if (a[0] !== 0 && b[0] === 0) return -1;
+        return 0;
+    });
+    return arr;
+}
+
 export function sortTischArrayNr(arr)    { arr.sort((a, b) => a[0] - b[0]); }
 
 export function findIndexByTableNumber(num) { return tisch.findIndex(([n]) => n === num); }

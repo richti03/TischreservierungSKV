@@ -9,7 +9,7 @@ import { printTischArray, setSelectedTableNr, renderReservationsForSelectedTable
 export function berechneReservierung() {
     const name  = prompt("Bitte gib den Namen des Kunden ein:");
     const cards = parseInt(prompt("Bitte gib die Anzahl der reservierten Karten an:"));
-    let preferredNr = parseInt(prompt("Tischwunsch (optional): Tischnummer eingeben oder leer lassen:"));
+    let preferredNr = parseInt(prompt("Tischwunsch (optional): Tischnummer eingeben oder leer lassen: (0 = Stehplatz)"));
     if (!Number.isInteger(preferredNr)) preferredNr = null;
 
     if (!name || !Number.isInteger(cards) || cards <= 0) {
@@ -40,7 +40,13 @@ export function reservierteKarten(t, c, n, preferredNr) {
     const iso = new Date().toISOString();
     const bookingId = nextBookingId();
 
-    const wishNoteText = () => Number.isInteger(preferredNr) ? `Tischwunsch: Tisch ${preferredNr}` : "";
+    let wishNoteText = () => {
+        if (!Number.isInteger(preferredNr) && !(preferredNr === null)) {
+            return preferredNr === 0 ? "Tischwunsch: Stehplatz" : `Tischwunsch: Tisch ${preferredNr}`;
+        } else {
+            return "";
+        }
+    };
 
     // Wunsch zuerst
     if (Number.isInteger(preferredNr)) {

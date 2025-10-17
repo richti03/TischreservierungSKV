@@ -596,12 +596,19 @@ function openModal(sourceNr, preselectId) {
     tgtSelect.appendChild(opt0);
 
     sortTischArrayNr(tisch);
-    for (const [nr, seats] of tisch) {
+    for (let i = 1; i < tisch.length; i++) {
+        const [nr, plaetze] = tisch[i];
         if (nr === sourceNr) continue;
         const opt = document.createElement("option");
-        opt.value = nr; opt.textContent = `Tisch ${nr} (frei: ${seats})`;
+        opt.value = nr;
+        opt.textContent = `Tisch ${nr} (frei: ${plaetze})`;
         tgtSelect.appendChild(opt);
     }
+
+    const optSteh = document.createElement("option");
+    optSteh.value = 0;
+    optSteh.textContent = `Stehplätze: ${tisch[0][1]}`;
+    tgtSelect.appendChild(optSteh);
 
     renderSourceTable();
     renderTargetTable();

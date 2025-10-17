@@ -27,9 +27,10 @@ export function setSelectedTableNr(nr) {
 export function printTischArray(arr = tisch) {
     sortTischArrayNr(arr);
     let output = "";
-    for (let i = 0; i < arr.length; i++) {
+    for (let i = 1; i < arr.length; i++) {
         output += `Tisch ${arr[i][0]}: ${arr[i][1]} Plätze<br>`;
     }
+    output += `Stehplätze: ${arr[0][1]} Plätze<br>`;
     const outEl = document.getElementById("tischAusgabe");
     if (outEl) outEl.innerHTML = output;
     renderTableSelect();
@@ -50,7 +51,7 @@ export function renderTableSelect(preserveSelection = true) {
     opt0.selected = isNaN(prev);
     select.appendChild(opt0);
 
-    for (let i = 0; i < tisch.length; i++) {
+    for (let i = 1; i < tisch.length; i++) {
         const [nr, plaetze] = tisch[i];
         const opt = document.createElement("option");
         opt.value = nr;
@@ -58,6 +59,12 @@ export function renderTableSelect(preserveSelection = true) {
         if (!isNaN(prev) && nr === prev) opt.selected = true;
         select.appendChild(opt);
     }
+
+    const optSteh = document.createElement("option");
+    optSteh.value = 0;
+    optSteh.textContent = `Stehplätze (${tisch[0][1]})`;
+    if (!isNaN(prev) && 0 === prev) optSteh.selected = true;
+    select.appendChild(optSteh);
 
     updateFooter();
     renderReservationsForSelectedTable();
