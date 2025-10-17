@@ -80,11 +80,24 @@ export function escapeHtml(str) {
 }
 
 // „Tischwunsch: Tisch X“ normalisieren
+export function tableLabel(tableNr) {
+    const num = Number(tableNr);
+    if (Number.isInteger(num)) {
+        return num === 0 ? "Stehplätze" : `Tisch ${num}`;
+    }
+    return `Tisch ${tableNr}`;
+}
+
 export function normalizeWishNote(note) {
     if (!note) return "";
     const re = /tischwunsch.*?\(?tisch\s*(\d+)\)?/i;
     const m = note.match(re);
-    if (m) return `Tischwunsch: Tisch ${m[1]}`;
+    if (m) {
+        const num = parseInt(m[1], 10);
+        if (Number.isInteger(num)) {
+            return num === 0 ? "Stehplätze" : `Tisch ${num}`;
+        }
+    }
     return note;
 }
 
@@ -101,7 +114,7 @@ export function buildSplitInfoText(bookingId, currentTable) {
         if (!Number.isInteger(tableNr) || tableNr === currentTable) continue;
         const arr = reservationsByTable[tableNr] || [];
         for (const r of arr) {
-            if (r.bookingId === bookingId) parts.push(`Tisch ${tableNr} (${r.cards})`);
+            if (r.bookingId === bookingId) parts.push(`${tableLabel(tableNr)} (${r.cards})`);
         }
     }
     return parts.length ? `Weitere Plätze: ${parts.join(", ")}` : "";
