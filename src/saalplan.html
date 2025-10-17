@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Saalplan – Weißes Layout (Fixe Zeichenfläche)</title>
+    <style>
+        :root{ --line:#111; --muted:#666; }
+        *{box-sizing:border-box}
+        body{margin:0; font-family:system-ui, sans-serif; background:#fff; color:#111}
+
+        .frame{
+            width:550px;
+            height:450px;
+            border:2px solid var(--line);
+            margin:24px auto;
+            padding:8px;
+            overflow:hidden;
+            display:flex;
+            flex-direction:column;
+            background:#fff;
+        }
+
+        h1{margin:0; text-align:center; font-size:20px}
+
+        .main-area{
+            flex:1;
+            display:grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items:center;
+            justify-content:center;
+            gap:40px;
+            margin-bottom:10px; /* weniger Abstand nach unten */
+        }
+
+        .col{display:flex; flex-direction:column; gap:20px; align-items:center; justify-content:center}
+
+        .parkett-wrapper{
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+        }
+
+        .parkett{width:220px; height:180px; border:2px solid var(--line); display:grid; place-items:center; margin-bottom:6px;}
+
+        .bottom-row{
+            width:100%;
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-end;
+            gap:6px;
+            padding:0 40px; /* enger am Parkett */
+        }
+
+        .table{position:relative; background:#fff; border:2px solid var(--line)}
+        .label{position:absolute; bottom:2px; right:4px; font-size:12px; color:var(--muted)}
+
+        .chair{position:absolute; width:12px; height:12px; border:1px solid var(--line); background:#fff}
+        .chair:hover{background:#f3f3f3}
+        .side-top{top:-8px}
+        .side-bottom{bottom:-8px}
+        .side-left{left:-8px}
+        .side-right{right:-8px}
+    </style>
+</head>
+<body>
+<div class="frame">
+    <h1>Saalplan</h1>
+
+    <div class="main-area">
+        <div class="col" id="leftCol"></div>
+        <div class="parkett-wrapper">
+            <div class="parkett" id="parkett">PARKETT</div>
+        </div>
+        <div class="col" id="rightCol"></div>
+    </div>
+
+    <div class="bottom-row" id="bottomRow"></div>
+</div>
+
+<script>
+    const leftTables = [
+        { id:1, seats:18 },{ id:2, seats:18 },{ id:3, seats:18 },{ id:4, seats:18 },{ id:5, seats:18 }
+    ];
+
+    const bottomTables = [
+        { id:6, seats:18 },{ id:7, seats:18 },
+        { id:8, seats:24 },{ id:9, seats:24 },{ id:10, seats:24 },{ id:11, seats:24 },
+        { id:12, seats:18 },{ id:13, seats:18 }
+    ];
+
+    const rightTables = [
+        { id:14, seats:12 },{ id:15, seats:18 },{ id:16, seats:18, gangAbove:true },{ id:17, seats:18 }
+    ];
+
+    function makeTableEl(table, orientation){
+        const baseLength = 80;
+        const length = baseLength + (table.seats - 12) * 3;
+        const thickness = 32;
+
+        const t = document.createElement('div');
+        if (orientation === 'horizontal') {
+            t.style.width = length + 'px';
+            t.style.height = thickness + 'px';
+        } else {
+            t.style.width = thickness + 'px';
+            t.style.height = length + 'px';
+        }
+        t.className = `table ${orientation}`;
+        t.setAttribute('data-table', table.id);
+
+        const lab = document.createElement('div'); lab.className = 'label'; lab.textContent = table.id; t.appendChild(lab);
+        const perSide = table.seats / 2;
+        const isHorizontal = (orientation === 'horizontal');
+        const span = (length - 12) / (perSide - 1);
+
+        for (let i = 0; i < perSide; i++) {
+            const c1 = document.createElement('div');
+            const c2 = document.createElement('div');
+            c1.className = 'chair ' + (isHorizontal ? 'side-top' : 'side-left');
+            c2.className = 'chair ' + (isHorizontal ? 'side-bottom' : 'side-right');
+            if (isHorizontal) { c1.style.left = c2.style.left = (i * span) + 'px'; }
+            else { c1.style.top = c2.style.top = (i * span) + 'px'; }
+            t.appendChild(c1); t.appendChild(c2);
+        }
+        return t;
+    }
+
+    const leftCol = document.getElementById('leftCol');
+    leftTables.forEach(cfg => leftCol.appendChild(makeTableEl(cfg, 'horizontal')));
+
+    const bottomRow = document.getElementById('bottomRow');
+    bottomTables.forEach(cfg => bottomRow.appendChild(makeTableEl(cfg, 'vertical')));
+
+    const rightCol = document.getElementById('rightCol');
+    rightCol.style.display = 'flex';
+    rightCol.style.flexDirection = 'column-reverse';
+    rightTables.forEach(cfg => {
+        const el = makeTableEl(cfg, 'horizontal');
+        if (cfg.gangAbove) { el.style.marginTop = '60px'; }
+        rightCol.appendChild(el);
+    });
+</script>
+</body>
+</html>
