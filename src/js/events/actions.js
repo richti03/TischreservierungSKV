@@ -3,7 +3,7 @@
 import {
     reservationsByTable, getSeatsByTableNumber, setSeatsByTableNumber
 } from "../core/state.js";
-import { getSelectedTableNr, renderReservationsForSelectedTable } from "../ui/tableView.js";
+import {getSelectedTableNr, printTischArray, renderReservationsForSelectedTable} from "../ui/tableView.js";
 import { openMoveModal } from "../features/modalMoveSwap.js";
 
 export function onReservationTableClick(e) {
@@ -28,6 +28,7 @@ export function onReservationTableClick(e) {
         const avail = getSeatsByTableNumber(fromNr) || 0;
         setSeatsByTableNumber(fromNr, avail + rec.cards);
         list.splice(idx, 1);
+        printTischArray();
         renderReservationsForSelectedTable();
         console.log("[DELETE] Entfernt:", rec);
         return;

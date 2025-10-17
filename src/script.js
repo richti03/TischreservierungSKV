@@ -123,38 +123,6 @@ function printTischArray(arr) {
     console.log("[UI] Tische neu gerendert.");
 }
 
-function renderTableSelect(preserveSelection = true) {
-    sortTischArrayNr(tisch);
-    var select = document.getElementById("table-select");
-    if (!select) return;
-
-    var prev = preserveSelection ? parseInt(select.value) : NaN;
-
-    // reset
-    select.innerHTML = "";
-    var opt0 = document.createElement("option");
-    opt0.textContent = "Bitte Tisch auswählen.";
-    opt0.disabled = true;
-    opt0.selected = isNaN(prev);
-    select.appendChild(opt0);
-
-    // Optionen
-    for (var i = 0; i < tisch.length; i++) {
-        var nr = tisch[i][0];
-        var plaetze = tisch[i][1];
-
-        var opt = document.createElement("option");
-        opt.value = nr;
-        opt.textContent = "Tisch " + nr + " (" + plaetze + " Plätze)";
-        if (!isNaN(prev) && nr === prev) opt.selected = true;
-        select.appendChild(opt);
-    }
-
-    updateFooter();
-    renderReservationsForSelectedTable();
-    console.log("[UI] Select neu aufgebaut. Ausgewählt:", select.value || "(keiner)");
-}
-
 function updateFooter() {
     var select = document.getElementById("table-select");
     var strong = document.getElementById("available-cards");
