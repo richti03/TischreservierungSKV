@@ -177,13 +177,13 @@
     const frame = document.querySelector('.frame');
 
     const COLOR_PRESETS = {
-        red: {primary: '#E53935', secondary: '#FFCDD2'},
-        blue: {primary: '#1E88E5', secondary: '#BBDEFB'},
-        yellow: {primary: '#FDD835', secondary: '#FFF59D'},
-        orange: {primary: '#FB8C00', secondary: '#FFE0B2'},
-        purple: {primary: '#8E24AA', secondary: '#E1BEE7'},
-        green: {primary: '#43A047', secondary: '#C8E6C9'},
-        gray: {primary: '#757575', secondary: '#E0E0E0'},
+        red: {primary: '#E53935' },
+        blue: {primary: '#1E88E5' },
+        yellow: {primary: '#FDD835' },
+        orange: {primary: '#FB8C00' },
+        purple: {primary: '#8E24AA' },
+        green: {primary: '#43A047' },
+        gray: {primary: '#757575' },
     };
 
     const EVEN_TABLE_COLOR_SEQUENCE = [
@@ -326,15 +326,12 @@
                     name: segment.name || '',
                     title: buildSeatTitle(segment, i),
                     colorPrimary: segment.colorPrimary || null,
-                    colorSecondary: segment.colorSecondary || null,
                     notes: segment.notes || '',
                 };
                 if (seat.type === 'reserved') {
-                    const colorA = seat.colorPrimary || '#c5e1a5';
-                    const colorB = seat.colorSecondary || seat.colorPrimary || '#c5e1a5';
-                    const background = (i % 2 === 0) ? colorA : colorB;
-                    seat.background = background;
-                    seat.borderColor = seat.colorPrimary || background;
+                    const color = seat.colorPrimary || '#c5e1a5';
+                    seat.background = color;
+                    seat.borderColor = color;
                 } else if (seat.type === 'sold') {
                     seat.background = '#111';
                     seat.borderColor = '#000';

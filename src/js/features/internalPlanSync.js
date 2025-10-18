@@ -4,13 +4,13 @@ const CHANNEL_NAME = "skv-internal-plan";
 const TAB_URL = "sync/saalplan_intern.html";
 
 const COLOR_PRESETS = {
-    red: { primary: "#E53935", secondary: "#FFCDD2" },
-    blue: { primary: "#1E88E5", secondary: "#BBDEFB" },
-    yellow: { primary: "#FDD835", secondary: "#FFF59D" },
-    orange: { primary: "#FB8C00", secondary: "#FFE0B2" },
-    purple: { primary: "#8E24AA", secondary: "#E1BEE7" },
-    green: { primary: "#43A047", secondary: "#C8E6C9" },
-    gray: { primary: "#757575", secondary: "#E0E0E0" },
+    red: { primary: "#E53935" },
+    blue: { primary: "#1E88E5" },
+    yellow: { primary: "#FDD835" },
+    orange: { primary: "#FB8C00" },
+    purple: { primary: "#8E24AA" },
+    green: { primary: "#43A047" },
+    gray: { primary: "#757575" },
 };
 
 const EVEN_TABLE_COLOR_SEQUENCE = [
@@ -131,7 +131,6 @@ function buildSeatSegments(list, freeSeats, tableNr) {
                 const palette = paletteSequence[paletteIndex % paletteSequence.length];
                 paletteIndex += 1;
                 segment.colorPrimary = palette.primary;
-                segment.colorSecondary = palette.secondary;
             }
 
             segments.push(segment);
@@ -161,7 +160,7 @@ function buildTablePayload() {
             total,
             position: nr === 0 ? "standing" : (position || "middle"),
             gangDaneben: gangDaneben || null,
-            segments: buildSeatSegments(list, free),
+            segments: buildSeatSegments(list, free, nr),
         };
     }).sort((a, b) => a.nr - b.nr);
 }
