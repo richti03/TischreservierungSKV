@@ -105,11 +105,28 @@
             width: 12px;
             height: 12px;
             border: 1px solid var(--line);
-            background: #fff
+            background: #fff;
+            border-radius: 2px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            cursor: default;
         }
 
         .chair:hover {
-            background: #f3f3f3
+            transform: scale(1.2);
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15);
+        }
+
+        .chair--free {
+            background: #fff;
+        }
+
+        .chair--sold {
+            background: #111;
+            border-color: #000;
+        }
+
+        .chair--reserved {
+            border-color: rgba(0, 0, 0, 0.55);
         }
 
         .side-top {
@@ -203,10 +220,79 @@
         return totalSeats * PX_PER_SEAT;
     }
 
+    function buildSeatTitle(segment, seatIndex) {
+        if (!segment) return 'Frei';
+        const typeLabel = segment.type === 'sold' ? 'Verkauft' : (segment.type === 'reserved' ? 'Reserviert' : 'Frei');
+        const parts = [typeLabel];
+        if (segment.name) parts.push(segment.name);
+        if (segment.bookingId) parts.push('Buchung ' + segment.bookingId);
+        if (segment.notes) parts.push('Notiz: ' + segment.notes);
+        if (segment.count > 1) parts.push(`Platz ${seatIndex + 1} von ${segment.count}`);
+        return parts.join(' · ');
+    }
+
+    function expandSegmentsToSeats(table, totalSeats) {
+        const seats = [];
+        const segments = Array.isArray(table?.segments) ? table.segments : [];
+        segments.forEach(segment => {
+            const count = Math.max(parseInt(segment?.count, 10) || 0, 0);
+            if (!count) return;
+            for (let i = 0; i < count; i++) {
+                const seat = {
+                    type: segment.type === 'sold' ? 'sold' : (segment.type === 'reserved' ? 'reserved' : 'free'),
+                    bookingId: segment.bookingId || null,
+                    name: segment.name || '',
+                    title: buildSeatTitle(segment, i),
+                    colorPrimary: segment.colorPrimary || null,
+                    colorSecondary: segment.colorSecondary || null,
+                    notes: segment.notes || '',
+                };
+                if (seat.type === 'reserved') {
+                    const colorA = seat.colorPrimary || '#c5e1a5';
+                    const colorB = seat.colorSecondary || seat.colorPrimary || '#c5e1a5';
+                    const background = (i % 2 === 0) ? colorA : colorB;
+                    seat.background = background;
+                    seat.borderColor = seat.colorPrimary || background;
+                } else if (seat.type === 'sold') {
+                    seat.background = '#111';
+                    seat.borderColor = '#000';
+                } else {
+                    seat.background = '#fff';
+                    seat.borderColor = 'var(--line)';
+                }
+                seats.push(seat);
+            }
+        });
+
+        while (seats.length < totalSeats) {
+            seats.push({
+                type: 'free',
+                title: 'Frei',
+                background: '#fff',
+                borderColor: 'var(--line)'
+            });
+        }
+
+        if (seats.length > totalSeats) seats.length = totalSeats;
+
+        return seats;
+    }
+
+    function applySeatVisual(chair, seat) {
+        const state = seat?.type || 'free';
+        chair.dataset.state = state;
+        chair.classList.add('chair--' + state);
+        if (seat?.bookingId) chair.dataset.bookingId = seat.bookingId;
+        chair.title = seat?.title || (state === 'sold' ? 'Verkauft' : state === 'reserved' ? 'Reserviert' : 'Frei');
+        if (seat?.background) chair.style.background = seat.background;
+        if (seat?.borderColor) chair.style.borderColor = seat.borderColor;
+    }
+
     function makeTableEl(table, orientation) {
         const length = getHorizontalLength(table);
         const thickness = TABLE_THICKNESS;
         const totalSeats = Math.max(parseInt(table?.total, 10) || 0, 0);
+        const seats = expandSegmentsToSeats(table, totalSeats);
 
         const el = document.createElement('div');
         if (orientation === 'horizontal') {
@@ -247,7 +333,7 @@
             const offsetsA = makeOffsets(sideA);
             const offsetsB = makeOffsets(sideB);
 
-            const createChair = (className, offset) => {
+            const createChair = (className, offset, seat) => {
                 const chair = document.createElement('div');
                 chair.className = 'chair ' + className;
                 if (isHorizontal) {
@@ -255,17 +341,19 @@
                 } else {
                     chair.style.top = offset + 'px';
                 }
+                applySeatVisual(chair, seat);
                 return chair;
             };
 
-            offsetsA.forEach(offset => {
+            offsetsA.forEach((offset, idx) => {
                 const cls = isHorizontal ? 'side-top' : 'side-left';
-                el.appendChild(createChair(cls, offset));
+                el.appendChild(createChair(cls, offset, seats[idx]));
             });
 
-            offsetsB.forEach(offset => {
+            offsetsB.forEach((offset, idx) => {
                 const cls = isHorizontal ? 'side-bottom' : 'side-right';
-                el.appendChild(createChair(cls, offset));
+                const seat = seats[sideA + idx];
+                el.appendChild(createChair(cls, offset, seat));
             });
         }
 
@@ -280,6 +368,7 @@
             case 'oben':
                 el.style.marginTop = EXTRA + 'px';
                 break;
+
             case 'unten':
                 el.style.marginBottom = EXTRA + 'px';
                 break;
