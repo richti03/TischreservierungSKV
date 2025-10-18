@@ -100,11 +100,13 @@
             white-space: nowrap;
         }
 
-        .label[role="button"] {
+        .label[role="button"],
+        .standing[role="button"] {
             cursor: pointer;
         }
 
-        .label[role="button"]:focus-visible {
+        .label[role="button"]:focus-visible,
+        .standing[role="button"]:focus-visible {
             outline: 2px solid var(--line);
             outline-offset: 2px;
         }
@@ -331,6 +333,20 @@
 
     function isActivationKey(event) {
         return event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar';
+    }
+
+    if (standingEl) {
+        standingEl.setAttribute('role', 'button');
+        standingEl.tabIndex = 0;
+        standingEl.addEventListener('click', event => {
+            event.preventDefault();
+            notifyTableSelection(0);
+        });
+        standingEl.addEventListener('keydown', event => {
+            if (!isActivationKey(event)) return;
+            event.preventDefault();
+            notifyTableSelection(0);
+        });
     }
 
     const TABLE_THICKNESS = 32;
