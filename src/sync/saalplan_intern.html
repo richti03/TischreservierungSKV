@@ -227,28 +227,46 @@
 
         const label = document.createElement('div');
         label.className = 'label';
-        label.textContent = 'Tisch ' + table.nr;
+        label.textContent = 'Tisch ' + table.nr + ': ' + totalSeats + ' Plätze';
         if (orientation === 'vertical') label.classList.add('vertical');
         el.appendChild(label);
 
         if (totalSeats > 0) {
-            const perSide = Math.max(Math.round(totalSeats / 2), 1);
-            const span = perSide > 1 ? (length - 12) / (perSide - 1) : 0;
             const isHorizontal = orientation === 'horizontal';
+            const longSide = length;
+            const makeOffsets = count => {
+                if (count <= 0) return [];
+                if (count === 1) return [Math.max((longSide - 12) / 2, 0)];
+                const usable = Math.max(longSide - 12, 0);
+                const span = usable / (count - 1);
+                return Array.from({length: count}, (_, i) => i * span);
+            };
 
-            for (let i = 0; i < perSide; i++) {
-                const chairA = document.createElement('div');
-                const chairB = document.createElement('div');
-                chairA.className = 'chair ' + (isHorizontal ? 'side-top' : 'side-left');
-                chairB.className = 'chair ' + (isHorizontal ? 'side-bottom' : 'side-right');
+            const sideA = Math.ceil(totalSeats / 2);
+            const sideB = totalSeats - sideA;
+            const offsetsA = makeOffsets(sideA);
+            const offsetsB = makeOffsets(sideB);
+
+            const createChair = (className, offset) => {
+                const chair = document.createElement('div');
+                chair.className = 'chair ' + className;
                 if (isHorizontal) {
-                    chairA.style.left = chairB.style.left = (i * span) + 'px';
+                    chair.style.left = offset + 'px';
                 } else {
-                    chairA.style.top = chairB.style.top = (i * span) + 'px';
+                    chair.style.top = offset + 'px';
                 }
-                el.appendChild(chairA);
-                el.appendChild(chairB);
-            }
+                return chair;
+            };
+
+            offsetsA.forEach(offset => {
+                const cls = isHorizontal ? 'side-top' : 'side-left';
+                el.appendChild(createChair(cls, offset));
+            });
+
+            offsetsB.forEach(offset => {
+                const cls = isHorizontal ? 'side-bottom' : 'side-right';
+                el.appendChild(createChair(cls, offset));
+            });
         }
 
         return el;
