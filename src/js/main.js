@@ -1,6 +1,6 @@
 // Bootstrapping & Events
 
-import { printTischArray, updateFooter, renderReservationsForSelectedTable } from "./ui/tableView.js";
+import { printTischArray, updateFooter, renderReservationsForSelectedTable, setSelectedTableNr } from "./ui/tableView.js";
 import { berechneReservierung } from "./features/booking.js";
 import { changePlätze, tischHinzufuegen, tischEntfernen } from "./features/tablesCrud.js";
 import { exportSeatsJSON, importSeatsJSON, exportReservationsJSON, importReservationsJSON } from "./features/importExport.js";
@@ -12,6 +12,10 @@ import { setupInternalPlanSync, openInternalPlanTab} from "./features/internalPl
 const selectEl = document.getElementById("table-select");
 if (selectEl) {
     selectEl.addEventListener("change", () => {
+        if (selectEl.dataset.silentTableUpdate === "1") {
+            delete selectEl.dataset.silentTableUpdate;
+            return;
+        }
         updateFooter();
         renderReservationsForSelectedTable();
         console.log("[UI] Select geändert:", selectEl.value);
@@ -19,6 +23,22 @@ if (selectEl) {
 } else {
     console.warn("[INIT] table-select nicht gefunden.");
 }
+
+window.addEventListener("internal-plan:select-table", event => {
+    const tableNr = event?.detail?.tableNr;
+    if (!Number.isInteger(tableNr)) {
+        return;
+    }
+    setSelectedTableNr(tableNr);
+});
+
+window.addEventListener("internal-plan:search-booking", event => {
+    const query = event?.detail?.query;
+    if (typeof query !== "string") {
+        return;
+    }
+    openBookingSearchModal(query);
+});
 
 // Hauptbuttons (IDs vorausgesetzt)
 const $ = id => document.getElementById(id);

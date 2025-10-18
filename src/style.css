@@ -54,6 +54,31 @@ button:hover {
     width: 25%
 }
 
+#tischAusgabe .table-label {
+    display: inline-block;
+    padding: 4px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    text-align: left;
+}
+
+#tischAusgabe .table-label:hover,
+#tischAusgabe .table-label:focus {
+    background-color: rgba(65, 105, 225, 0.12);
+    color: #1d3b7a;
+}
+
+#tischAusgabe .table-label:focus-visible {
+    outline: 2px solid royalblue;
+    outline-offset: 2px;
+}
+
+#tischAusgabe .table-label.is-active {
+    background-color: royalblue;
+    color: #fff;
+}
+
 #reservationview {
     width: 75%;
 }
