@@ -32,6 +32,14 @@ window.addEventListener("internal-plan:select-table", event => {
     setSelectedTableNr(tableNr);
 });
 
+window.addEventListener("internal-plan:search-booking", event => {
+    const query = event?.detail?.query;
+    if (typeof query !== "string") {
+        return;
+    }
+    openBookingSearchModal(query);
+});
+
 // Hauptbuttons (IDs vorausgesetzt)
 const $ = id => document.getElementById(id);
 $("btn-book")              ?.addEventListener("click", berechneReservierung);

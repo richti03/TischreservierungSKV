@@ -171,6 +171,14 @@ function handleIncomingPayload(payload) {
         const detail = {tableNr};
         const customEvent = new CustomEvent("internal-plan:select-table", {detail});
         window.dispatchEvent(customEvent);
+        return;
+    }
+
+    if (payload.type === "search-booking") {
+        const query = typeof payload.query === "string" ? payload.query : String(payload.query ?? "");
+        const detail = {query};
+        const customEvent = new CustomEvent("internal-plan:search-booking", {detail});
+        window.dispatchEvent(customEvent);
     }
 }
 

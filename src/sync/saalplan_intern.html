@@ -573,7 +573,20 @@
                 } else {
                     chair.style.top = offset + 'px';
                 }
+                chair.dataset.tableNr = table.nr;
                 applySeatVisual(chair, seat);
+                chair.addEventListener('click', event => {
+                    const state = chair.dataset.state;
+                    if (state !== 'reserved' && state !== 'sold') {
+                        return;
+                    }
+                    const bookingId = chair.dataset.bookingId;
+                    if (!bookingId) {
+                        return;
+                    }
+                    event.preventDefault();
+                    sendInternalMessage({type: 'search-booking', query: String(bookingId)});
+                });
                 return chair;
             };
 

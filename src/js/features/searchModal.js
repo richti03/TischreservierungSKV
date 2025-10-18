@@ -251,15 +251,20 @@ function wire() {
     wired = true;
 }
 
-export function openBookingSearchModal() {
+export function openBookingSearchModal(initialFilter = "") {
     const el = ensureSearchModal();
     el.classList.remove("hidden");
     el.setAttribute("aria-hidden", "false");
     wire();
     // initial render
     const input = el.querySelector("#bk-search-input");
-    if (input) input.value = "";
-    renderTable("");
+    if (input) input.value = initialFilter;
+    renderTable(initialFilter);
     // Fokus auf Suche
-    setTimeout(() => input?.focus(), 0);
+    setTimeout(() => {
+        input?.focus();
+        if (initialFilter) {
+            input?.select();
+        }
+    }, 0);
 }
