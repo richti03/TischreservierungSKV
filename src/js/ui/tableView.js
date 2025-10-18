@@ -11,6 +11,73 @@ export function getReservationTbody() {
     return document.querySelector('#reservationview table tbody');
 }
 
+let tableLabelHandlersBound = false;
+
+function getTableLabelContainer() {
+    return document.getElementById("tischAusgabe");
+}
+
+function parseTableNrFromElement(el) {
+    if (!el) return NaN;
+    const nr = parseInt(el.dataset.tableNr, 10);
+    return Number.isNaN(nr) ? NaN : nr;
+}
+
+function activateTableLabel(el) {
+    const nr = parseTableNrFromElement(el);
+    if (Number.isNaN(nr)) {
+        return;
+    }
+    setSelectedTableNr(nr);
+}
+
+function findTableLabelTarget(event) {
+    const rawTarget = event.target;
+    if (!(rawTarget instanceof Element)) return null;
+    return rawTarget.closest('[data-table-nr]');
+}
+
+function onTableLabelClick(event) {
+    const target = findTableLabelTarget(event);
+    if (!target) return;
+    event.preventDefault();
+    activateTableLabel(target);
+}
+
+function onTableLabelKeydown(event) {
+    const isActivationKey = event.key === "Enter" || event.key === " " || event.key === "Spacebar";
+    if (!isActivationKey) return;
+    const target = findTableLabelTarget(event);
+    if (!target) return;
+    event.preventDefault();
+    activateTableLabel(target);
+}
+
+function ensureTableLabelHandlers() {
+    if (tableLabelHandlersBound) return;
+    const container = getTableLabelContainer();
+    if (!container) return;
+    container.addEventListener("click", onTableLabelClick);
+    container.addEventListener("keydown", onTableLabelKeydown);
+    tableLabelHandlersBound = true;
+}
+
+function highlightTableLabel(nr) {
+    const container = getTableLabelContainer();
+    if (!container) return;
+    const labels = container.querySelectorAll('[data-table-nr]');
+    labels.forEach(label => {
+        const value = parseTableNrFromElement(label);
+        if (Number.isInteger(nr) && value === nr) {
+            label.classList.add("is-active");
+            label.setAttribute("aria-current", "true");
+        } else {
+            label.classList.remove("is-active");
+            label.removeAttribute("aria-current");
+        }
+    });
+}
+
 export function getSelectedTableNr() {
     const select = document.getElementById("table-select");
     return select ? parseInt(select.value) : NaN;
@@ -22,6 +89,10 @@ export function setSelectedTableNr(nr) {
     select.value = nr;
     updateFooter();
     renderReservationsForSelectedTable();
+    const changeEvent = new Event("change", { bubbles: true });
+    select.dataset.silentTableUpdate = "1";
+    select.dispatchEvent(changeEvent);
+    delete select.dataset.silentTableUpdate;
     console.log("[UI] Select auf Tisch gesetzt:", nr);
 }
 
@@ -29,11 +100,15 @@ export function printTischArray(arr = tisch) {
     sortTischArrayNr(arr);
     let output = "";
     for (let i = 1; i < arr.length; i++) {
-        output += `Tisch ${arr[i][0]}: ${arr[i][1]} Plätze<br>`;
+        output += `<span class="table-label" data-table-nr="${arr[i][0]}" role="button" tabindex="0">Tisch ${arr[i][0]}: ${arr[i][1]} Plätze</span><br>`;
     }
-    output += `Stehplätze: ${arr[0][1]} Plätze<br>`;
+    output += `<span class="table-label" data-table-nr="0" role="button" tabindex="0">Stehplätze: ${arr[0][1]} Plätze</span><br>`;
     const outEl = document.getElementById("tischAusgabe");
-    if (outEl) outEl.innerHTML = output;
+    if (outEl) {
+        outEl.innerHTML = output;
+        ensureTableLabelHandlers();
+        highlightTableLabel(getSelectedTableNr());
+    }
     renderTableSelect();
     console.log("[UI] Tische neu gerendert.");
     broadcastInternalPlanState("tables-render")
@@ -116,6 +191,8 @@ export function renderReservationsForSelectedTable() {
     const nr = getSelectedTableNr();
     const tbody = getReservationTbody();
     if (!tbody) return;
+
+    highlightTableLabel(nr);
 
     if (!Number.isInteger(nr)) {
         tbody.innerHTML = `<tr><td colspan="4">Bitte oben einen Tisch auswählen.</td></tr>`;

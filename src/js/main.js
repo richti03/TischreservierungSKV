@@ -12,6 +12,10 @@ import { setupInternalPlanSync, openInternalPlanTab} from "./features/internalPl
 const selectEl = document.getElementById("table-select");
 if (selectEl) {
     selectEl.addEventListener("change", () => {
+        if (selectEl.dataset.silentTableUpdate === "1") {
+            delete selectEl.dataset.silentTableUpdate;
+            return;
+        }
         updateFooter();
         renderReservationsForSelectedTable();
         console.log("[UI] Select geändert:", selectEl.value);
