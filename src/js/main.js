@@ -1,6 +1,6 @@
 // Bootstrapping & Events
 
-import { printTischArray, updateFooter, renderReservationsForSelectedTable } from "./ui/tableView.js";
+import { printTischArray, updateFooter, renderReservationsForSelectedTable, setSelectedTableNr } from "./ui/tableView.js";
 import { berechneReservierung } from "./features/booking.js";
 import { changePlätze, tischHinzufuegen, tischEntfernen } from "./features/tablesCrud.js";
 import { exportSeatsJSON, importSeatsJSON, exportReservationsJSON, importReservationsJSON } from "./features/importExport.js";
@@ -23,6 +23,14 @@ if (selectEl) {
 } else {
     console.warn("[INIT] table-select nicht gefunden.");
 }
+
+window.addEventListener("internal-plan:select-table", event => {
+    const tableNr = event?.detail?.tableNr;
+    if (!Number.isInteger(tableNr)) {
+        return;
+    }
+    setSelectedTableNr(tableNr);
+});
 
 // Hauptbuttons (IDs vorausgesetzt)
 const $ = id => document.getElementById(id);

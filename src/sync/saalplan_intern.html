@@ -100,6 +100,15 @@
             white-space: nowrap;
         }
 
+        .label[role="button"] {
+            cursor: pointer;
+        }
+
+        .label[role="button"]:focus-visible {
+            outline: 2px solid var(--line);
+            outline-offset: 2px;
+        }
+
         .chair {
             position: absolute;
             width: 12px;
@@ -169,6 +178,9 @@
 
 <script>
     const CHANNEL_NAME = "skv-internal-plan";
+    const STORAGE_KEY = "skv-internal-plan-message";
+    const MESSAGE_MARKER = "__skvInternalPlan";
+    const MAX_SEEN_MESSAGES = 200;
 
     const leftCol = document.getElementById('leftCol');
     const rightCol = document.getElementById('rightCol');
@@ -257,37 +269,137 @@
         });
     }
 
+    function rememberMessageId(id) {
+        if (!id || seenMessageIds.has(id)) return;
+        seenMessageIds.add(id);
+        seenMessageQueue.push(id);
+        if (seenMessageQueue.length > MAX_SEEN_MESSAGES) {
+            const oldest = seenMessageQueue.shift();
+            if (oldest !== undefined) {
+                seenMessageIds.delete(oldest);
+            }
+        }
+    }
+
+    function hasSeenMessage(id) {
+        if (!id) return false;
+        return seenMessageIds.has(id);
+    }
+
+    function createEnvelope(data) {
+        return {
+            marker: MESSAGE_MARKER,
+            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            data,
+        };
+    }
+
+    function transmitEnvelope(envelope) {
+        const bc = ensureChannel();
+        if (bc && envelope) {
+            try {
+                bc.postMessage(envelope);
+            } catch (err) {
+                console.warn('[SYNC] BroadcastChannel konnte Nachricht nicht senden:', err);
+            }
+        }
+
+        if (!envelope) return;
+
+        if (typeof localStorage === 'undefined' || localStorage === null) {
+            return;
+        }
+
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(envelope));
+        } catch (err) {
+            if (err?.name !== 'SecurityError') {
+                console.warn('[SYNC] localStorage-Fallback konnte Nachricht nicht senden:', err);
+            }
+        }
+    }
+
+    function sendInternalMessage(data) {
+        transmitEnvelope(createEnvelope(data));
+    }
+
+    function notifyTableSelection(tableNr) {
+        const nr = parseTableNumber(tableNr);
+        if (!Number.isInteger(nr)) return;
+        sendInternalMessage({type: 'select-table', tableNr: nr});
+    }
+
+    function isActivationKey(event) {
+        return event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar';
+    }
+
     const TABLE_THICKNESS = 32;
     const PX_PER_SEAT = 7.5;
     const PARKETT_WIDTH = 220;
     const FRAME_EXTRA_WIDTH = 100;
 
     let channel = null;
+    let storageListenerBound = false;
+    const seenMessageIds = new Set();
+    const seenMessageQueue = [];
+
+    function setupStorageListener() {
+        if (storageListenerBound) return;
+        if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+        window.addEventListener('storage', onStorageMessage);
+        storageListenerBound = true;
+    }
 
     function ensureChannel() {
+        setupStorageListener()
         if (!('BroadcastChannel' in window)) {
-            console.warn('[SYNC] BroadcastChannel wird nicht unterstützt.');
             return null;
         }
         if (!channel) {
-            channel = new BroadcastChannel(CHANNEL_NAME);
-            channel.addEventListener('message', onChannelMessage);
-            window.addEventListener('beforeunload', () => {
-                try {
-                    channel?.close();
-                } catch (err) {
-                    console.warn('[SYNC] Kanal konnte nicht geschlossen werden:', err);
-                }
-            }, {once: true});
+            try {
+                channel = new BroadcastChannel(CHANNEL_NAME);
+                channel.addEventListener('message', onChannelMessage);
+                window.addEventListener('beforeunload', () => {
+                    try {
+                        channel?.close();
+                    } catch (err) {
+                        console.warn('[SYNC] Kanal konnte nicht geschlossen werden:', err);
+                    }
+                }, {once: true});
+            } catch (err) {
+                console.warn('[SYNC] BroadcastChannel konnte nicht initialisiert werden:', err);
+                channel = null;
+            }
         }
         return channel;
     }
 
+    function handleIncomingPayload(payload) {
+        if (!payload || typeof payload !== 'object') return;
+        if (payload.type === 'state' && payload.payload) {
+            renderPlan(payload.payload);
+        }
+    }
+
+    function handleEnvelope(envelope) {
+        if (!envelope || envelope.marker !== MESSAGE_MARKER) return;
+        if (hasSeenMessage(envelope.id)) return;
+        rememberMessageId(envelope.id);
+        handleIncomingPayload(envelope.data);
+    }
+
     function onChannelMessage(event) {
-        const data = event?.data;
-        if (!data || typeof data !== 'object') return;
-        if (data.type === 'state' && data.payload) {
-            renderPlan(data.payload);
+        handleEnvelope(event?.data);
+    }
+
+    function onStorageMessage(event) {
+        if (!event || event.key !== STORAGE_KEY) return;
+        if (!event.newValue) return;
+        try {
+            const parsed = JSON.parse(event.newValue);
+            handleEnvelope(parsed);
+        } catch (err) {
+            console.warn('[SYNC] Konnte Nachricht aus localStorage nicht verarbeiten:', err);
         }
     }
 
@@ -406,6 +518,18 @@
         const label = document.createElement('div');
         label.className = 'label';
         label.textContent = 'Tisch ' + table.nr + ': ' + totalSeats + ' Plätze';
+        label.dataset.tableNr = table.nr;
+        label.setAttribute('role', 'button');
+        label.tabIndex = 0;
+        label.addEventListener('click', event => {
+            event.preventDefault();
+            notifyTableSelection(table.nr);
+        });
+        label.addEventListener('keydown', event => {
+            if (!isActivationKey(event)) return;
+            event.preventDefault();
+            notifyTableSelection(table.nr);
+        });
         if (orientation === 'vertical') label.classList.add('vertical');
         el.appendChild(label);
 
@@ -536,10 +660,8 @@
         updateStandingInfo(standingTable);
     }
 
-    const bc = ensureChannel();
-    if (bc) {
-        bc.postMessage({type: 'request_state'});
-    }
+    ensureChannel();
+    sendInternalMessage({type: 'request_state'});
 </script>
 </body>
 </html>
