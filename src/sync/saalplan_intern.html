@@ -176,6 +176,87 @@
     const standingEl = document.getElementById('standing');
     const frame = document.querySelector('.frame');
 
+    const COLOR_PRESETS = {
+        red: {primary: '#E53935', secondary: '#FFCDD2'},
+        blue: {primary: '#1E88E5', secondary: '#BBDEFB'},
+        yellow: {primary: '#FDD835', secondary: '#FFF59D'},
+        orange: {primary: '#FB8C00', secondary: '#FFE0B2'},
+        purple: {primary: '#8E24AA', secondary: '#E1BEE7'},
+        green: {primary: '#43A047', secondary: '#C8E6C9'},
+        gray: {primary: '#757575', secondary: '#E0E0E0'},
+    };
+
+    const EVEN_TABLE_COLOR_SEQUENCE = [
+        COLOR_PRESETS.red,
+        COLOR_PRESETS.blue,
+        COLOR_PRESETS.yellow,
+        COLOR_PRESETS.orange,
+        COLOR_PRESETS.purple,
+        COLOR_PRESETS.green,
+        COLOR_PRESETS.gray,
+    ];
+
+    const ODD_TABLE_COLOR_SEQUENCE = [
+        COLOR_PRESETS.orange,
+        COLOR_PRESETS.purple,
+        COLOR_PRESETS.green,
+        COLOR_PRESETS.red,
+        COLOR_PRESETS.blue,
+        COLOR_PRESETS.yellow,
+        COLOR_PRESETS.gray,
+    ];
+
+    function parseTableNumber(tableNr) {
+        if (Number.isInteger(tableNr)) {
+            return tableNr;
+        }
+
+        if (typeof tableNr === 'string') {
+            const trimmed = tableNr.trim();
+            if (!trimmed) return null;
+
+            const direct = Number(trimmed);
+            if (Number.isInteger(direct)) {
+                return direct;
+            }
+
+            const match = trimmed.match(/-?\d+/);
+            if (match) {
+                const parsed = Number(match[0]);
+                if (Number.isInteger(parsed)) {
+                    return parsed;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function getColorSequenceForTable(tableNr) {
+        const nr = parseTableNumber(tableNr);
+        if (!Number.isInteger(nr)) {
+            return EVEN_TABLE_COLOR_SEQUENCE;
+        }
+        return Math.abs(nr) % 2 === 0 ? EVEN_TABLE_COLOR_SEQUENCE : ODD_TABLE_COLOR_SEQUENCE;
+    }
+
+    function applyTablePalette(table, segments) {
+        const paletteSequence = getColorSequenceForTable(table?.nr);
+        let paletteIndex = 0;
+        return segments.map(segment => {
+            if (!segment || segment.type !== 'reserved') {
+                return segment;
+            }
+            const palette = paletteSequence[paletteIndex % paletteSequence.length];
+            paletteIndex += 1;
+            return {
+                ...segment,
+                colorPrimary: palette.primary,
+                colorSecondary: palette.secondary,
+            };
+        });
+    }
+
     const TABLE_THICKNESS = 32;
     const PX_PER_SEAT = 7.5;
     const PARKETT_WIDTH = 220;
@@ -233,7 +314,8 @@
 
     function expandSegmentsToSeats(table, totalSeats) {
         const seats = [];
-        const segments = Array.isArray(table?.segments) ? table.segments : [];
+        const baseSegments = Array.isArray(table?.segments) ? table.segments : [];
+        const segments = applyTablePalette(table, baseSegments);
         segments.forEach(segment => {
             const count = Math.max(parseInt(segment?.count, 10) || 0, 0);
             if (!count) return;

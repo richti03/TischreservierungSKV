@@ -3,16 +3,61 @@ import { tisch, reservationsByTable } from "../core/state.js";
 const CHANNEL_NAME = "skv-internal-plan";
 const TAB_URL = "sync/saalplan_intern.html";
 
-const COLOR_PALETTE = [
-    { primary: "#FF6F61", secondary: "#FFB199" },
-    { primary: "#42A5F5", secondary: "#90CAF9" },
-    { primary: "#66BB6A", secondary: "#A5D6A7" },
-    { primary: "#AB47BC", secondary: "#CE93D8" },
-    { primary: "#FFA726", secondary: "#FFCC80" },
-    { primary: "#26C6DA", secondary: "#80DEEA" },
-    { primary: "#EC407A", secondary: "#F48FB1" },
-    { primary: "#7E57C2", secondary: "#B39DDB" },
+const COLOR_PRESETS = {
+    red: { primary: "#E53935", secondary: "#FFCDD2" },
+    blue: { primary: "#1E88E5", secondary: "#BBDEFB" },
+    yellow: { primary: "#FDD835", secondary: "#FFF59D" },
+    orange: { primary: "#FB8C00", secondary: "#FFE0B2" },
+    purple: { primary: "#8E24AA", secondary: "#E1BEE7" },
+    green: { primary: "#43A047", secondary: "#C8E6C9" },
+    gray: { primary: "#757575", secondary: "#E0E0E0" },
+};
+
+const EVEN_TABLE_COLOR_SEQUENCE = [
+    COLOR_PRESETS.red,
+    COLOR_PRESETS.blue,
+    COLOR_PRESETS.yellow,
+    COLOR_PRESETS.orange,
+    COLOR_PRESETS.purple,
+    COLOR_PRESETS.green,
+    COLOR_PRESETS.gray,
 ];
+
+const ODD_TABLE_COLOR_SEQUENCE = [
+    COLOR_PRESETS.orange,
+    COLOR_PRESETS.purple,
+    COLOR_PRESETS.green,
+    COLOR_PRESETS.red,
+    COLOR_PRESETS.blue,
+    COLOR_PRESETS.yellow,
+    COLOR_PRESETS.gray,
+];
+
+function parseTableNumber(tableNr) {
+    if (Number.isInteger(tableNr)) {
+        return tableNr;
+    }
+
+    if (typeof tableNr === "string") {
+        const trimmed = tableNr.trim();
+        if (!trimmed) return null;
+
+        const direct = Number(trimmed);
+        if (Number.isInteger(direct)) {
+            return direct;
+        }
+
+        const match = trimmed.match(/-?\d+/);
+        if (match) {
+            const parsed = Number(match[0]);
+            if (Number.isInteger(parsed)) {
+                return parsed;
+            }
+        }
+    }
+
+    return null;
+}
 
 let channel = null;
 let lastSignature = null;
@@ -55,9 +100,18 @@ function sumCards(list, filterFn = null) {
     }, 0);
 }
 
-function buildSeatSegments(list, freeSeats) {
+function getColorSequenceForTable(tableNr) {
+    const nr = parseInt(tableNr, 10);
+    if (!Number.isFinite(nr)) {
+        return EVEN_TABLE_COLOR_SEQUENCE;
+    }
+    return Math.abs(nr) % 2 === 0 ? EVEN_TABLE_COLOR_SEQUENCE : ODD_TABLE_COLOR_SEQUENCE;
+}
+
+function buildSeatSegments(list, freeSeats, tableNr) {
     const segments = [];
     let paletteIndex = 0;
+    const paletteSequence = getColorSequenceForTable(tableNr);
 
     if (Array.isArray(list)) {
         for (const entry of list) {
@@ -74,7 +128,7 @@ function buildSeatSegments(list, freeSeats) {
             };
 
             if (!segment.sold) {
-                const palette = COLOR_PALETTE[paletteIndex % COLOR_PALETTE.length];
+                const palette = paletteSequence[paletteIndex % paletteSequence.length];
                 paletteIndex += 1;
                 segment.colorPrimary = palette.primary;
                 segment.colorSecondary = palette.secondary;
