@@ -1,4 +1,4 @@
-import { tisch, reservationsByTable } from "../core/state.js";
+import { tisch, reservationsByTable, buildSplitInfoText } from "../core/state.js";
 
 const CHANNEL_NAME = "skv-internal-plan";
 const TAB_URL = "sync/saalplan_intern.html";
@@ -118,6 +118,8 @@ function buildSeatSegments(list, freeSeats, tableNr) {
             const count = Math.max(parseInt(entry?.cards, 10) || 0, 0);
             if (!count) continue;
 
+            const splitInfo = buildSplitInfoText(entry?.bookingId, tableNr);
+
             const segment = {
                 type: entry?.sold ? "sold" : "reserved",
                 count,
@@ -126,6 +128,10 @@ function buildSeatSegments(list, freeSeats, tableNr) {
                 notes: entry?.notes ?? "",
                 sold: !!entry?.sold,
             };
+
+            if (splitInfo) {
+                segment.splitInfo = splitInfo;
+            }
 
             if (!segment.sold) {
                 const palette = paletteSequence[paletteIndex % paletteSequence.length];

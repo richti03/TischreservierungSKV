@@ -177,13 +177,13 @@
     const frame = document.querySelector('.frame');
 
     const COLOR_PRESETS = {
-        red: {primary: '#E53935' },
-        blue: {primary: '#1E88E5' },
-        yellow: {primary: '#FDD835' },
-        orange: {primary: '#FB8C00' },
-        purple: {primary: '#8E24AA' },
-        green: {primary: '#43A047' },
-        gray: {primary: '#757575' },
+        red: {primary: '#E53935'},
+        blue: {primary: '#1E88E5'},
+        yellow: {primary: '#FDD835'},
+        orange: {primary: '#FB8C00'},
+        purple: {primary: '#8E24AA'},
+        green: {primary: '#43A047'},
+        gray: {primary: '#757575'},
     };
 
     const EVEN_TABLE_COLOR_SEQUENCE = [
@@ -302,13 +302,26 @@
     }
 
     function buildSeatTitle(segment, seatIndex) {
-        if (!segment) return 'Frei';
-        const typeLabel = segment.type === 'sold' ? 'Verkauft' : (segment.type === 'reserved' ? 'Reserviert' : 'Frei');
-        const parts = [typeLabel];
-        if (segment.name) parts.push(segment.name);
-        if (segment.bookingId) parts.push('Buchung ' + segment.bookingId);
-        if (segment.notes) parts.push('Notiz: ' + segment.notes);
-        if (segment.count > 1) parts.push(`Platz ${seatIndex + 1} von ${segment.count}`);
+        if (!segment || segment.type === 'free') return 'Frei';
+        const seatCount = Math.max(parseInt(segment.count, 10) || 0, 0);
+        const parts = [];
+
+        if (segment.name) {
+            parts.push(segment.name);
+        } else {
+            const typeLabel = segment.type === 'sold' ? 'Verkauft' : 'Reserviert';
+            parts.push(typeLabel);
+        }
+
+        if (seatCount > 0) {
+            const seatNumber = Math.min(seatIndex + 1, seatCount);
+            parts.push(`Platz ${seatNumber} von ${seatCount}`);
+        }
+
+        if (segment.splitInfo) {
+            parts.push(segment.splitInfo);
+        }
+
         return parts.join(' · ');
     }
 
