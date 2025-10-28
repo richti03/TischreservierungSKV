@@ -73,7 +73,7 @@
 
         .standing-area {
             margin: 20px 40px 0;
-            padding: 16px 20px;
+            padding: 0 0 16px 0;
             border: 2px solid var(--line);
             display: flex;
             flex-direction: column;
@@ -81,13 +81,22 @@
             gap: 12px;
         }
 
-        .standing-info {
+        .standing-label {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 4px;
             font-size: 13px;
             text-align: center;
+        }
+
+        .standing-label[role="button"] {
+            cursor: pointer;
+        }
+
+        .standing-label[role="button"]:focus-visible {
+            outline: 2px solid var(--line);
+            outline-offset: 2px;
         }
 
         .standing-grid {
@@ -143,13 +152,11 @@
             white-space: nowrap;
         }
 
-        .label[role="button"],
-        .standing-info[role="button"] {
+        .label[role="button"] {
             cursor: pointer;
         }
 
-        .label[role="button"]:focus-visible,
-        .standing-info[role="button"]:focus-visible {
+        .label[role="button"]:focus-visible {
             outline: 2px solid var(--line);
             outline-offset: 2px;
         }
@@ -232,8 +239,7 @@
 
     const DEFAULT_STANDING_TOTAL = 76;
 
-    let standingInfoEl = null;
-    let standingMetaEl = null;
+    let standingLabelEl = null;
     let standingGridEl = null;
 
     const COLOR_PRESETS = {
@@ -386,32 +392,29 @@
 
         standingArea.innerHTML = '';
 
-        const info = document.createElement('div');
-        info.className = 'standing-info';
-        info.setAttribute('role', 'button');
-        info.tabIndex = 0;
-        info.addEventListener('click', event => {
+        const label = document.createElement('p');
+        label.className = 'standing-label';
+        label.setAttribute('role', 'button');
+        label.tabIndex = 0;
+        label.addEventListener('click', event => {
             event.preventDefault();
             notifyTableSelection(0);
         });
-        info.addEventListener('keydown', event => {
+        label.addEventListener('keydown', event => {
             if (!isActivationKey(event)) return;
             event.preventDefault();
             notifyTableSelection(0);
         });
 
-        const title = document.createElement('p');
-        title.textContent = `STEHPLÄTZE: 0/${DEFAULT_STANDING_TOTAL} belegt`;
-        info.appendChild(title);
+        label.textContent = 'STEHPLÄTZE:';
 
         const grid = document.createElement('div');
         grid.className = 'standing-grid';
 
-        standingArea.appendChild(info);
+        standingArea.appendChild(label);
         standingArea.appendChild(grid);
 
-        standingInfoEl = info;
-        standingMetaEl = meta;
+        standingLabelEl = label;
         standingGridEl = grid;
 
         updateStandingInfo(null);
@@ -713,18 +716,18 @@
         }
         occupied = Math.max(Math.min(occupied, total), 0);
 
-        if (standingMetaEl) {
-            standingMetaEl.textContent = `${occupied}/${total} belegt`;
-        }
+        const labelPrefix = 'STEHPLÄTZE';
+        const occupancyText = `${occupied}/${total} belegt`;
 
-        if (standingInfoEl) {
+        if (standingLabelEl) {
+            standingLabelEl.textContent = `${labelPrefix}: ${occupancyText}`;
             if (table) {
                 const parts = [`Frei: ${free}`];
                 if (reserved) parts.push(`Reserviert: ${reserved}`);
                 if (sold) parts.push(`Verkauft: ${sold}`);
-                standingInfoEl.title = parts.join(' · ');
+                standingLabelEl.title = parts.join(' · ');
             } else {
-                standingInfoEl.removeAttribute('title');
+                standingLabelEl.removeAttribute('title');
             }
         }
 
