@@ -48,7 +48,7 @@ $("btn-export-seats")      ?.addEventListener("click", exportSeatsJSON);
 $("btn-import-seats")      ?.addEventListener("click", importSeatsJSON);
 $("btn-export-res")        ?.addEventListener("click", exportReservationsJSON);
 $("btn-import-res")        ?.addEventListener("click", importReservationsJSON);
-$("btn-search-bookings")   ?.addEventListener("click", openBookingSearchModal);
+$("btn-search-bookings")   ?.addEventListener("click", () => openBookingSearchModal());
 $("btn-open-internal-plan")?.addEventListener("click", openInternalPlanTab);
 
 // NEU: Tische automatisch hinzufügen/entfernen
