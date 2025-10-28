@@ -71,6 +71,49 @@
             place-items: center;
         }
 
+        .standing-area {
+            margin: 20px 40px 0;
+            padding: 16px 20px;
+            border: 2px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .standing-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .standing-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .standing-seat {
+            position: static !important;
+            width: 12px;
+            height: 12px;
+            border: 1px solid var(--line);
+            border-radius: 2px;
+            flex: 0 0 12px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .standing-seat[data-state="reserved"],
+        .standing-seat[data-state="sold"] {
+            cursor: pointer;
+        }
+
         .bottom-row {
             width: 100%;
             display: flex;
@@ -101,12 +144,12 @@
         }
 
         .label[role="button"],
-        .standing[role="button"] {
+        .standing-info[role="button"] {
             cursor: pointer;
         }
 
         .label[role="button"]:focus-visible,
-        .standing[role="button"]:focus-visible {
+        .standing-info[role="button"]:focus-visible {
             outline: 2px solid var(--line);
             outline-offset: 2px;
         }
@@ -166,10 +209,6 @@
         <div class="parkett-wrapper">
             <div class="parkett" id="parkett">
                 <p>PARKETT</p>
-                <div class="standing" id="standing">
-                    <p>Stehplätze</p>
-                    <p>0/76</p>
-                </div>
             </div>
         </div>
         <div class="col" id="rightCol"></div>
@@ -188,8 +227,14 @@
     const leftCol = document.getElementById('leftCol');
     const rightCol = document.getElementById('rightCol');
     const bottomRow = document.getElementById('bottomRow');
-    const standingEl = document.getElementById('standing');
+    const standingArea = document.getElementById('standing-area');
     const frame = document.querySelector('.frame');
+
+    const DEFAULT_STANDING_TOTAL = 76;
+
+    let standingInfoEl = null;
+    let standingMetaEl = null;
+    let standingGridEl = null;
 
     const COLOR_PRESETS = {
         red: {primary: '#E53935'},
@@ -336,19 +381,43 @@
         return event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar';
     }
 
-    if (standingEl) {
-        standingEl.setAttribute('role', 'button');
-        standingEl.tabIndex = 0;
-        standingEl.addEventListener('click', event => {
+    function setupStandingArea() {
+        if (!standingArea) return;
+
+        standingArea.innerHTML = '';
+
+        const info = document.createElement('div');
+        info.className = 'standing-info';
+        info.setAttribute('role', 'button');
+        info.tabIndex = 0;
+        info.addEventListener('click', event => {
             event.preventDefault();
             notifyTableSelection(0);
         });
-        standingEl.addEventListener('keydown', event => {
+        info.addEventListener('keydown', event => {
             if (!isActivationKey(event)) return;
             event.preventDefault();
             notifyTableSelection(0);
         });
+
+        const title = document.createElement('p');
+        title.textContent = `STEHPLÄTZE: 0/${DEFAULT_STANDING_TOTAL} belegt`;
+        info.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'standing-grid';
+
+        standingArea.appendChild(info);
+        standingArea.appendChild(grid);
+
+        standingInfoEl = info;
+        standingMetaEl = meta;
+        standingGridEl = grid;
+
+        updateStandingInfo(null);
     }
+
+    setupStandingArea();
 
     const TABLE_THICKNESS = 32;
     const PX_PER_SEAT = 7.5;
@@ -628,23 +697,61 @@
     }
 
     function updateStandingInfo(table) {
-        if (!standingEl) return;
-        const lines = standingEl.querySelectorAll('p');
+        if (!standingArea) return;
+
+        const total = Math.max(parseInt(table?.total, 10) || DEFAULT_STANDING_TOTAL, 0);
+        let free = Math.max(parseInt(table?.free, 10) || 0, 0);
         if (!table) {
-            if (lines[1]) lines[1].textContent = '0/0';
-            standingEl.removeAttribute('title');
-            return;
+            free = total;
         }
-        const reserved = `${table.reserved}/${table.total}`;
-        if (lines[1]) lines[1].textContent = reserved;
-        else {
-            const p = document.createElement('p');
-            p.textContent = reserved;
-            standingEl.appendChild(p);
+        const reserved = Math.max(parseInt(table?.reserved, 10) || 0, 0);
+        const sold = Math.max(parseInt(table?.sold, 10) || 0, 0);
+        let occupied = reserved + sold;
+        const computedOccupied = total - free;
+        if (occupied <= 0 && computedOccupied >= 0) {
+            occupied = computedOccupied;
         }
-        const parts = [`Frei: ${table.free}`, `Reserviert: ${table.reserved}`];
-        if (table.sold) parts.push(`Verkauft: ${table.sold}`);
-        standingEl.title = parts.join(' · ');
+        occupied = Math.max(Math.min(occupied, total), 0);
+
+        if (standingMetaEl) {
+            standingMetaEl.textContent = `${occupied}/${total} belegt`;
+        }
+
+        if (standingInfoEl) {
+            if (table) {
+                const parts = [`Frei: ${free}`];
+                if (reserved) parts.push(`Reserviert: ${reserved}`);
+                if (sold) parts.push(`Verkauft: ${sold}`);
+                standingInfoEl.title = parts.join(' · ');
+            } else {
+                standingInfoEl.removeAttribute('title');
+            }
+        }
+
+        if (!standingGridEl) return;
+
+        const seatSource = table || {nr: 0, segments: []};
+        const seats = expandSegmentsToSeats(seatSource, total);
+        clearChildren(standingGridEl);
+        seats.forEach(seat => {
+            const seatEl = document.createElement('div');
+            seatEl.className = 'standing-seat chair';
+            seatEl.dataset.tableNr = 0;
+            applySeatVisual(seatEl, seat);
+            seatEl.addEventListener('click', event => {
+                const state = seatEl.dataset.state;
+                if (state !== 'reserved' && state !== 'sold') {
+                    return;
+                }
+                const bookingId = seatEl.dataset.bookingId;
+                if (!bookingId) {
+                    return;
+                }
+                event.preventDefault();
+                sendInternalMessage({type: 'search-booking', query: String(bookingId)});
+            });
+            standingGridEl.appendChild(seatEl);
+        });
     }
 
     function renderPlan(payload) {
