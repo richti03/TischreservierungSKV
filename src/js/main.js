@@ -21,7 +21,7 @@ if (selectEl) {
         console.log("[UI] Select geändert:", selectEl.value);
     });
 } else {
-    console.warn("[INIT] table-select nicht gefunden.");
+    console.log("[INIT] table-select nicht vorhanden (optional).");
 }
 
 window.addEventListener("internal-plan:select-table", event => {

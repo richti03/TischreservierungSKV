@@ -7,6 +7,8 @@ import {
 } from "../core/state.js";
 import { broadcastInternalPlanState } from "../features/internalPlanSync.js";
 
+let selectedTableNr = NaN;
+
 export function getReservationTbody() {
     return document.querySelector('#reservationview table tbody');
 }
@@ -80,20 +82,35 @@ function highlightTableLabel(nr) {
 
 export function getSelectedTableNr() {
     const select = document.getElementById("table-select");
-    return select ? parseInt(select.value) : NaN;
+    if (select) {
+        const nr = parseInt(select.value, 10);
+        return Number.isNaN(nr) ? NaN : nr;
+    }
+    return Number.isNaN(selectedTableNr) ? NaN : selectedTableNr;
 }
 
 export function setSelectedTableNr(nr) {
+    const normalized = Number.isInteger(nr) ? nr : NaN;
+    selectedTableNr = normalized;
     const select = document.getElementById("table-select");
-    if (!select) return;
-    select.value = nr;
-    updateFooter();
-    renderReservationsForSelectedTable();
-    const changeEvent = new Event("change", { bubbles: true });
-    select.dataset.silentTableUpdate = "1";
-    select.dispatchEvent(changeEvent);
-    delete select.dataset.silentTableUpdate;
-    console.log("[UI] Select auf Tisch gesetzt:", nr);
+    if (select) {
+        if (Number.isInteger(normalized)) {
+            select.value = String(normalized);
+        } else {
+            select.value = "";
+        }
+        updateFooter();
+        renderReservationsForSelectedTable();
+        const changeEvent = new Event("change", { bubbles: true });
+        select.dataset.silentTableUpdate = "1";
+        select.dispatchEvent(changeEvent);
+        delete select.dataset.silentTableUpdate;
+        console.log("[UI] Select auf Tisch gesetzt:", normalized);
+    } else {
+        updateFooter();
+        renderReservationsForSelectedTable();
+        console.log("[UI] Tisch gesetzt (ohne Select):", normalized);
+    }
 }
 
 export function printTischArray(arr = tisch) {
@@ -119,7 +136,7 @@ export function renderTableSelect(preserveSelection = true) {
     const select = document.getElementById("table-select");
     if (!select) return;
 
-    const prev = preserveSelection ? parseInt(select.value) : NaN;
+    const prev = preserveSelection ? parseInt(select.value, 10) : NaN;
 
     select.innerHTML = "";
     const opt0 = document.createElement("option");
@@ -149,10 +166,9 @@ export function renderTableSelect(preserveSelection = true) {
 }
 
 export function updateFooter() {
-    const select = document.getElementById("table-select");
     const strong = document.getElementById("available-cards");
     if (!strong) return;
-    const nr = select ? parseInt(select.value) : NaN;
+    const nr = getSelectedTableNr();
     const val = getSeatsByTableNumber(nr);
     strong.textContent = Number.isInteger(val) ? val : "—";
 }
@@ -195,7 +211,7 @@ export function renderReservationsForSelectedTable() {
     highlightTableLabel(nr);
 
     if (!Number.isInteger(nr)) {
-        tbody.innerHTML = `<tr><td colspan="4">Bitte oben einen Tisch auswählen.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4">Bitte einen Tisch auswählen.</td></tr>`;
         broadcastInternalPlanState("reservations-render")
         return;
     }
