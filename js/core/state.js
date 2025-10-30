@@ -31,6 +31,34 @@ export let alleExportCodes = "";
 // Reservierungen: { [tischnr]: [{ id, bookingId, name, cards, notes, ts }] }
 export let reservationsByTable = {};
 
+// Kartenpreis (EUR)
+export let cardPriceValue = 19.5;
+const cardPriceListeners = new Set();
+
+export function getCardPriceValue() {
+    return cardPriceValue;
+}
+
+export function setCardPriceValue(value) {
+    if (!Number.isFinite(value) || value < 0) {
+        return;
+    }
+    cardPriceValue = value;
+    for (const cb of cardPriceListeners) {
+        try {
+            cb(cardPriceValue);
+        } catch (err) {
+            console.error("[CARD PRICE] Listener error", err);
+        }
+    }
+}
+
+export function onCardPriceChange(cb) {
+    if (typeof cb !== "function") return () => {};
+    cardPriceListeners.add(cb);
+    return () => cardPriceListeners.delete(cb);
+}
+
 // ---------- Booking-ID Sequenz ----------
 export let lastBookingSeq = 0; // höchste vergebene Nummer (001 => 1, ...)
 
