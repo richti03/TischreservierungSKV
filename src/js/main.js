@@ -7,6 +7,7 @@ import { exportSeatsJSON, importSeatsJSON, exportReservationsJSON, importReserva
 import { onReservationTableClick } from "./events/actions.js";
 import { openBookingSearchModal } from "./features/searchModal.js"; // optional
 import { setupInternalPlanSync, openInternalPlanTab} from "./features/internalPlanSync.js";
+import { setupExternalPlanSync, openExternalPlanTab } from "./features/externalPlanSync.js";
 import { getCardPriceValue, onCardPriceChange, setCardPriceValue } from "./core/state.js";
 import { onCartChange, getCartEntries } from "./features/cart.js";
 import { openCartModal } from "./features/cartModal.js";
@@ -183,6 +184,7 @@ $("btn-export-res")        ?.addEventListener("click", exportReservationsJSON);
 $("btn-import-res")        ?.addEventListener("click", importReservationsJSON);
 $("btn-search-bookings")   ?.addEventListener("click", () => openBookingSearchModal());
 $("btn-open-internal-plan")?.addEventListener("click", openInternalPlanTab);
+$("btn-open-external-plan")?.addEventListener("click", openExternalPlanTab);
 
 // NEU: Tische automatisch hinzufügen/entfernen
 $("btn-add-table")      ?.addEventListener("click", tischHinzufuegen);
@@ -210,6 +212,7 @@ window.openBookingSearchModal = window.openBookingSearchModal || openBookingSear
 
 // Initiales Rendering
 setupInternalPlanSync()
+setupExternalPlanSync()
 printTischArray();
 updateFooter();
 renderReservationsForSelectedTable();

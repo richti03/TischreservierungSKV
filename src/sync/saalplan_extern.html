@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Saalplan – Sandersdorfer Karnevalsverein e.V.</title>
+  <style>
+    :root {
+      --line: #111;
+      --muted: #666;
+      --royal-blue: #4169E1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #fff;
+      color: #111;
+    }
+
+    .frame {
+      height: 100%;
+      border: 2px solid var(--line);
+      margin: 24px auto;
+      padding: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      text-align: center;
+      font-size: 22px;
+      letter-spacing: 0.5px;
+    }
+
+    .main-area {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 10px;
+    }
+
+    .col {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .parkett-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .parkett {
+      width: 260px;
+      min-height: 260px;
+      border: 2px solid var(--line);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      background: #f7f8fb;
+    }
+
+    .parkett-display {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px 20px;
+      font-size: 20px;
+      font-weight: 500;
+      font-family: "IBM Plex Mono", "Fira Mono", "Courier New", monospace;
+    }
+
+    .parkett-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+    }
+
+    .parkett-line__label {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .parkett-quantity {
+      min-width: 40px;
+      text-align: right;
+    }
+
+    .parkett-amount {
+      min-width: 90px;
+      text-align: right;
+    }
+
+    .parkett-divider {
+      border-bottom: 2px solid var(--line);
+      margin: 4px 0 0;
+    }
+
+    .parkett-total {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .parkett-placeholder {
+      margin: 0;
+      text-align: center;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: var(--muted);
+    }
+
+    .standing-area {
+      margin: 20px 40px 0;
+      padding: 0 0 16px 0;
+      border: 2px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .standing-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    .standing-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+      width: 100%;
+      max-width: 320px;
+      padding: 0 16px 12px;
+    }
+
+    .standing-seat {
+      position: static !important;
+      width: 12px;
+      height: 12px;
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      flex: 0 0 12px;
+    }
+
+    .bottom-row {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 6px;
+      padding: 0 40px;
+    }
+
+    .table {
+      position: relative;
+      background: #fff;
+      border: 2px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .label {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .label.vertical {
+      transform: rotate(-90deg);
+      white-space: nowrap;
+    }
+
+    .chair {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 2px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      cursor: default;
+    }
+
+    .chair:hover {
+      transform: scale(1.15);
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12);
+    }
+
+    .chair--reserved {
+      border-color: var(--royal-blue);
+      background: var(--royal-blue);
+    }
+
+    .chair--sold {
+      background: #111;
+      border-color: #000;
+    }
+
+    .side-top {
+      top: -8px;
+    }
+
+    .side-bottom {
+      bottom: -8px;
+    }
+
+    .side-left {
+      left: -8px;
+    }
+
+    .side-right {
+      right: -8px;
+    }
+  </style>
+</head>
+<body>
+<div class="frame">
+  <h1>Saalplan –  Sandersdorfer Karnevalsverein e.V.</h1>
+
+  <div class="main-area">
+    <div class="col" id="leftCol"></div>
+    <div class="parkett-wrapper">
+      <div class="parkett" id="parkett">
+        <div class="parkett-display" id="parkett-display">
+          <p class="parkett-placeholder">HERZLICH WILLKOMMEN</p>
+        </div>
+      </div>
+    </div>
+    <div class="col" id="rightCol"></div>
+  </div>
+
+  <div class="bottom-row" id="bottomRow"></div>
+  <div class="standing-area" id="standing-area"></div>
+</div>
+
+<script>
+  const CHANNEL_NAME = "skv-external-plan";
+  const STORAGE_KEY = "skv-external-plan-message";
+  const MESSAGE_MARKER = "__skvExternalPlan";
+  const MAX_SEEN_MESSAGES = 200;
+  const ROYAL_BLUE = '#4169E1';
+
+  const leftCol = document.getElementById('leftCol');
+  const rightCol = document.getElementById('rightCol');
+  const bottomRow = document.getElementById('bottomRow');
+  const standingArea = document.getElementById('standing-area');
+  const frame = document.querySelector('.frame');
+  const parkettDisplay = document.getElementById('parkett-display');
+
+  const DEFAULT_STANDING_TOTAL = 76;
+
+  let standingLabelEl = null;
+  let standingGridEl = null;
+
+  const TABLE_THICKNESS = 32;
+  const PX_PER_SEAT = 7.5;
+  const PARKETT_WIDTH = 260;
+  const FRAME_EXTRA_WIDTH = 120;
+
+  const euroFormatter = new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+  });
+
+  let channel = null;
+  let storageListenerBound = false;
+  const seenMessageIds = new Set();
+  const seenMessageQueue = [];
+
+  function rememberMessageId(id) {
+    if (!id || seenMessageIds.has(id)) return;
+    seenMessageIds.add(id);
+    seenMessageQueue.push(id);
+    if (seenMessageQueue.length > MAX_SEEN_MESSAGES) {
+      const oldest = seenMessageQueue.shift();
+      if (oldest !== undefined) {
+        seenMessageIds.delete(oldest);
+      }
+    }
+  }
+
+  function hasSeenMessage(id) {
+    if (!id) return false;
+    return seenMessageIds.has(id);
+  }
+
+  function createEnvelope(data) {
+    return {
+      marker: MESSAGE_MARKER,
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      data,
+    };
+  }
+
+  function transmitEnvelope(envelope) {
+    const bc = ensureChannel();
+    if (bc && envelope) {
+      try {
+        bc.postMessage(envelope);
+      } catch (err) {
+        console.warn('[SYNC-EXTERNAL] BroadcastChannel konnte Nachricht nicht senden:', err);
+      }
+    }
+
+    if (!envelope) return;
+
+    if (typeof localStorage === 'undefined' || localStorage === null) {
+      return;
+    }
+
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(envelope));
+    } catch (err) {
+      if (err?.name !== 'SecurityError') {
+        console.warn('[SYNC-EXTERNAL] localStorage-Fallback konnte Nachricht nicht senden:', err);
+      }
+    }
+  }
+
+  function sendMessage(data) {
+    transmitEnvelope(createEnvelope(data));
+  }
+
+  function setupStorageListener() {
+    if (storageListenerBound) return;
+    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+    window.addEventListener('storage', onStorageMessage);
+    storageListenerBound = true;
+  }
+
+  function ensureChannel() {
+    setupStorageListener();
+    if (!('BroadcastChannel' in window)) {
+      return null;
+    }
+    if (!channel) {
+      try {
+        channel = new BroadcastChannel(CHANNEL_NAME);
+        channel.addEventListener('message', onChannelMessage);
+        window.addEventListener('beforeunload', () => {
+          try {
+            channel?.close();
+          } catch (err) {
+            console.warn('[SYNC-EXTERNAL] BroadcastChannel konnte nicht geschlossen werden:', err);
+          }
+        }, { once: true });
+      } catch (err) {
+        console.warn('[SYNC-EXTERNAL] BroadcastChannel konnte nicht initialisiert werden:', err);
+        channel = null;
+      }
+    }
+    return channel;
+  }
+
+  function handleIncomingPayload(payload) {
+    if (!payload || typeof payload !== 'object') return;
+    if (payload.type === 'state' && payload.payload) {
+      renderPlan(payload.payload);
+    }
+  }
+
+  function handleEnvelope(envelope) {
+    if (!envelope || envelope.marker !== MESSAGE_MARKER) return;
+    if (hasSeenMessage(envelope.id)) return;
+    rememberMessageId(envelope.id);
+    handleIncomingPayload(envelope.data);
+  }
+
+  function onChannelMessage(event) {
+    handleEnvelope(event?.data);
+  }
+
+  function onStorageMessage(event) {
+    if (!event || event.key !== STORAGE_KEY) return;
+    if (!event.newValue) return;
+    try {
+      const parsed = JSON.parse(event.newValue);
+      handleEnvelope(parsed);
+    } catch (err) {
+      console.warn('[SYNC-EXTERNAL] Konnte Nachricht aus localStorage nicht verarbeiten:', err);
+    }
+  }
+
+  function clearChildren(el) {
+    if (!el) return;
+    while (el.firstChild) el.removeChild(el.firstChild);
+  }
+
+  function getHorizontalLength(table) {
+    const totalSeats = Math.max(parseInt(table?.total, 10) || 0, 0);
+    return totalSeats * PX_PER_SEAT;
+  }
+
+  function buildSeatTitle(segment, seatIndex) {
+    if (!segment || segment.type === 'free') return 'Frei';
+    const seatCount = Math.max(parseInt(segment.count, 10) || 0, 0);
+    const parts = [];
+
+    if (segment.name) {
+      parts.push(segment.name);
+    }
+
+    if (segment.bookingId) {
+      parts.push(`Buchung ${segment.bookingId}`);
+    }
+
+    if (seatCount > 0) {
+      const seatNumber = Math.min(seatIndex + 1, seatCount);
+      parts.push(`Platz ${seatNumber} von ${seatCount}`);
+    }
+
+    if (segment.splitInfo) {
+      parts.push(segment.splitInfo);
+    }
+
+    if (segment.notes) {
+      parts.push(segment.notes);
+    }
+
+    return parts.join(' · ');
+  }
+
+  function expandSegmentsToSeats(table, totalSeats) {
+    const seats = [];
+    const segments = Array.isArray(table?.segments) ? table.segments : [];
+    segments.forEach(segment => {
+      const count = Math.max(parseInt(segment?.count, 10) || 0, 0);
+      if (!count) return;
+      for (let i = 0; i < count; i++) {
+        const seat = {
+          type: segment.type === 'reserved' ? 'reserved' : (segment.type === 'sold' ? 'sold' : 'free'),
+          bookingId: segment.bookingId || null,
+          name: segment.name || '',
+          title: buildSeatTitle(segment, i),
+          notes: segment.notes || '',
+        };
+        if (seat.type === 'reserved') {
+          const rawColor = typeof segment.colorPrimary === 'string' ? segment.colorPrimary.trim() : '';
+          const color = rawColor || ROYAL_BLUE;
+          seat.background = color;
+          seat.borderColor = color;
+        } else if (seat.type === 'sold') {
+          seat.background = '#111';
+          seat.borderColor = '#000';
+        } else {
+          seat.background = '#fff';
+          seat.borderColor = 'var(--line)';
+        }
+        seats.push(seat);
+      }
+    });
+
+    while (seats.length < totalSeats) {
+      seats.push({
+        type: 'free',
+        title: 'Frei',
+        background: '#fff',
+        borderColor: 'var(--line)',
+      });
+    }
+
+    if (seats.length > totalSeats) seats.length = totalSeats;
+
+    return seats;
+  }
+
+  function applySeatVisual(chair, seat) {
+    const state = seat?.type || 'free';
+    chair.dataset.state = state;
+    chair.classList.add('chair--' + state);
+    if (seat?.bookingId) chair.dataset.bookingId = seat.bookingId;
+    chair.title = seat?.title || (state === 'reserved' ? 'Reserviert' : state === 'sold' ? 'Verkauft' : 'Frei');
+    if (seat?.background) chair.style.background = seat.background;
+    if (seat?.borderColor) chair.style.borderColor = seat.borderColor;
+  }
+
+  function makeTableEl(table, orientation) {
+    const length = getHorizontalLength(table);
+    const thickness = TABLE_THICKNESS;
+    const totalSeats = Math.max(parseInt(table?.total, 10) || 0, 0);
+    const seats = expandSegmentsToSeats(table, totalSeats);
+
+    const el = document.createElement('div');
+    if (orientation === 'horizontal') {
+      el.style.width = length + 'px';
+      el.style.height = thickness + 'px';
+    } else {
+      el.style.width = thickness + 'px';
+      el.style.height = length + 'px';
+    }
+    el.className = `table ${orientation}`;
+    el.dataset.table = table.nr;
+
+    const titleParts = [`Tisch ${table.nr}`];
+    titleParts.push(`Warenkorb: ${table.reserved}`);
+    el.title = titleParts.join(' · ');
+
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = `Tisch ${table.nr}`;
+    if (orientation === 'vertical') {
+      label.classList.add('vertical');
+    }
+    el.appendChild(label);
+
+    if (totalSeats > 0) {
+      const isHorizontal = orientation === 'horizontal';
+      const longSide = length;
+      const makeOffsets = count => {
+        if (count <= 0) return [];
+        if (count === 1) return [Math.max((longSide - 12) / 2, 0)];
+        const usable = Math.max(longSide - 12, 0);
+        const span = usable / (count - 1);
+        return Array.from({ length: count }, (_, i) => i * span);
+      };
+
+      const sideA = Math.ceil(totalSeats / 2);
+      const sideB = totalSeats - sideA;
+      const offsetsA = makeOffsets(sideA);
+      const offsetsB = makeOffsets(sideB);
+
+      const createChair = (className, offset, seat) => {
+        const chair = document.createElement('div');
+        chair.className = 'chair ' + className;
+        if (isHorizontal) {
+          chair.style.left = offset + 'px';
+        } else {
+          chair.style.top = offset + 'px';
+        }
+        chair.dataset.tableNr = table.nr;
+        applySeatVisual(chair, seat);
+        return chair;
+      };
+
+      offsetsA.forEach((offset, idx) => {
+        const cls = isHorizontal ? 'side-top' : 'side-left';
+        el.appendChild(createChair(cls, offset, seats[idx]));
+      });
+
+      offsetsB.forEach((offset, idx) => {
+        const cls = isHorizontal ? 'side-bottom' : 'side-right';
+        const seat = seats[sideA + idx];
+        el.appendChild(createChair(cls, offset, seat));
+      });
+    }
+
+    return el;
+  }
+
+  function applyGangDaneben(el, where) {
+    const EXTRA = 40;
+    if (!el || !where) return;
+    switch (where) {
+      case 'oben':
+        el.style.marginTop = EXTRA + 'px';
+        break;
+      case 'unten':
+        el.style.marginBottom = EXTRA + 'px';
+        break;
+      case 'links':
+        el.style.marginLeft = EXTRA + 'px';
+        break;
+      case 'rechts':
+        el.style.marginRight = EXTRA + 'px';
+        break;
+    }
+  }
+
+  function setupStandingArea() {
+    if (!standingArea) return;
+
+    standingArea.innerHTML = '';
+
+    const label = document.createElement('p');
+    label.className = 'standing-label';
+    standingArea.appendChild(label);
+
+    const grid = document.createElement('div');
+    grid.className = 'standing-grid';
+    standingArea.appendChild(grid);
+
+    standingLabelEl = label;
+    standingGridEl = grid;
+
+    updateStandingInfo(null);
+  }
+
+  function updateStandingInfo(table) {
+    if (!standingArea) return;
+
+    const total = Math.max(parseInt(table?.total, 10) || DEFAULT_STANDING_TOTAL, 0);
+    const reserved = Math.max(parseInt(table?.reserved, 10) || 0, 0);
+    const labelText = `STEHPLÄTZE`;
+
+    if (standingLabelEl) {
+      standingLabelEl.textContent = labelText;
+    }
+
+    if (!standingGridEl) return;
+
+    const seatSource = table || { nr: 0, segments: [] };
+    const seats = expandSegmentsToSeats(seatSource, total);
+    clearChildren(standingGridEl);
+    seats.forEach(seat => {
+      const seatEl = document.createElement('div');
+      seatEl.className = 'standing-seat chair';
+      seatEl.dataset.tableNr = 0;
+      applySeatVisual(seatEl, seat);
+      standingGridEl.appendChild(seatEl);
+    });
+  }
+
+  function renderParkettDisplay(cart) {
+    if (!parkettDisplay) return;
+    clearChildren(parkettDisplay);
+
+    const lines = Array.isArray(cart?.lines) ? cart.lines : [];
+    const totalAmount = Number.isFinite(cart?.totalAmount) ? cart.totalAmount : 0;
+
+    if (!lines.length) {
+      const placeholder = document.createElement('p');
+      placeholder.className = 'parkett-placeholder';
+      placeholder.textContent = 'HERZLICH WILLKOMMEN';
+      parkettDisplay.appendChild(placeholder);
+      return;
+    }
+
+    lines.forEach(line => {
+      const row = document.createElement('div');
+      row.className = 'parkett-line';
+
+      const label = document.createElement('span');
+      label.className = 'parkett-line__label';
+
+      const qty = document.createElement('span');
+      qty.className = 'parkett-quantity';
+      qty.textContent = `${line.quantity}x`;
+      label.appendChild(qty);
+
+      const text = document.createElement('span');
+      text.textContent = line.label;
+      label.appendChild(text);
+
+      const amount = document.createElement('span');
+      amount.className = 'parkett-amount';
+      amount.textContent = euroFormatter.format(line.amount || 0);
+
+      row.appendChild(label);
+      row.appendChild(amount);
+      parkettDisplay.appendChild(row);
+    });
+
+    const divider = document.createElement('div');
+    divider.className = 'parkett-divider';
+    parkettDisplay.appendChild(divider);
+
+    const totalRow = document.createElement('div');
+    totalRow.className = 'parkett-line parkett-total';
+
+    const totalLabel = document.createElement('span');
+    totalLabel.textContent = 'Summe';
+    totalRow.appendChild(totalLabel);
+
+    const totalAmountEl = document.createElement('span');
+    totalAmountEl.className = 'parkett-amount';
+    totalAmountEl.textContent = euroFormatter.format(totalAmount);
+    totalRow.appendChild(totalAmountEl);
+
+    parkettDisplay.appendChild(totalRow);
+  }
+
+  function renderPlan(payload) {
+    const tables = Array.isArray(payload?.tables) ? payload.tables : [];
+    const leftTables = tables.filter(t => t.position === 'left').sort((a, b) => a.nr - b.nr);
+    const rightTables = tables.filter(t => t.position === 'right').sort((a, b) => a.nr - b.nr);
+    const bottomTables = tables.filter(t => !['left', 'right', 'standing'].includes(t.position)).sort((a, b) => a.nr - b.nr);
+    const standingTable = tables.find(t => t.position === 'standing');
+
+    if (frame) {
+      const longestLeft = leftTables.length ? Math.max(...leftTables.map(getHorizontalLength)) : 0;
+      const longestRight = rightTables.length ? Math.max(...rightTables.map(getHorizontalLength)) : 0;
+      const computedWidth = longestLeft + longestRight + PARKETT_WIDTH + FRAME_EXTRA_WIDTH;
+      frame.style.width = computedWidth + 'px';
+    }
+
+    clearChildren(leftCol);
+    leftTables.forEach(cfg => {
+      const el = makeTableEl(cfg, 'horizontal');
+      if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+      leftCol?.appendChild(el);
+    });
+
+    clearChildren(bottomRow);
+    bottomTables.forEach(cfg => {
+      const el = makeTableEl(cfg, 'vertical');
+      if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+      bottomRow?.appendChild(el);
+    });
+
+    clearChildren(rightCol);
+    if (rightCol) {
+      rightCol.style.display = 'flex';
+      rightCol.style.flexDirection = 'column-reverse';
+      rightTables.forEach(cfg => {
+        const el = makeTableEl(cfg, 'horizontal');
+        if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+        rightCol.appendChild(el);
+      });
+    }
+
+    updateStandingInfo(standingTable);
+    renderParkettDisplay(payload?.cart);
+  }
+
+  setupStandingArea();
+  ensureChannel();
+  sendMessage({ type: 'request_state' });
+</script>
+</body>
+</html>
