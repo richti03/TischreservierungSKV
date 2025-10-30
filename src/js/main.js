@@ -40,6 +40,106 @@ window.addEventListener("internal-plan:search-booking", event => {
     openBookingSearchModal(query);
 });
 
+// Einstellungen / Sidepanel
+const settingsPanel = document.getElementById("settings-panel");
+const settingsToggle = document.getElementById("settings-toggle");
+const settingsClose = document.getElementById("settings-close");
+const settingsBackdrop = document.getElementById("settings-backdrop");
+const cardPriceDisplay = document.getElementById("card-price-value");
+const cardPriceEdit = document.getElementById("card-price-edit");
+
+let cardPriceValue = parseFloat(cardPriceDisplay?.dataset?.price || "19.5");
+if (!Number.isFinite(cardPriceValue) || cardPriceValue < 0) {
+    cardPriceValue = 19.5;
+}
+
+const euroFormatter = new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+});
+
+const updateCardPriceDisplay = () => {
+    if (!cardPriceDisplay) {
+        return;
+    }
+    cardPriceDisplay.textContent = euroFormatter.format(cardPriceValue);
+    cardPriceDisplay.dataset.price = cardPriceValue.toString();
+};
+
+const closeSettingsPanel = () => {
+    if (!settingsPanel) {
+        return;
+    }
+    settingsPanel.classList.remove("is-open");
+    settingsPanel.setAttribute("aria-hidden", "true");
+    if (settingsBackdrop) {
+        settingsBackdrop.classList.remove("is-visible");
+        settingsBackdrop.hidden = true;
+    }
+    document.removeEventListener("keydown", onSettingsKeydown);
+};
+
+const openSettingsPanel = () => {
+    if (!settingsPanel) {
+        return;
+    }
+    settingsPanel.classList.add("is-open");
+    settingsPanel.setAttribute("aria-hidden", "false");
+    if (settingsBackdrop) {
+        settingsBackdrop.hidden = false;
+        requestAnimationFrame(() => settingsBackdrop.classList.add("is-visible"));
+    }
+    settingsPanel.focus({ preventScroll: true });
+    document.addEventListener("keydown", onSettingsKeydown);
+};
+
+const onSettingsKeydown = event => {
+    if (event.key === "Escape") {
+        closeSettingsPanel();
+        settingsToggle?.focus();
+    }
+};
+
+settingsToggle?.addEventListener("click", () => {
+    if (settingsPanel?.classList.contains("is-open")) {
+        closeSettingsPanel();
+    } else {
+        openSettingsPanel();
+    }
+});
+
+settingsClose?.addEventListener("click", () => {
+    closeSettingsPanel();
+    settingsToggle?.focus();
+});
+
+settingsBackdrop?.addEventListener("click", () => {
+    closeSettingsPanel();
+});
+
+cardPriceEdit?.addEventListener("click", () => {
+    const input = window.prompt("Neuer Kartenpreis in Euro", euroFormatter
+        .format(cardPriceValue)
+        .replace(/\s/g, ""));
+    if (input == null) {
+        return;
+    }
+    const normalized = input
+        .replace(/€/g, "")
+        .replace(/\s/g, "")
+        .replace(/,/g, ".");
+    const value = Number.parseFloat(normalized);
+    if (!Number.isFinite(value) || value < 0) {
+        window.alert("Bitte geben Sie einen gültigen Preis ein.");
+        return;
+    }
+    cardPriceValue = value;
+    updateCardPriceDisplay();
+});
+
+updateCardPriceDisplay();
+
 // Hauptbuttons (IDs vorausgesetzt)
 const $ = id => document.getElementById(id);
 $("btn-book")              ?.addEventListener("click", berechneReservierung);
