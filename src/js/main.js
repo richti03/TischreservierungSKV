@@ -7,6 +7,9 @@ import { exportSeatsJSON, importSeatsJSON, exportReservationsJSON, importReserva
 import { onReservationTableClick } from "./events/actions.js";
 import { openBookingSearchModal } from "./features/searchModal.js"; // optional
 import { setupInternalPlanSync, openInternalPlanTab} from "./features/internalPlanSync.js";
+import { getCardPriceValue, onCardPriceChange, setCardPriceValue } from "./core/state.js";
+import { onCartChange, getCartEntries } from "./features/cart.js";
+import { openCartModal } from "./features/cartModal.js";
 
 // Select-Change
 const selectEl = document.getElementById("table-select");
@@ -48,11 +51,6 @@ const settingsBackdrop = document.getElementById("settings-backdrop");
 const cardPriceDisplay = document.getElementById("card-price-value");
 const cardPriceEdit = document.getElementById("card-price-edit");
 
-let cardPriceValue = parseFloat(cardPriceDisplay?.dataset?.price || "19.5");
-if (!Number.isFinite(cardPriceValue) || cardPriceValue < 0) {
-    cardPriceValue = 19.5;
-}
-
 const euroFormatter = new Intl.NumberFormat("de-DE", {
     style: "currency",
     currency: "EUR",
@@ -63,9 +61,20 @@ const updateCardPriceDisplay = () => {
     if (!cardPriceDisplay) {
         return;
     }
-    cardPriceDisplay.textContent = euroFormatter.format(cardPriceValue);
-    cardPriceDisplay.dataset.price = cardPriceValue.toString();
+    const value = getCardPriceValue();
+    cardPriceDisplay.textContent = euroFormatter.format(value);
+    cardPriceDisplay.dataset.price = value.toString();
 };
+
+onCardPriceChange(() => {
+    updateCardPriceDisplay();
+});
+
+let initialPrice = parseFloat(cardPriceDisplay?.dataset?.price || "");
+if (!Number.isFinite(initialPrice) || initialPrice < 0) {
+    initialPrice = getCardPriceValue();
+}
+setCardPriceValue(initialPrice);
 
 const closeSettingsPanel = () => {
     if (!settingsPanel) {
@@ -119,8 +128,9 @@ settingsBackdrop?.addEventListener("click", () => {
 });
 
 cardPriceEdit?.addEventListener("click", () => {
+    const current = getCardPriceValue();
     const input = window.prompt("Neuer Kartenpreis in Euro", euroFormatter
-        .format(cardPriceValue)
+        .format(current)
         .replace(/\s/g, ""));
     if (input == null) {
         return;
@@ -134,11 +144,34 @@ cardPriceEdit?.addEventListener("click", () => {
         window.alert("Bitte geben Sie einen gültigen Preis ein.");
         return;
     }
-    cardPriceValue = value;
-    updateCardPriceDisplay();
+    setCardPriceValue(value);
 });
 
 updateCardPriceDisplay();
+
+// Warenkorb-Button im Header
+const cartToggle = document.getElementById("cart-toggle");
+const cartBadge = document.getElementById("cart-badge");
+
+const updateCartBadge = entries => {
+    if (!cartBadge || !cartToggle) return;
+    const list = Array.isArray(entries) ? entries : getCartEntries();
+    const count = list.length;
+    cartBadge.textContent = String(count);
+    cartBadge.hidden = count === 0;
+    cartToggle.classList.toggle("has-items", count > 0);
+    const label = count === 0
+        ? "Warenkorb öffnen"
+        : `Warenkorb öffnen (${count} ${count === 1 ? "Reservierung" : "Reservierungen"})`;
+    cartToggle.setAttribute("aria-label", label);
+};
+
+cartToggle?.addEventListener("click", () => {
+    openCartModal();
+});
+
+onCartChange(updateCartBadge);
+updateCartBadge();
 
 // Hauptbuttons (IDs vorausgesetzt)
 const $ = id => document.getElementById(id);

@@ -180,6 +180,8 @@ function icon(name) {
         case "edit":   return `<svg ${common}><path d="M12 20h9"/><path d="M16.5 3.5A2.121 2.121 0 1 1 19.5 6.5L7 19l-4 1 1-4 12.5-12.5z"/></svg>`;
         case "note":   return `<svg ${common}><path d="M3 7a4 4 0 0 1 4-4h7l7 7v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7z"/><path d="M14 3v6h6"/></svg>`;
         case "move":   return `<svg ${common}><polyline points="5 12 9 8 5 4"/><line x1="9" y1="8" x2="15" y2="8"/><polyline points="19 12 15 16 19 20"/><line x1="15" y1="16" x2="9" y2="16"/></svg>`;
+        case "cart":   return `<svg ${common}><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61H19a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
+        case "cart-remove": return `<svg ${common}><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61H19a2 2 0 0 0 2-1.61L23 6H6"/><line x1="4" y1="4" x2="22" y2="22"/></svg>`;
         case "sold":   return `<svg ${common}><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>`;
         case "unsold": return `<svg ${common}><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
         case "trash":  return `<svg ${common}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>`;
@@ -191,12 +193,14 @@ function iconBtn({ action, id, title, ghost=false, disabled=false, extraClass=""
     const aria = title.replace(/"/g, "'");
     const dis = disabled ? "disabled" : "";
     const svg = (
-        action === "edit"   ? icon("edit")   :
-            action === "note"   ? icon("note")   :
-                action === "move"   ? icon("move")   :
-                    action === "sold"   ? icon("sold")   :
-                        action === "unsold" ? icon("unsold") :
-                            action === "delete" ? icon("trash")  : ""
+        action === "edit"        ? icon("edit")        :
+            action === "note"        ? icon("note")        :
+                action === "move"        ? icon("move")        :
+                    action === "cart"        ? icon("cart")        :
+                        action === "cart-remove" ? icon("cart-remove") :
+                            action === "sold"        ? icon("sold")        :
+                                action === "unsold"      ? icon("unsold")      :
+                                    action === "delete"      ? icon("trash")       : ""
     );
     return `<button class="${cls}" data-action="${action}" data-id="${id}" title="${aria}" aria-label="${aria}" ${dis}>${svg}</button>`;
 }
@@ -230,22 +234,28 @@ export function renderReservationsForSelectedTable() {
         const baseNotes = noteToHtml(r.notes);
         const splitInfo = buildSplitInfoText(r.bookingId, nr);
         const splitInfoHtml = splitInfo ? `<div style="font-size:12px; opacity:.75;">${escapeHtml(splitInfo)}</div>` : "";
-        const soldClass = r.sold ? ' class="is-sold"' : "";
+        const rowClasses = [];
+        if (r.sold) rowClasses.push("is-sold");
+        if (r.inCart && !r.sold) rowClasses.push("is-in-cart");
+        const rowClassAttr = rowClasses.length ? ` class="${rowClasses.join(" ")}"` : "";
 
         let actionsHtml = "";
         if (r.sold) {
             actionsHtml = iconBtn({ action:"unsold", id:r.id, title:"Verkauf rückgängig" });
         } else {
+            const cartBtn = r.inCart
+                ? iconBtn({ action:"cart-remove", id:r.id, title:"Aus Warenkorb entfernen", extraClass:"icon-btn--cart" })
+                : iconBtn({ action:"cart", id:r.id, title:"Zum Warenkorb hinzufügen" });
             actionsHtml = [
                 iconBtn({ action:"edit",   id:r.id, title:"Bearbeiten" }),
                 iconBtn({ action:"move",   id:r.id, title:"Verschieben" }),
-                iconBtn({ action:"sold",   id:r.id, title:"Als verkauft markieren" }),
+                cartBtn,
                 iconBtn({ action:"delete", id:r.id, title:"Löschen", ghost:true })
             ].join(" ");
         }
 
         return `
-      <tr data-id="${r.id}"${soldClass}>
+      <tr data-id="${r.id}"${rowClassAttr}>
         <td>
           ${escapeHtml(r.name)}
           <div style="font-size:12px; opacity:.7;">Buchung-ID: ${escapeHtml(bid)}</div>

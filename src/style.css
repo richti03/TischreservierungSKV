@@ -26,13 +26,6 @@ body {
     position: relative;
 }
 
-.app-header::after {
-    content: "";
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
-}
-
 .app-header__titles {
     flex: 1;
     text-align: center;
@@ -58,6 +51,7 @@ body {
     justify-content: center;
     border: 0;
     padding: 0;
+    margin: 0;
     cursor: pointer;
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
@@ -77,6 +71,60 @@ body {
 .app-header__settings-btn:focus-visible {
     outline: 2px solid #fff;
     outline-offset: 2px;
+}
+
+.app-header__cart-btn {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    position: relative;
+}
+
+.app-header__cart-btn svg {
+    width: 24px;
+    height: 24px;
+    color: #fff;
+}
+
+.app-header__cart-btn:hover,
+.app-header__cart-btn:focus {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.app-header__cart-btn:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+.app-header__cart-btn.has-items {
+    background: rgba(255, 255, 255, 0.32);
+}
+
+.app-header__cart-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #f97316;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 button {
@@ -470,4 +518,23 @@ tfoot td{
 .table td.actions .btn.icon-btn:hover,
 .table--compact td.actions .btn.icon-btn:hover {
     filter: none; /* Modal .btn:hover filter ausschalten */
+}
+
+.icon-btn--cart {
+    border-color: #2563eb !important;
+    color: #2563eb !important;
+}
+
+.table tr.is-in-cart .icon-btn--cart {
+    background: #2563eb !important;
+    color: #fff !important;
+    border-color: #2563eb !important;
+}
+
+.table tr.is-in-cart {
+    background: #eef4ff;
+}
+
+.table tr.is-in-cart td {
+    background: transparent;
 }
