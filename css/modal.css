@@ -26,6 +26,7 @@
     display:flex; align-items:center; justify-content:space-between; padding:12px 18px; background:#f8fafc; border-top:1px solid #e5e7eb;
 }
 .modal__actions{ display:flex; gap:10px; }
+.modal__actions--right{ margin-left:auto; }
 .btn{ background:#0ea5e9; color:#fff; border:0; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600; }
 .btn:hover{ filter:brightness(0.95); }
 .btn:disabled{ opacity:.5; cursor:not-allowed; }

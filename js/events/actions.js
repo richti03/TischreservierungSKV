@@ -4,6 +4,7 @@ import {
     reservationsByTable, getSeatsByTableNumber, setSeatsByTableNumber
 } from "../core/state.js";
 import {getSelectedTableNr, printTischArray, renderReservationsForSelectedTable} from "../ui/tableView.js";
+import { addToCart, removeFromCart, markCartDirty } from "../features/cart.js";
 import { openMoveModal } from "../features/modalMoveSwap.js";
 
 export function onReservationTableClick(e) {
@@ -28,6 +29,7 @@ export function onReservationTableClick(e) {
         const avail = getSeatsByTableNumber(fromNr) || 0;
         setSeatsByTableNumber(fromNr, avail + rec.cards);
         list.splice(idx, 1);
+        markCartDirty();
         printTischArray();
         renderReservationsForSelectedTable();
         console.log("[DELETE] Entfernt:", rec);
@@ -62,8 +64,26 @@ export function onReservationTableClick(e) {
         return;
     }
 
+    if (action === "cart") {
+        if (rec.sold) {
+            alert("Als verkauft markierte Reservierungen können nicht in den Warenkorb gelegt werden.");
+            return;
+        }
+        addToCart(fromNr, rec.id);
+        renderReservationsForSelectedTable();
+        return;
+    }
+
+    if (action === "cart-remove") {
+        removeFromCart(fromNr, rec.id);
+        renderReservationsForSelectedTable();
+        return;
+    }
+
     if (action === "sold") {
         rec.sold = true;
+        rec.inCart = false;
+        markCartDirty();
         renderReservationsForSelectedTable();
         console.log("[SOLD] Markiert als verkauft:", rec);
         return;
@@ -71,6 +91,7 @@ export function onReservationTableClick(e) {
 
     if (action === "unsold") {
         rec.sold = false;
+        markCartDirty();
         renderReservationsForSelectedTable();
         console.log("[SOLD] Verkauf rückgängig:", rec);
         return;

@@ -7,6 +7,7 @@ import {
 } from "../core/state.js";
 import { printTischArray, renderReservationsForSelectedTable, setSelectedTableNr } from "../ui/tableView.js";
 import { openMoveModal } from "./modalMoveSwap.js";
+import { addToCart, removeFromCart, markCartDirty } from "./cart.js";
 
 let wired = false;
 
@@ -59,22 +60,25 @@ function icon(name) {
     const common = 'class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
     switch (name) {
         case "edit":   return `<svg ${common}><path d="M12 20h9"/><path d="M16.5 3.5A2.121 2.121 0 1 1 19.5 6.5L7 19l-4 1 1-4 12.5-12.5z"/></svg>`;
-        case "move":   return `<svg ${common}><polyline points="5 12 9 8 5 4"/><line x1="9" y1="8" x2="15" y2="8"/><polyline points="19 12 15 16 19 20"/><line x1="15" y1="16" x2="9" y2="16"/></svg>`;
-        case "sold":   return `<svg ${common}><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>`;
-        case "unsold": return `<svg ${common}><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`; // rotate-ccw (Undo)
+        case "move":        return `<svg ${common}><polyline points="5 12 9 8 5 4"/><line x1="9" y1="8" x2="15" y2="8"/><polyline points="19 12 15 16 19 20"/><line x1="15" y1="16" x2="9" y2="16"/></svg>`;
+        case "cart":        return `<svg ${common}><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61H19a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
+        case "cart-remove": return `<svg ${common}><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61H19a2 2 0 0 0 2-1.61L23 6H6"/><line x1="4" y1="4" x2="22" y2="22"/></svg>`;
+        case "unsold":     return `<svg ${common}><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`; // rotate-ccw (Undo)
         case "trash":  return `<svg ${common}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>`;
         default:       return "";
     }
 }
 function iconBtn({ action, title, ghost=false }) {
-    const cls = `btn icon-btn ${ghost ? "btn--ghost" : ""}`.trim();
+    const extra = action === "cart-remove" ? "icon-btn--cart" : "";
+    const cls = `btn icon-btn ${ghost ? "btn--ghost" : ""} ${extra}`.trim();
     const aria = title.replace(/"/g, "'");
     const svg = (
         action === "edit"   ? icon("edit")   :
             action === "move"   ? icon("move")   :
-                action === "sold"   ? icon("sold")   :
-                    action === "unsold" ? icon("unsold") :
-                        action === "delete" ? icon("trash")  : ""
+                action === "cart"   ? icon("cart")   :
+                    action === "cart-remove" ? icon("cart-remove") :
+                        action === "unsold" ? icon("unsold") :
+                            action === "delete" ? icon("trash")  : ""
     );
     return `<button class="${cls}" data-action="${action}" title="${aria}" aria-label="${aria}">${svg}</button>`;
 }
@@ -94,6 +98,7 @@ function collectRows() {
                 cards: parseInt(r.cards) || 0,
                 notes: r.notes || "",
                 sold: !!r.sold,
+                inCart: !!r.inCart,
                 tableNr
             });
         }
@@ -128,19 +133,22 @@ function renderTable(filter = "") {
         const splitHtml = splitInfo ? `<div style="font-size:12px;opacity:.75;">${escapeHtml(splitInfo)}</div>` : "";
         const notesHtml = baseNotes + splitHtml;
 
-        const soldClass = r.sold ? ' class="is-sold"' : "";
+        const rowClasses = [];
+        if (r.sold) rowClasses.push("is-sold");
+        if (r.inCart && !r.sold) rowClasses.push("is-in-cart");
+        const classAttr = rowClasses.length ? ` class="${rowClasses.join(" ")}"` : "";
 
         const actions = r.sold
             ? iconBtn({ action:"unsold", title:"Verkauf rückgängig" })
             : [
                 iconBtn({ action:"edit",   title:"Bearbeiten" }),
                 iconBtn({ action:"move",   title:"Verschieben" }),
-                iconBtn({ action:"sold",   title:"Als verkauft markieren" }),
+                iconBtn({ action: r.inCart ? "cart-remove" : "cart", title: r.inCart ? "Aus Warenkorb entfernen" : "Zum Warenkorb hinzufügen" }),
                 iconBtn({ action:"delete", title:"Löschen", ghost:true })
             ].join(" ");
 
         return `
-      <tr data-id="${r.id}" data-table="${r.tableNr}"${soldClass}>
+      <tr data-id="${r.id}" data-table="${r.tableNr}"${classAttr}>
         <td>
           ${escapeHtml(r.name)}
           <div style="font-size:12px;opacity:.7;">Buchung-ID: ${escapeHtml(bid)}</div>
@@ -225,14 +233,22 @@ function wire() {
             openMoveModal(tableNr, id);
         }
 
-        if (action === "sold") {
-            rec.sold = true;
-            renderTable(input?.value || "");
+        if (action === "cart") {
+            if (rec.sold) return alert("Als verkauft markierte Reservierungen können nicht in den Warenkorb gelegt werden.");
+            addToCart(tableNr, id);
             renderReservationsForSelectedTable();
+            renderTable(input?.value || "");
+        }
+
+        if (action === "cart-remove") {
+            removeFromCart(tableNr, id);
+            renderReservationsForSelectedTable();
+            renderTable(input?.value || "");
         }
 
         if (action === "unsold") {
             rec.sold = false;
+            markCartDirty();
             renderTable(input?.value || "");
             renderReservationsForSelectedTable();
         }
@@ -242,6 +258,7 @@ function wire() {
             const avail = getSeatsByTableNumber(tableNr) || 0;
             setSeatsByTableNumber(tableNr, avail + rec.cards);
             list.splice(idx, 1);
+            markCartDirty();
             printTischArray();
             renderReservationsForSelectedTable();
             renderTable(input?.value || "");

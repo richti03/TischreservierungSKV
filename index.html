@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
     <!--<link rel="stylesheet" href="modal.css">-->
     <script type="module" src="js/main.js"></script>
     <title>Sandersdorfer Karnevalsverein e.V. - Tischreservierung</title>
@@ -12,22 +12,62 @@
 <body>
 
 <div class="container">
-    <header>
-        <h1>Sandersdorfer Karnevalsverein e.V.</h1>
-        <h2>Tischreservierung</h2>
+    <header class="app-header">
+        <button class="app-header__settings-btn" id="settings-toggle" type="button" aria-label="Einstellungen öffnen">
+            <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                <path d="M19.14 12.94a7.14 7.14 0 0 0 .06-.94 7.14 7.14 0 0 0-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a6.83 6.83 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 14.42 2h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.14.56-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.18 8.02a.5.5 0 0 0 .12.64l2.03 1.58a7.14 7.14 0 0 0-.06.94c0 .32.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.49.38 1.04.7 1.63.94l.36 2.54a.5.5 0 0 0 .5.42h3.84a.5.5 0 0 0 .5-.42l.36-2.54c.59-.24 1.14-.56 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.25A3.25 3.25 0 1 1 12 8.75a3.25 3.25 0 0 1 0 6.5Z"></path>
+            </svg>
+        </button>
+        <div class="app-header__titles">
+            <h1>Sandersdorfer Karnevalsverein e.V.</h1>
+            <h2>Tischreservierung</h2>
+        </div>
+        <button class="app-header__cart-btn" id="cart-toggle" type="button" aria-label="Warenkorb öffnen" title="Warenkorb öffnen">
+            <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="19" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61H19a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span class="app-header__cart-badge" id="cart-badge" hidden>0</span>
+        </button>
     </header>
 
-    <p id="tischInfo">Hallo, aktuell haben unsere Tische folgende Sitzplätze:</p>
+    <aside class="settings-panel" id="settings-panel" aria-hidden="true" tabindex="-1">
+        <div class="settings-panel__header">
+            <h3>Einstellungen</h3>
+            <button type="button" class="settings-panel__close" id="settings-close" aria-label="Einstellungen schließen">×</button>
+        </div>
+        <div class="settings-panel__section">
+            <h4>Aktionen</h4>
+            <div class="settings-panel__actions">
+                <button id="btn-export-seats" type="button">Sitzplätze exportieren (JSON)</button>
+                <button id="btn-import-seats" type="button">Sitzplätze importieren</button>
+                <button id="btn-export-res" type="button">Reservierungen exportieren (JSON)</button>
+                <button id="btn-import-res" type="button">Reservierungen importieren</button>
+            </div>
+        </div>
+        <div class="settings-panel__section">
+            <h4>Werte</h4>
+            <div class="settings-panel__value">
+                <div class="settings-panel__value-label">Kartenpreis</div>
+                <div class="settings-panel__value-display">
+                    <span id="card-price-value" data-price="19.5">19,50 €</span>
+                    <button type="button" class="settings-panel__edit" id="card-price-edit" aria-label="Kartenpreis bearbeiten">
+                        <svg aria-hidden="true" focusable="false" viewBox="0 0 20 20">
+                            <path d="M13.586 2.586a2 2 0 0 1 2.828 2.828l-9.9 9.9a1 1 0 0 1-.464.26l-3.357.746a.5.5 0 0 1-.607-.607l.746-3.357a1 1 0 0 1 .26-.464l9.9-9.9ZM12.172 4 4 12.172V14h1.828L14 5.828 12.172 4Z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </aside>
+    <div class="settings-panel-backdrop" id="settings-backdrop" hidden></div>
+
+    <p></p>
 
     <div class="content">
         <div id="tischAusgabe"></div>
         <div id="reservationview">
-            <label for="table-select">Tisch:</label>
-            <select id="table-select">
-                <option selected disabled>Bitte Tisch auswählen.</option>
-            </select>
-            <button id="btn-add-table" type="button">Tisch hinzufügen</button>
-            <button id="btn-remove-table" type="button">Tisch entfernen</button>
 
             <div class="table-wrap">
                 <table class="table">
@@ -78,12 +118,9 @@
 
     <button id="btn-book" type="button">Reservierung berechnen</button>
     <button id="btn-change-seats" type="button">Sitzplatzanzahl ändern</button>
-    <button id="btn-export-seats" type="button">Sitzplätze exportieren (JSON)</button>
-    <button id="btn-import-seats" type="button">Sitzplätze importieren</button>
-    <button id="btn-export-res" type="button">Reservierungen exportieren (JSON)</button>
-    <button id="btn-import-res" type="button">Reservierungen importieren</button>
     <button id="btn-search-bookings">Buchungen suchen</button>
     <button id="btn-open-internal-plan" type="button">Internen Saalplan öffnen</button>
+    <button id="btn-open-external-plan" type="button">Externen Saalplan öffnen</button>
 </div>
 
 <!-- Modal: Verschieben / Tauschen -->

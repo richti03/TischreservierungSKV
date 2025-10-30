@@ -128,6 +128,10 @@ function ensureSeatsModal() {
               <button type="button" class="btn btn--ghost" id="tableSeatsModalCancel">Abbrechen</button>
               <button type="button" class="btn" id="tableSeatsModalSave">Speichern</button>
             </div>
+             <div class="modal__actions modal__actions--right">
+              <button type="button" class="btn" id="btn-add-table">Tisch hinzufügen</button>
+              <button type="button" class="btn btn--ghost" id="btn-remove-table">Tisch entfernen</button>
+            </div>
           </footer>
         </div>
       </div>`;
@@ -138,6 +142,8 @@ function ensureSeatsModal() {
     const closeElements = modal.querySelectorAll('[data-action="close"], #tableSeatsModalCancel');
     closeElements.forEach(el => el.addEventListener("click", closeSeatsModal));
     document.getElementById("tableSeatsModalSave")?.addEventListener("click", onSeatsModalSave);
+    modal.querySelector('#btn-add-table')?.addEventListener("click", tischHinzufuegen);
+    modal.querySelector('#btn-remove-table')?.addEventListener("click", tischEntfernen);
 
     seatsModalInitialized = true;
 }
