@@ -164,6 +164,13 @@ button:hover {
 
 .settings-panel__header {
     display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+}
+
+.settings-panel__header-top {
+    display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
@@ -173,6 +180,203 @@ button:hover {
     margin: 0;
     font-size: 20px;
     color: #0f172a;
+}
+
+.settings-panel__events {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.event-tabs {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 36px;
+}
+
+.event-tabs:empty::before {
+    content: "Keine Veranstaltung angelegt";
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.event-tab {
+    border: 1px solid #cbd5f5;
+    background: #f1f5f9;
+    color: #1f2937;
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    white-space: nowrap;
+}
+
+.event-tab:hover,
+.event-tab:focus {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    outline: none;
+}
+
+.event-tab.is-active {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #ffffff;
+    box-shadow: 0 6px 16px rgba(29, 78, 216, 0.25);
+}
+
+.event-tabs__actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.event-tabs__add-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #cbd5f5;
+    background: #f8fafc;
+    color: #1d4ed8;
+    font-size: 1.2rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.event-tabs__add-btn:hover,
+.event-tabs__add-btn:focus {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    color: #1e3a8a;
+    outline: none;
+}
+
+.event-tabs__menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #cbd5f5;
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    padding: 6px 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 220px;
+    z-index: 1400;
+}
+
+.event-tabs__menu-item {
+    background: transparent;
+    border: none;
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    color: #1f2937;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.event-tabs__menu-item:hover,
+.event-tabs__menu-item:focus {
+    background: #e0e7ff;
+    color: #1d4ed8;
+    outline: none;
+}
+
+.event-start-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 2000;
+}
+
+.event-start-overlay[hidden] {
+    display: none;
+}
+
+.event-start-overlay__dialog {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.25);
+    text-align: center;
+}
+
+.event-start-overlay__dialog h2 {
+    margin: 0 0 12px;
+    font-size: 1.6rem;
+    color: #0f172a;
+}
+
+.event-start-overlay__dialog p {
+    margin: 0 0 24px;
+    color: #475569;
+    font-size: 1rem;
+}
+
+.event-start-overlay__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+@media (min-width: 480px) {
+    .event-start-overlay__actions {
+        flex-direction: row;
+        justify-content: center;
+    }
+}
+
+.event-start-overlay__btn {
+    flex: 1;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    background: #f8fafc;
+    color: #1f2937;
+    box-shadow: 0 4px 12px rgba(148, 163, 184, 0.25);
+}
+
+.event-start-overlay__btn:hover,
+.event-start-overlay__btn:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
+    outline: none;
+}
+
+.event-start-overlay__btn--primary {
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
+}
+
+.event-start-overlay__btn--primary:hover,
+.event-start-overlay__btn--primary:focus {
+    background: #1d4ed8;
+}
+
+body.event-start-visible {
+    overflow: hidden;
 }
 
 .settings-panel__close {

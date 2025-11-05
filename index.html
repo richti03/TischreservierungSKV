@@ -11,6 +11,17 @@
 </head>
 <body>
 
+<div class="event-start-overlay" id="event-start-overlay" hidden>
+    <div class="event-start-overlay__dialog" role="dialog" aria-modal="true" aria-labelledby="event-start-title">
+        <h2 id="event-start-title">Veranstaltung auswählen</h2>
+        <p>Bitte wählen Sie, wie Sie fortfahren möchten.</p>
+        <div class="event-start-overlay__actions">
+            <button type="button" class="event-start-overlay__btn event-start-overlay__btn--primary" id="event-start-new">Neue Veranstaltung anlegen</button>
+            <button type="button" class="event-start-overlay__btn" id="event-start-import">Veranstaltung importieren</button>
+        </div>
+    </div>
+</div>
+
 <div class="container">
     <header class="app-header">
         <button class="app-header__settings-btn" id="settings-toggle" type="button" aria-label="Einstellungen öffnen">
@@ -34,8 +45,20 @@
 
     <aside class="settings-panel" id="settings-panel" aria-hidden="true" tabindex="-1">
         <div class="settings-panel__header">
-            <h3>Einstellungen</h3>
-            <button type="button" class="settings-panel__close" id="settings-close" aria-label="Einstellungen schließen">×</button>
+            <div class="settings-panel__header-top">
+                <h3>Einstellungen</h3>
+                <button type="button" class="settings-panel__close" id="settings-close" aria-label="Einstellungen schließen">×</button>
+            </div>
+            <div class="settings-panel__events">
+                <div class="event-tabs" id="event-tabs" role="tablist" aria-label="Veranstaltungen"></div>
+                <div class="event-tabs__actions">
+                    <button type="button" class="event-tabs__add-btn" id="event-tab-add" aria-label="Veranstaltung hinzufügen" aria-haspopup="true" aria-expanded="false">+</button>
+                    <div class="event-tabs__menu" id="event-add-menu" role="menu" hidden>
+                        <button type="button" class="event-tabs__menu-item" id="event-add-new" role="menuitem">Neue Veranstaltung anlegen</button>
+                        <button type="button" class="event-tabs__menu-item" id="event-add-import" role="menuitem">Veranstaltung importieren</button>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="settings-panel__section">
             <h4>Aktionen</h4>

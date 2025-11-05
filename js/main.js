@@ -9,6 +9,7 @@ import { openBookingSearchModal } from "./features/searchModal.js"; // optional
 import { setupInternalPlanSync, openInternalPlanTab} from "./features/internalPlanSync.js";
 import { setupExternalPlanSync, openExternalPlanTab } from "./features/externalPlanSync.js";
 import { getCardPriceValue, onCardPriceChange, setCardPriceValue } from "./core/state.js";
+import { createEvent, onEventsChange, setActiveEvent, renameEvent } from "./core/events.js";
 import { onCartChange, getCartEntries } from "./features/cart.js";
 import { openCartModal } from "./features/cartModal.js";
 
@@ -76,6 +77,190 @@ if (!Number.isFinite(initialPrice) || initialPrice < 0) {
     initialPrice = getCardPriceValue();
 }
 setCardPriceValue(initialPrice);
+
+const eventTabsContainer = document.getElementById("event-tabs");
+const eventAddButton = document.getElementById("event-tab-add");
+const eventAddMenu = document.getElementById("event-add-menu");
+const eventAddNewButton = document.getElementById("event-add-new");
+const eventAddImportButton = document.getElementById("event-add-import");
+const eventStartOverlay = document.getElementById("event-start-overlay");
+const eventStartNewButton = document.getElementById("event-start-new");
+const eventStartImportButton = document.getElementById("event-start-import");
+
+let latestEventsSnapshot = { events: [], activeEventId: null };
+let lastRenderedEventId = null;
+
+const rerenderActiveEvent = () => {
+    printTischArray();
+    updateFooter();
+    renderReservationsForSelectedTable();
+    updateCardPriceDisplay();
+};
+
+const isEventMenuOpen = () => !!(eventAddMenu && !eventAddMenu.hidden);
+
+const closeEventMenu = () => {
+    if (!eventAddMenu || eventAddMenu.hidden) {
+        return;
+    }
+    eventAddMenu.hidden = true;
+    eventAddButton?.setAttribute("aria-expanded", "false");
+};
+
+const openEventMenu = () => {
+    if (!eventAddMenu) {
+        return;
+    }
+    eventAddMenu.hidden = false;
+    eventAddButton?.setAttribute("aria-expanded", "true");
+};
+
+const updateEventStartOverlay = snapshot => {
+    if (!eventStartOverlay) {
+        return;
+    }
+    const hasEvents = Array.isArray(snapshot?.events) && snapshot.events.length > 0;
+    eventStartOverlay.hidden = hasEvents;
+    if (typeof document !== "undefined" && document.body) {
+        document.body.classList.toggle("event-start-visible", !hasEvents);
+    }
+    if (!hasEvents) {
+        closeEventMenu();
+    }
+};
+
+const renderEventTabs = snapshot => {
+    if (!eventTabsContainer) {
+        return;
+    }
+    eventTabsContainer.innerHTML = "";
+    const events = Array.isArray(snapshot?.events) ? snapshot.events : [];
+    const activeId = snapshot?.activeEventId ?? null;
+
+    for (const entry of events) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `event-tab${entry.id === activeId ? " is-active" : ""}`;
+        button.dataset.eventId = entry.id;
+        button.textContent = entry.name;
+        button.title = `${entry.name}\n(Doppelklick zum Umbenennen)`;
+        button.setAttribute("role", "tab");
+        button.setAttribute("aria-selected", entry.id === activeId ? "true" : "false");
+        eventTabsContainer.appendChild(button);
+    }
+};
+
+function startEventCreation({ importAfterCreate = false } = {}) {
+    closeEventMenu();
+    const created = createEvent();
+    if (!created) {
+        return;
+    }
+    if (importAfterCreate) {
+        importReservationsJSON();
+    }
+}
+
+eventAddButton?.addEventListener("click", event => {
+    event.stopPropagation();
+    if (isEventMenuOpen()) {
+        closeEventMenu();
+    } else {
+        openEventMenu();
+    }
+});
+
+eventAddMenu?.addEventListener("click", event => {
+    event.stopPropagation();
+});
+
+document.addEventListener("click", event => {
+    if (!isEventMenuOpen()) {
+        return;
+    }
+    const target = event.target;
+    if (target instanceof Element) {
+        if (eventAddMenu?.contains(target) || eventAddButton?.contains(target)) {
+            return;
+        }
+    }
+    closeEventMenu();
+});
+
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && isEventMenuOpen()) {
+        closeEventMenu();
+        eventAddButton?.focus();
+    }
+});
+
+eventAddNewButton?.addEventListener("click", () => {
+    startEventCreation();
+});
+
+eventAddImportButton?.addEventListener("click", () => {
+    startEventCreation({ importAfterCreate: true });
+});
+
+eventStartNewButton?.addEventListener("click", () => {
+    startEventCreation();
+});
+
+eventStartImportButton?.addEventListener("click", () => {
+    startEventCreation({ importAfterCreate: true });
+});
+
+eventTabsContainer?.addEventListener("click", event => {
+    const target = event.target instanceof Element ? event.target.closest(".event-tab") : null;
+    if (!target) {
+        return;
+    }
+    const id = target.dataset.eventId;
+    if (!id) {
+        return;
+    }
+    setActiveEvent(id);
+    closeEventMenu();
+});
+
+eventTabsContainer?.addEventListener("dblclick", event => {
+    const target = event.target instanceof Element ? event.target.closest(".event-tab") : null;
+    if (!target) {
+        return;
+    }
+    const id = target.dataset.eventId;
+    if (!id) {
+        return;
+    }
+    const current = latestEventsSnapshot.events.find(entry => entry.id === id);
+    const currentName = current?.name ?? "";
+    const input = window.prompt("Neuer Name der Veranstaltung", currentName);
+    if (input == null) {
+        return;
+    }
+    const trimmed = input.trim();
+    if (!trimmed || trimmed === currentName) {
+        return;
+    }
+    renameEvent(id, trimmed);
+});
+
+onEventsChange(snapshot => {
+    latestEventsSnapshot = snapshot;
+    renderEventTabs(snapshot);
+    updateEventStartOverlay(snapshot);
+
+    const activeId = snapshot?.activeEventId ?? null;
+    if (!activeId) {
+        lastRenderedEventId = null;
+        return;
+    }
+    if (activeId !== lastRenderedEventId) {
+        lastRenderedEventId = activeId;
+        setSelectedTableNr(NaN);
+    }
+    rerenderActiveEvent();
+});
 
 const closeSettingsPanel = () => {
     if (!settingsPanel) {
@@ -211,8 +396,6 @@ window.tischEntfernen         = window.tischEntfernen         || tischEntfernen;
 window.openBookingSearchModal = window.openBookingSearchModal || openBookingSearchModal;
 
 // Initiales Rendering
-setupInternalPlanSync()
-setupExternalPlanSync()
-printTischArray();
-updateFooter();
-renderReservationsForSelectedTable();
+setupInternalPlanSync();
+setupExternalPlanSync();
+rerenderActiveEvent();
