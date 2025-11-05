@@ -86,9 +86,24 @@ const eventAddImportButton = document.getElementById("event-add-import");
 const eventStartOverlay = document.getElementById("event-start-overlay");
 const eventStartNewButton = document.getElementById("event-start-new");
 const eventStartImportButton = document.getElementById("event-start-import");
+const eventRenameButton = document.getElementById("event-rename-btn");
+const eventNameDisplay = document.getElementById("event-name-display");
+const eventNameDialog = document.getElementById("event-name-dialog");
+const eventNameForm = document.getElementById("event-name-form");
+const eventNameDateInput = document.getElementById("event-name-date");
+const eventNameTypeSelect = document.getElementById("event-name-type");
+const eventNameCancelButton = document.getElementById("event-name-cancel");
+const eventNameSubmitButton = document.getElementById("event-name-submit");
+const eventNameTitle = document.getElementById("event-name-title");
+const eventNameDescription = document.getElementById("event-name-description");
+const eventNamePreview = document.getElementById("event-name-preview");
 
 let latestEventsSnapshot = { events: [], activeEventId: null };
 let lastRenderedEventId = null;
+const EVENT_TYPES = ["Lumpenball", "Fasching", "Narrengipfel", "Sonstiges"];
+const DEFAULT_EVENT_TYPE = EVENT_TYPES[0];
+let isEventNameDialogVisible = false;
+let resolveEventNameDialog = null;
 
 const rerenderActiveEvent = () => {
     printTischArray();
@@ -96,6 +111,139 @@ const rerenderActiveEvent = () => {
     renderReservationsForSelectedTable();
     updateCardPriceDisplay();
 };
+
+const formatEventName = (date, type) => `${date}-${type}`;
+
+const parseEventNameParts = name => {
+    const trimmed = typeof name === "string" ? name.trim() : "";
+    const match = trimmed.match(/^(\d{4}-\d{2}-\d{2})-([A-Za-zÄÖÜäöüß]+)$/u);
+    if (!match) {
+        return null;
+    }
+    const [, date, type] = match;
+    const normalizedType = EVENT_TYPES.includes(type) ? type : DEFAULT_EVENT_TYPE;
+    return { date, type: normalizedType };
+};
+
+const updateEventNamePreview = () => {
+    if (!eventNamePreview) {
+        return;
+    }
+    const dateValue = eventNameDateInput?.value;
+    const typeValue = eventNameTypeSelect?.value;
+    if (dateValue && typeValue) {
+        eventNamePreview.textContent = formatEventName(dateValue, typeValue);
+    } else {
+        eventNamePreview.textContent = "—";
+    }
+};
+
+const onEventNameDialogKeydown = event => {
+    if (event.key === "Escape") {
+        event.preventDefault();
+        closeEventNameDialog(null);
+    }
+};
+
+function closeEventNameDialog(result) {
+    if (!isEventNameDialogVisible) {
+        return;
+    }
+    isEventNameDialogVisible = false;
+    eventNameDialog?.setAttribute("aria-hidden", "true");
+    if (eventNameDialog) {
+        eventNameDialog.hidden = true;
+    }
+    eventNameForm?.reset();
+    updateEventNamePreview();
+    document.body?.classList.remove("event-name-dialog-open");
+    document.removeEventListener("keydown", onEventNameDialogKeydown);
+    const resolver = resolveEventNameDialog;
+    resolveEventNameDialog = null;
+    resolver?.(result);
+}
+
+function openEventNameDialog({ mode = "create", initialName = "", initialDate, initialType } = {}) {
+    if (!eventNameDialog || !eventNameForm || !eventNameDateInput || !eventNameTypeSelect) {
+        const fallback = window.prompt("Name der Veranstaltung", initialName || "");
+        const trimmed = fallback ? fallback.trim() : "";
+        return Promise.resolve(trimmed ? { name: trimmed } : null);
+    }
+    if (isEventNameDialogVisible) {
+        return Promise.resolve(null);
+    }
+
+    const parsed = parseEventNameParts(initialName);
+    const today = new Date();
+    const isoToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    const dateValue = initialDate || parsed?.date || isoToday;
+    const normalizedInitialType = initialType && EVENT_TYPES.includes(initialType) ? initialType : null;
+    const typeValue = normalizedInitialType || parsed?.type || DEFAULT_EVENT_TYPE;
+
+    return new Promise(resolve => {
+        isEventNameDialogVisible = true;
+        resolveEventNameDialog = resolve;
+
+        if (eventNameTitle) {
+            eventNameTitle.textContent = mode === "rename"
+                ? "Veranstaltungsnamen ändern"
+                : "Veranstaltung benennen";
+        }
+        if (eventNameDescription) {
+            eventNameDescription.textContent = mode === "rename"
+                ? "Passen Sie Veranstaltungsdatum und Art nach Bedarf an."
+                : "Bitte wählen Sie das Veranstaltungsdatum und die Art der Veranstaltung aus.";
+        }
+        if (eventNameSubmitButton) {
+            eventNameSubmitButton.textContent = mode === "rename" ? "Speichern" : "Anlegen";
+        }
+
+        eventNameDialog.hidden = false;
+        eventNameDialog.setAttribute("aria-hidden", "false");
+        document.body?.classList.add("event-name-dialog-open");
+
+        eventNameDateInput.value = dateValue;
+        eventNameTypeSelect.value = EVENT_TYPES.includes(typeValue) ? typeValue : DEFAULT_EVENT_TYPE;
+        updateEventNamePreview();
+
+        requestAnimationFrame(() => {
+            eventNameDateInput.focus({ preventScroll: true });
+        });
+
+        document.addEventListener("keydown", onEventNameDialogKeydown);
+    });
+}
+
+eventNameDateInput?.addEventListener("input", updateEventNamePreview);
+eventNameDateInput?.addEventListener("change", updateEventNamePreview);
+eventNameTypeSelect?.addEventListener("input", updateEventNamePreview);
+eventNameTypeSelect?.addEventListener("change", updateEventNamePreview);
+
+eventNameForm?.addEventListener("submit", event => {
+    event.preventDefault();
+    if (!eventNameForm.reportValidity()) {
+        return;
+    }
+    const dateValue = eventNameDateInput?.value;
+    const typeValue = eventNameTypeSelect?.value;
+    if (!dateValue || !/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+        eventNameDateInput?.focus({ preventScroll: true });
+        return;
+    }
+    const finalType = EVENT_TYPES.includes(typeValue) ? typeValue : DEFAULT_EVENT_TYPE;
+    const name = formatEventName(dateValue, finalType);
+    closeEventNameDialog({ name, date: dateValue, type: finalType });
+});
+
+eventNameCancelButton?.addEventListener("click", () => {
+    closeEventNameDialog(null);
+});
+
+eventNameDialog?.addEventListener("click", event => {
+    if (event.target === eventNameDialog) {
+        closeEventNameDialog(null);
+    }
+});
 
 const isEventMenuOpen = () => !!(eventAddMenu && !eventAddMenu.hidden);
 
@@ -150,9 +298,13 @@ const renderEventTabs = snapshot => {
     }
 };
 
-function startEventCreation({ importAfterCreate = false } = {}) {
+async function startEventCreation({ importAfterCreate = false } = {}) {
     closeEventMenu();
-    const created = createEvent();
+    const result = await openEventNameDialog({ mode: "create" });
+    if (!result || !result.name) {
+        return;
+    }
+    const created = createEvent({ name: result.name });
     if (!created) {
         return;
     }
@@ -188,7 +340,7 @@ document.addEventListener("click", event => {
 });
 
 document.addEventListener("keydown", event => {
-    if (event.key === "Escape" && isEventMenuOpen()) {
+    if (event.key === "Escape" && isEventMenuOpen() && !isEventNameDialogVisible) {
         closeEventMenu();
         eventAddButton?.focus();
     }
@@ -223,7 +375,7 @@ eventTabsContainer?.addEventListener("click", event => {
     closeEventMenu();
 });
 
-eventTabsContainer?.addEventListener("dblclick", event => {
+eventTabsContainer?.addEventListener("dblclick", async event => {
     const target = event.target instanceof Element ? event.target.closest(".event-tab") : null;
     if (!target) {
         return;
@@ -234,15 +386,27 @@ eventTabsContainer?.addEventListener("dblclick", event => {
     }
     const current = latestEventsSnapshot.events.find(entry => entry.id === id);
     const currentName = current?.name ?? "";
-    const input = window.prompt("Neuer Name der Veranstaltung", currentName);
-    if (input == null) {
-        return;
-    }
-    const trimmed = input.trim();
+    const dialogResult = await openEventNameDialog({ mode: "rename", initialName: currentName });
+    const trimmed = dialogResult?.name?.trim?.() ?? "";
     if (!trimmed || trimmed === currentName) {
         return;
     }
     renameEvent(id, trimmed);
+});
+
+eventRenameButton?.addEventListener("click", async () => {
+    const activeId = latestEventsSnapshot?.activeEventId;
+    if (!activeId) {
+        return;
+    }
+    const current = latestEventsSnapshot.events.find(entry => entry.id === activeId);
+    const currentName = current?.name ?? "";
+    const dialogResult = await openEventNameDialog({ mode: "rename", initialName: currentName });
+    const trimmed = dialogResult?.name?.trim?.() ?? "";
+    if (!trimmed || trimmed === currentName) {
+        return;
+    }
+    renameEvent(activeId, trimmed);
 });
 
 onEventsChange(snapshot => {
@@ -251,6 +415,13 @@ onEventsChange(snapshot => {
     updateEventStartOverlay(snapshot);
 
     const activeId = snapshot?.activeEventId ?? null;
+    const activeEvent = snapshot?.events?.find?.(entry => entry.id === activeId) || null;
+    if (eventNameDisplay) {
+        eventNameDisplay.textContent = activeEvent?.name || "—";
+    }
+    if (eventRenameButton) {
+        eventRenameButton.disabled = !activeEvent;
+    }
     if (!activeId) {
         lastRenderedEventId = null;
         return;

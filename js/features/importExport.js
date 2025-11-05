@@ -3,6 +3,7 @@ import {
     lastReservationsFilename, setLastReservationsFilename,
     nextBookingId, bumpBookingSeqFromExisting
 } from "../core/state.js";
+import { getActiveEventFileSafeName } from "../core/events.js";
 import { printTischArray, updateFooter, renderReservationsForSelectedTable } from "../ui/tableView.js";
 
 /* Hilfen */
@@ -40,6 +41,14 @@ function setFreeSeatsFromMap(newFreeMap) {
 }
 
 /* SEATS Export/Import */
+function buildFilename(prefix, fallbackBuilder) {
+    const base = getActiveEventFileSafeName();
+    if (base) {
+        return `${base}-${prefix}.json`;
+    }
+    return fallbackBuilder();
+}
+
 export function exportSeatsJSON() {
     sortTischArrayNr(tisch);
     const data = {
@@ -48,7 +57,8 @@ export function exportSeatsJSON() {
         exportedAt: new Date().toISOString(),
         seats: tisch.map(([table, seats]) => ({ table, seats }))
     };
-    downloadJSON(data, `sitze_${fileTimestamp()}.json`);
+    const filename = buildFilename("sitze", () => `sitze_${fileTimestamp()}.json`);
+    downloadJSON(data, filename);
 }
 
 export function importSeatsJSON() {
@@ -92,8 +102,10 @@ export function exportReservationsJSON() {
         // reservationsByTable enthält nun auch das Feld `sold` in den Einträgen
         reservationsByTable
     };
-    const filename = lastReservationsFilename || `reservierungen_${fileTimestamp()}.json`;
+    const defaultFilename = buildFilename("reservierungen", () => `reservierungen_${fileTimestamp()}.json`);
+    const filename = lastReservationsFilename || defaultFilename;
     downloadJSON(data, filename);
+    setLastReservationsFilename(filename);
 }
 
 export function importReservationsJSON() {

@@ -22,6 +22,35 @@
     </div>
 </div>
 
+<div class="event-name-dialog" id="event-name-dialog" hidden>
+    <div class="event-name-dialog__dialog" role="dialog" aria-modal="true" aria-labelledby="event-name-title">
+        <form class="event-name-dialog__form" id="event-name-form">
+            <h2 class="event-name-dialog__title" id="event-name-title">Veranstaltung benennen</h2>
+            <p class="event-name-dialog__description" id="event-name-description">
+                Bitte wählen Sie das Veranstaltungsdatum und die Art der Veranstaltung aus.
+            </p>
+            <div class="event-name-dialog__field">
+                <label class="event-name-dialog__label" for="event-name-date">Datum</label>
+                <input class="event-name-dialog__input" type="date" id="event-name-date" name="date" required>
+            </div>
+            <div class="event-name-dialog__field">
+                <label class="event-name-dialog__label" for="event-name-type">Art der Veranstaltung</label>
+                <select class="event-name-dialog__input" id="event-name-type" name="type" required>
+                    <option value="Lumpenball">Lumpenball</option>
+                    <option value="Fasching">Fasching</option>
+                    <option value="Narrengipfel">Narrengipfel</option>
+                    <option value="Sonstiges">Sonstiges</option>
+                </select>
+            </div>
+            <p class="event-name-dialog__preview">Dateiname: <strong id="event-name-preview">—</strong></p>
+            <div class="event-name-dialog__actions">
+                <button type="button" class="event-name-dialog__btn" id="event-name-cancel">Abbrechen</button>
+                <button type="submit" class="event-name-dialog__btn event-name-dialog__btn--primary" id="event-name-submit">Speichern</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="container">
     <header class="app-header">
         <button class="app-header__settings-btn" id="settings-toggle" type="button" aria-label="Einstellungen öffnen">
@@ -57,6 +86,13 @@
                         <button type="button" class="event-tabs__menu-item" id="event-add-new" role="menuitem">Neue Veranstaltung anlegen</button>
                         <button type="button" class="event-tabs__menu-item" id="event-add-import" role="menuitem">Veranstaltung importieren</button>
                     </div>
+                </div>
+            </div>
+            <div class="event-name-control" id="event-name-control">
+                <div class="event-name-control__label">Veranstaltungsname</div>
+                <div class="event-name-control__body">
+                    <span class="event-name-control__value" id="event-name-display">—</span>
+                    <button type="button" class="event-name-control__edit" id="event-rename-btn" disabled>Namen ändern</button>
                 </div>
             </div>
         </div>
