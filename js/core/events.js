@@ -5,6 +5,9 @@ let events = [];
 let activeEventId = null;
 let defaultEventCounter = 1;
 
+const RESERVATIONS_EVENT_NAME_PATTERN = /^(\d{4}-\d{2}-\d{2})-Lumpenball$/i;
+const RESERVATIONS_FILENAME_PATTERN = /^(\d{4}-\d{2}-\d{2})-Lumpenball\.json$/i;
+
 function normalizeEventNameForFilename(name) {
     const trimmed = typeof name === "string" ? name.trim() : "";
     if (!trimmed) {
@@ -19,8 +22,13 @@ function normalizeEventNameForFilename(name) {
 }
 
 function defaultReservationsFilenameForName(name) {
-    const base = normalizeEventNameForFilename(name);
-    return base ? `${base}-reservierungen.json` : null;
+    const trimmed = typeof name === "string" ? name.trim() : "";
+    const match = trimmed.match(RESERVATIONS_EVENT_NAME_PATTERN);
+    if (!match) {
+        return null;
+    }
+    const [ , date ] = match;
+    return `${date}-Lumpenball.json`;
 }
 
 function syncDefaultReservationsFilename(event) {
@@ -28,11 +36,9 @@ function syncDefaultReservationsFilename(event) {
         return;
     }
     const defaultFilename = defaultReservationsFilenameForName(event.name);
-    if (defaultFilename) {
-        event.state.lastReservationsFilename = defaultFilename;
-        if (event.id === activeEventId) {
-            setLastReservationsFilename(defaultFilename);
-        }
+    event.state.lastReservationsFilename = defaultFilename;
+    if (event.id === activeEventId) {
+        setLastReservationsFilename(defaultFilename);
     }
 }
 
@@ -43,6 +49,30 @@ export function getEventNameFileBase(name) {
 export function getActiveEventFileSafeName() {
     const active = getActiveEvent();
     return active ? normalizeEventNameForFilename(active.name) : "";
+}
+
+export function parseEventNameFromReservationsFilename(filename) {
+    if (typeof filename !== "string") {
+        return null;
+    }
+    const normalized = filename.trim();
+    const match = normalized.match(RESERVATIONS_FILENAME_PATTERN);
+    if (!match) {
+        return null;
+    }
+    const [ , date ] = match;
+    return `${date}-Lumpenball`;
+}
+
+export function getReservationsFilenameForEvent(event) {
+    if (!event || typeof event.name !== "string") {
+        return null;
+    }
+    return defaultReservationsFilenameForName(event.name);
+}
+
+export function getReservationsFilenameForName(name) {
+    return defaultReservationsFilenameForName(name);
 }
 
 function generateEventId() {
@@ -131,17 +161,12 @@ export function createEvent(options = {}) {
     }
 
     if (!event.state.lastReservationsFilename) {
-        const defaultFilename = defaultReservationsFilenameForName(event.name);
-        if (defaultFilename) {
-            event.state.lastReservationsFilename = defaultFilename;
-        }
+        event.state.lastReservationsFilename = defaultReservationsFilenameForName(event.name);
     }
 
     events.push(event);
     setActiveEvent(event.id);
-    if (event.state.lastReservationsFilename) {
-        setLastReservationsFilename(event.state.lastReservationsFilename);
-    }
+    setLastReservationsFilename(event.state.lastReservationsFilename || null);
     return event;
 }
 

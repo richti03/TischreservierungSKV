@@ -3,13 +3,13 @@
 import { printTischArray, updateFooter, renderReservationsForSelectedTable, setSelectedTableNr } from "./ui/tableView.js";
 import { berechneReservierung } from "./features/booking.js";
 import { changePlätze, tischHinzufuegen, tischEntfernen } from "./features/tablesCrud.js";
-import { exportSeatsJSON, importSeatsJSON, exportReservationsJSON, importReservationsJSON } from "./features/importExport.js";
+import { exportSeatsJSON, importSeatsJSON, exportReservationsJSON, importReservationsJSON, applyReservationsImport } from "./features/importExport.js";
 import { onReservationTableClick } from "./events/actions.js";
 import { openBookingSearchModal } from "./features/searchModal.js"; // optional
 import { setupInternalPlanSync, openInternalPlanTab} from "./features/internalPlanSync.js";
 import { setupExternalPlanSync, openExternalPlanTab } from "./features/externalPlanSync.js";
-import { getCardPriceValue, onCardPriceChange, setCardPriceValue } from "./core/state.js";
-import { createEvent, onEventsChange, setActiveEvent, renameEvent } from "./core/events.js";
+import { getCardPriceValue, onCardPriceChange, setCardPriceValue, pickJSONFile } from "./core/state.js";
+import { createEvent, onEventsChange, setActiveEvent, renameEvent, parseEventNameFromReservationsFilename } from "./core/events.js";
 import { onCartChange, getCartEntries } from "./features/cart.js";
 import { openCartModal } from "./features/cartModal.js";
 
@@ -79,6 +79,7 @@ if (!Number.isFinite(initialPrice) || initialPrice < 0) {
 setCardPriceValue(initialPrice);
 
 const eventTabsContainer = document.getElementById("event-tabs");
+const headerEventTabsContainer = document.getElementById("header-event-tabs");
 const eventAddButton = document.getElementById("event-tab-add");
 const eventAddMenu = document.getElementById("event-add-menu");
 const eventAddNewButton = document.getElementById("event-add-new");
@@ -277,40 +278,63 @@ const updateEventStartOverlay = snapshot => {
     }
 };
 
-const renderEventTabs = snapshot => {
-    if (!eventTabsContainer) {
+const renderTabsInto = (container, events, activeId, { showRenameHint = false } = {}) => {
+    if (!container) {
         return;
     }
-    eventTabsContainer.innerHTML = "";
-    const events = Array.isArray(snapshot?.events) ? snapshot.events : [];
-    const activeId = snapshot?.activeEventId ?? null;
-
+    container.innerHTML = "";
     for (const entry of events) {
         const button = document.createElement("button");
         button.type = "button";
         button.className = `event-tab${entry.id === activeId ? " is-active" : ""}`;
         button.dataset.eventId = entry.id;
         button.textContent = entry.name;
-        button.title = `${entry.name}\n(Doppelklick zum Umbenennen)`;
+        button.title = showRenameHint ? `${entry.name}\n(Doppelklick zum Umbenennen)` : entry.name;
         button.setAttribute("role", "tab");
         button.setAttribute("aria-selected", entry.id === activeId ? "true" : "false");
-        eventTabsContainer.appendChild(button);
+        container.appendChild(button);
     }
 };
 
-async function startEventCreation({ importAfterCreate = false } = {}) {
+const renderEventTabs = snapshot => {
+    const events = Array.isArray(snapshot?.events) ? snapshot.events : [];
+    const activeId = snapshot?.activeEventId ?? null;
+
+    renderTabsInto(eventTabsContainer, events, activeId, { showRenameHint: true });
+    renderTabsInto(headerEventTabsContainer, events, activeId);
+};
+
+async function startEventCreation() {
     closeEventMenu();
     const result = await openEventNameDialog({ mode: "create" });
     if (!result || !result.name) {
         return;
     }
-    const created = createEvent({ name: result.name });
-    if (!created) {
-        return;
-    }
-    if (importAfterCreate) {
-        importReservationsJSON();
-    }
+    createEvent({ name: result.name });
+}
+
+function startEventImportFromFile() {
+    closeEventMenu();
+    pickJSONFile((obj, filename) => {
+        const desiredName = parseEventNameFromReservationsFilename(typeof filename === "string" ? filename : "");
+        if (!desiredName) {
+            alert("ungültige Datei");
+            return;
+        }
+
+        const src = obj && (obj.reservationsByTable || obj);
+        if (!src || typeof src !== "object") {
+            alert("ungültige Datei");
+            return;
+        }
+
+        const created = createEvent({ name: desiredName });
+        if (!created) {
+            return;
+        }
+
+        applyReservationsImport(obj, filename);
+    });
 }
 
 eventAddButton?.addEventListener("click", event => {
@@ -351,7 +375,7 @@ eventAddNewButton?.addEventListener("click", () => {
 });
 
 eventAddImportButton?.addEventListener("click", () => {
-    startEventCreation({ importAfterCreate: true });
+    startEventImportFromFile();
 });
 
 eventStartNewButton?.addEventListener("click", () => {
@@ -359,28 +383,27 @@ eventStartNewButton?.addEventListener("click", () => {
 });
 
 eventStartImportButton?.addEventListener("click", () => {
-    startEventCreation({ importAfterCreate: true });
+    startEventImportFromFile();
 });
 
-eventTabsContainer?.addEventListener("click", event => {
+const getEventIdFromEvent = event => {
     const target = event.target instanceof Element ? event.target.closest(".event-tab") : null;
-    if (!target) {
-        return;
-    }
-    const id = target.dataset.eventId;
+    return target?.dataset?.eventId || null;
+};
+
+const createEventTabClickHandler = ({ closeMenu = false } = {}) => event => {
+    const id = getEventIdFromEvent(event);
     if (!id) {
         return;
     }
     setActiveEvent(id);
-    closeEventMenu();
-});
-
-eventTabsContainer?.addEventListener("dblclick", async event => {
-    const target = event.target instanceof Element ? event.target.closest(".event-tab") : null;
-    if (!target) {
-        return;
+    if (closeMenu) {
+        closeEventMenu();
     }
-    const id = target.dataset.eventId;
+};
+
+const handleEventTabDblClick = async event => {
+    const id = getEventIdFromEvent(event);
     if (!id) {
         return;
     }
@@ -392,7 +415,11 @@ eventTabsContainer?.addEventListener("dblclick", async event => {
         return;
     }
     renameEvent(id, trimmed);
-});
+};
+
+eventTabsContainer?.addEventListener("click", createEventTabClickHandler({ closeMenu: true }));
+headerEventTabsContainer?.addEventListener("click", createEventTabClickHandler());
+eventTabsContainer?.addEventListener("dblclick", handleEventTabDblClick);
 
 eventRenameButton?.addEventListener("click", async () => {
     const activeId = latestEventsSnapshot?.activeEventId;
