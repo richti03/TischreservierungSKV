@@ -8,12 +8,21 @@ import { onReservationTableClick } from "./events/actions.js";
 import { openBookingSearchModal } from "./features/searchModal.js"; // optional
 import { setupInternalPlanSync, openInternalPlanTab} from "./features/internalPlanSync.js";
 import { setupExternalPlanSync, openExternalPlanTab } from "./features/externalPlanSync.js";
-import { getCardPriceValue, onCardPriceChange, setCardPriceValue, pickJSONFile } from "./core/state.js";
+import {
+    getCardPriceValue,
+    onCardPriceChange,
+    setCardPriceValue,
+    pickJSONFile,
+    getExternalEventName,
+    onExternalEventNameChange,
+} from "./core/state.js";
 import {
     createEvent,
     onEventsChange,
     setActiveEvent,
     renameEvent,
+    setEventDisplayName,
+    removeEvent,
     EVENT_TYPES,
     DEFAULT_EVENT_TYPE,
     buildEventName,
@@ -78,8 +87,20 @@ const updateCardPriceDisplay = () => {
     cardPriceDisplay.dataset.price = value.toString();
 };
 
+const updateEventDisplayNameValue = value => {
+    if (!eventDisplayNameDisplay) {
+        return;
+    }
+    const resolved = typeof value === "string" && value.trim() ? value.trim() : getExternalEventName();
+    eventDisplayNameDisplay.textContent = resolved || "—";
+};
+
 onCardPriceChange(() => {
     updateCardPriceDisplay();
+});
+
+onExternalEventNameChange(name => {
+    updateEventDisplayNameValue(name);
 });
 
 let initialPrice = parseFloat(cardPriceDisplay?.dataset?.price || "");
@@ -89,6 +110,7 @@ if (!Number.isFinite(initialPrice) || initialPrice < 0) {
 setCardPriceValue(initialPrice);
 
 const eventTabsContainer = document.getElementById("event-tabs");
+const headerEventTabsContainer = document.getElementById("header-event-tabs");
 const eventAddButton = document.getElementById("event-tab-add");
 const eventAddMenu = document.getElementById("event-add-menu");
 const eventAddNewButton = document.getElementById("event-add-new");
@@ -98,6 +120,9 @@ const eventStartNewButton = document.getElementById("event-start-new");
 const eventStartImportButton = document.getElementById("event-start-import");
 const eventRenameButton = document.getElementById("event-rename-btn");
 const eventNameDisplay = document.getElementById("event-name-display");
+const eventDisplayNameDisplay = document.getElementById("event-display-name");
+const eventDisplayNameButton = document.getElementById("event-display-name-btn");
+const eventRemoveButton = document.getElementById("event-remove-btn");
 const eventNameDialog = document.getElementById("event-name-dialog");
 const eventNameForm = document.getElementById("event-name-form");
 const eventNameDateInput = document.getElementById("event-name-date");
@@ -263,6 +288,8 @@ const openEventMenu = () => {
     eventAddButton?.setAttribute("aria-expanded", "true");
 };
 
+const eventTabContainers = [eventTabsContainer, headerEventTabsContainer].filter(Boolean);
+
 const updateEventStartOverlay = snapshot => {
     if (!eventStartOverlay) {
         return;
@@ -277,24 +304,32 @@ const updateEventStartOverlay = snapshot => {
     }
 };
 
+const createEventTabButton = (entry, activeId) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `event-tab${entry.id === activeId ? " is-active" : ""}`;
+    button.dataset.eventId = entry.id;
+    button.textContent = entry.name;
+    button.title = `${entry.name}\n(Doppelklick zum Umbenennen)`;
+    button.setAttribute("role", "tab");
+    button.setAttribute("aria-selected", entry.id === activeId ? "true" : "false");
+    return button;
+};
+
 const renderEventTabs = snapshot => {
-    if (!eventTabsContainer) {
-        return;
-    }
-    eventTabsContainer.innerHTML = "";
     const events = Array.isArray(snapshot?.events) ? snapshot.events : [];
     const activeId = snapshot?.activeEventId ?? null;
+    const containers = [eventTabsContainer, headerEventTabsContainer].filter(Boolean);
+
+    for (const container of containers) {
+        container.innerHTML = "";
+    }
 
     for (const entry of events) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = `event-tab${entry.id === activeId ? " is-active" : ""}`;
-        button.dataset.eventId = entry.id;
-        button.textContent = entry.name;
-        button.title = `${entry.name}\n(Doppelklick zum Umbenennen)`;
-        button.setAttribute("role", "tab");
-        button.setAttribute("aria-selected", entry.id === activeId ? "true" : "false");
-        eventTabsContainer.appendChild(button);
+        for (const container of containers) {
+            const button = createEventTabButton(entry, activeId);
+            container.appendChild(button);
+        }
     }
 };
 
@@ -371,7 +406,21 @@ eventStartImportButton?.addEventListener("click", () => {
     startEventCreation({ importAfterCreate: true });
 });
 
-eventTabsContainer?.addEventListener("click", event => {
+eventRemoveButton?.addEventListener("click", () => {
+    const activeId = latestEventsSnapshot?.activeEventId;
+    if (!activeId) {
+        return;
+    }
+    const activeEvent = latestEventsSnapshot?.events?.find?.(entry => entry.id === activeId) || null;
+    const label = activeEvent?.displayName || activeEvent?.name || "diese Veranstaltung";
+    const confirmed = window.confirm(`Veranstaltung "${label}" wirklich entfernen? Alle Tische, Reservierungen und Einstellungen werden gelöscht.`);
+    if (!confirmed) {
+        return;
+    }
+    removeEvent(activeId);
+});
+
+const onEventTabClick = event => {
     const target = event.target instanceof Element ? event.target.closest(".event-tab") : null;
     if (!target) {
         return;
@@ -382,9 +431,9 @@ eventTabsContainer?.addEventListener("click", event => {
     }
     setActiveEvent(id);
     closeEventMenu();
-});
+};
 
-eventTabsContainer?.addEventListener("dblclick", async event => {
+const onEventTabDblClick = async event => {
     const target = event.target instanceof Element ? event.target.closest(".event-tab") : null;
     if (!target) {
         return;
@@ -401,7 +450,12 @@ eventTabsContainer?.addEventListener("dblclick", async event => {
         return;
     }
     renameEvent(id, trimmed);
-});
+};
+
+for (const container of eventTabContainers) {
+    container.addEventListener("click", onEventTabClick);
+    container.addEventListener("dblclick", onEventTabDblClick);
+}
 
 eventRenameButton?.addEventListener("click", async () => {
     const activeId = latestEventsSnapshot?.activeEventId;
@@ -418,6 +472,23 @@ eventRenameButton?.addEventListener("click", async () => {
     renameEvent(activeId, trimmed);
 });
 
+eventDisplayNameButton?.addEventListener("click", () => {
+    const activeId = latestEventsSnapshot?.activeEventId;
+    if (!activeId) {
+        return;
+    }
+    const current = latestEventsSnapshot.events.find(entry => entry.id === activeId);
+    const currentDisplay = getExternalEventName() || current?.displayName || current?.name || "";
+    const input = window.prompt("Anzeigename der Veranstaltung", currentDisplay);
+    if (input == null) {
+        return;
+    }
+    const trimmed = input.trim();
+    const fallback = current?.name || currentDisplay;
+    const finalName = trimmed || fallback || "";
+    setEventDisplayName(activeId, finalName);
+});
+
 onEventsChange(snapshot => {
     latestEventsSnapshot = snapshot;
     renderEventTabs(snapshot);
@@ -430,6 +501,16 @@ onEventsChange(snapshot => {
     }
     if (eventRenameButton) {
         eventRenameButton.disabled = !activeEvent;
+    }
+    if (eventRemoveButton) {
+        eventRemoveButton.disabled = !activeEvent;
+    }
+    if (eventDisplayNameDisplay) {
+        const displayName = activeEvent?.displayName ?? getExternalEventName();
+        eventDisplayNameDisplay.textContent = displayName || "—";
+    }
+    if (eventDisplayNameButton) {
+        eventDisplayNameButton.disabled = !activeEvent;
     }
     if (!activeId) {
         lastRenderedEventId = null;

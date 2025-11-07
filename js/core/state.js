@@ -35,6 +35,7 @@ export function createEmptyEventState() {
         alleExportCodes: "",
         reservationsByTable: {},
         cardPriceValue: 19.5,
+        externalEventName: "",
         lastBookingSeq: 0,
         lastReservationsFilename: null,
     };
@@ -56,6 +57,11 @@ export let reservationsByTable = currentEventState.reservationsByTable;
 export let cardPriceValue = currentEventState.cardPriceValue;
 const cardPriceListeners = new Set();
 
+export let externalEventName = typeof currentEventState.externalEventName === "string"
+    ? currentEventState.externalEventName
+    : "";
+const externalEventNameListeners = new Set();
+
 export let lastBookingSeq = currentEventState.lastBookingSeq;
 
 export let lastReservationsFilename = currentEventState.lastReservationsFilename;
@@ -76,6 +82,9 @@ function ensureEventStateShape(state) {
     if (!Number.isFinite(state.cardPriceValue) || state.cardPriceValue < 0) {
         state.cardPriceValue = 19.5;
     }
+    if (typeof state.externalEventName !== "string") {
+        state.externalEventName = "";
+    }
     if (!Number.isInteger(state.lastBookingSeq)) {
         state.lastBookingSeq = 0;
     }
@@ -90,6 +99,7 @@ function assignStateReferences(state) {
     alleExportCodes = state.alleExportCodes;
     reservationsByTable = state.reservationsByTable;
     cardPriceValue = state.cardPriceValue;
+    externalEventName = typeof state.externalEventName === "string" ? state.externalEventName : "";
     lastBookingSeq = state.lastBookingSeq;
     lastReservationsFilename = state.lastReservationsFilename;
 }
@@ -104,6 +114,16 @@ function notifyCardPriceListeners() {
     }
 }
 
+function notifyExternalEventNameListeners() {
+    for (const cb of externalEventNameListeners) {
+        try {
+            cb(getExternalEventName());
+        } catch (err) {
+            console.error("[EVENT DISPLAY NAME] Listener error", err);
+        }
+    }
+}
+
 export function loadEventState(state) {
     if (!state || typeof state !== "object") {
         currentEventState = createEmptyEventState();
@@ -112,6 +132,7 @@ export function loadEventState(state) {
     }
     ensureEventStateShape(currentEventState);
     assignStateReferences(currentEventState);
+    notifyExternalEventNameListeners();
     notifyCardPriceListeners();
 }
 
@@ -129,9 +150,42 @@ export function setCardPriceValue(value) {
 }
 
 export function onCardPriceChange(cb) {
-    if (typeof cb !== "function") return () => {};
+    if (typeof cb !== "function") {
+        return () => {};
+    }
     cardPriceListeners.add(cb);
+    try {
+        cb(cardPriceValue);
+    } catch (err) {
+        console.error("[CARD PRICE] Listener error", err);
+    }
     return () => cardPriceListeners.delete(cb);
+}
+
+export function getExternalEventName() {
+    return typeof externalEventName === "string" && externalEventName.trim()
+        ? externalEventName.trim()
+        : "";
+}
+
+export function setExternalEventName(value) {
+    const normalized = typeof value === "string" ? value.trim() : "";
+    externalEventName = normalized;
+    currentEventState.externalEventName = normalized;
+    notifyExternalEventNameListeners();
+}
+
+export function onExternalEventNameChange(cb) {
+    if (typeof cb !== "function") {
+        return () => {};
+    }
+    externalEventNameListeners.add(cb);
+    try {
+        cb(getExternalEventName());
+    } catch (err) {
+        console.error("[EVENT DISPLAY NAME] Listener error", err);
+    }
+    return () => externalEventNameListeners.delete(cb);
 }
 
 // ---------- Booking-ID Sequenz ----------
