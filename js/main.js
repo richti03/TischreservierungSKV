@@ -122,12 +122,12 @@ const eventAddMenu = document.getElementById("event-add-menu");
 const eventAddNewButton = document.getElementById("event-add-new");
 const eventAddImportButton = document.getElementById("event-add-import");
 const eventAddCacheButton = document.getElementById("event-add-cache");
-const eventAddCacheDeleteButton = document.getElementById("event-add-cache-delete");
 const eventStartOverlay = document.getElementById("event-start-overlay");
 const eventStartNewButton = document.getElementById("event-start-new");
 const eventStartImportButton = document.getElementById("event-start-import");
 const eventStartCacheButton = document.getElementById("event-start-cache");
 const eventStartCacheDeleteButton = document.getElementById("event-start-cache-delete");
+const cacheRemoveActionButton = document.getElementById("btn-cache-remove");
 const eventRenameButton = document.getElementById("event-rename-btn");
 const eventNameDisplay = document.getElementById("event-name-display");
 const eventDisplayNameDisplay = document.getElementById("event-display-name");
@@ -453,10 +453,6 @@ eventAddCacheButton?.addEventListener("click", () => {
     startEventLoadFromCache({ closeMenu: true });
 });
 
-eventAddCacheDeleteButton?.addEventListener("click", () => {
-    startCacheRemoval({ closeMenu: true });
-});
-
 eventStartNewButton?.addEventListener("click", () => {
     startEventCreation();
 });
@@ -470,6 +466,10 @@ eventStartCacheButton?.addEventListener("click", () => {
 });
 
 eventStartCacheDeleteButton?.addEventListener("click", () => {
+    startCacheRemoval();
+});
+
+cacheRemoveActionButton?.addEventListener("click", () => {
     startCacheRemoval();
 });
 
@@ -595,15 +595,13 @@ const updateCacheButtons = summary => {
     const entries = Array.isArray(summary?.entries) ? summary.entries : [];
     const hasEntries = entries.length > 0;
 
-    const title = !available
-        ? "Browser-Cache nicht verfügbar"
-        : (hasEntries ? "" : "Keine gespeicherten Veranstaltungen verfügbar");
-
     if (eventStartCacheButton) {
         eventStartCacheButton.hidden = !available;
-        eventStartCacheButton.disabled = !hasEntries;
-        if (title) {
-            eventStartCacheButton.title = title;
+        eventStartCacheButton.disabled = !available;
+        if (!available) {
+            eventStartCacheButton.title = "Browser-Cache nicht verfügbar";
+        } else if (!hasEntries) {
+            eventStartCacheButton.title = "Keine Veranstaltungen im Cache vorhanden.";
         } else {
             eventStartCacheButton.removeAttribute("title");
         }
@@ -611,9 +609,11 @@ const updateCacheButtons = summary => {
 
     if (eventStartCacheDeleteButton) {
         eventStartCacheDeleteButton.hidden = !available;
-        eventStartCacheDeleteButton.disabled = !hasEntries;
-        if (title) {
-            eventStartCacheDeleteButton.title = title;
+        eventStartCacheDeleteButton.disabled = !available;
+        if (!available) {
+            eventStartCacheDeleteButton.title = "Browser-Cache nicht verfügbar";
+        } else if (!hasEntries) {
+            eventStartCacheDeleteButton.title = "Keine Veranstaltungen im Cache vorhanden.";
         } else {
             eventStartCacheDeleteButton.removeAttribute("title");
         }
@@ -621,12 +621,26 @@ const updateCacheButtons = summary => {
 
     if (eventAddCacheButton) {
         eventAddCacheButton.hidden = !available;
-        eventAddCacheButton.disabled = !hasEntries;
+        eventAddCacheButton.disabled = !available;
+        if (!available) {
+            eventAddCacheButton.title = "Browser-Cache nicht verfügbar";
+        } else if (!hasEntries) {
+            eventAddCacheButton.title = "Keine Veranstaltungen im Cache vorhanden.";
+        } else {
+            eventAddCacheButton.removeAttribute("title");
+        }
     }
 
-    if (eventAddCacheDeleteButton) {
-        eventAddCacheDeleteButton.hidden = !available;
-        eventAddCacheDeleteButton.disabled = !hasEntries;
+    if (cacheRemoveActionButton) {
+        cacheRemoveActionButton.hidden = !available;
+        cacheRemoveActionButton.disabled = !available;
+        if (!available) {
+            cacheRemoveActionButton.title = "Browser-Cache nicht verfügbar";
+        } else if (!hasEntries) {
+            cacheRemoveActionButton.title = "Keine Veranstaltungen im Cache vorhanden.";
+        } else {
+            cacheRemoveActionButton.removeAttribute("title");
+        }
     }
 };
 
