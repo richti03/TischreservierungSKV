@@ -35,6 +35,7 @@ import {
     setupEventCacheAutoSave,
     promptLoadFromCache,
     onCacheEntriesChange,
+    promptRemoveCacheEntry,
 } from "./features/cacheStorage.js";
 
 // Select-Change
@@ -121,10 +122,12 @@ const eventAddMenu = document.getElementById("event-add-menu");
 const eventAddNewButton = document.getElementById("event-add-new");
 const eventAddImportButton = document.getElementById("event-add-import");
 const eventAddCacheButton = document.getElementById("event-add-cache");
+const eventAddCacheDeleteButton = document.getElementById("event-add-cache-delete");
 const eventStartOverlay = document.getElementById("event-start-overlay");
 const eventStartNewButton = document.getElementById("event-start-new");
 const eventStartImportButton = document.getElementById("event-start-import");
 const eventStartCacheButton = document.getElementById("event-start-cache");
+const eventStartCacheDeleteButton = document.getElementById("event-start-cache-delete");
 const eventRenameButton = document.getElementById("event-rename-btn");
 const eventNameDisplay = document.getElementById("event-name-display");
 const eventDisplayNameDisplay = document.getElementById("event-display-name");
@@ -395,6 +398,16 @@ function startEventLoadFromCache({ closeMenu = false } = {}) {
     }
 }
 
+function startCacheRemoval({ closeMenu = false } = {}) {
+    const removed = promptRemoveCacheEntry();
+    if (!removed) {
+        return;
+    }
+    if (closeMenu) {
+        closeEventMenu();
+    }
+}
+
 eventAddButton?.addEventListener("click", event => {
     event.stopPropagation();
     if (isEventMenuOpen()) {
@@ -440,6 +453,10 @@ eventAddCacheButton?.addEventListener("click", () => {
     startEventLoadFromCache({ closeMenu: true });
 });
 
+eventAddCacheDeleteButton?.addEventListener("click", () => {
+    startCacheRemoval({ closeMenu: true });
+});
+
 eventStartNewButton?.addEventListener("click", () => {
     startEventCreation();
 });
@@ -450,6 +467,10 @@ eventStartImportButton?.addEventListener("click", () => {
 
 eventStartCacheButton?.addEventListener("click", () => {
     startEventLoadFromCache();
+});
+
+eventStartCacheDeleteButton?.addEventListener("click", () => {
+    startCacheRemoval();
 });
 
 eventRemoveButton?.addEventListener("click", () => {
@@ -574,12 +595,13 @@ const updateCacheButtons = summary => {
     const entries = Array.isArray(summary?.entries) ? summary.entries : [];
     const hasEntries = entries.length > 0;
 
+    const title = !available
+        ? "Browser-Cache nicht verfügbar"
+        : (hasEntries ? "" : "Keine gespeicherten Veranstaltungen verfügbar");
+
     if (eventStartCacheButton) {
         eventStartCacheButton.hidden = !available;
         eventStartCacheButton.disabled = !hasEntries;
-        const title = !available
-            ? "Browser-Cache nicht verfügbar"
-            : (hasEntries ? "" : "Keine gespeicherten Veranstaltungen verfügbar");
         if (title) {
             eventStartCacheButton.title = title;
         } else {
@@ -587,9 +609,24 @@ const updateCacheButtons = summary => {
         }
     }
 
+    if (eventStartCacheDeleteButton) {
+        eventStartCacheDeleteButton.hidden = !available;
+        eventStartCacheDeleteButton.disabled = !hasEntries;
+        if (title) {
+            eventStartCacheDeleteButton.title = title;
+        } else {
+            eventStartCacheDeleteButton.removeAttribute("title");
+        }
+    }
+
     if (eventAddCacheButton) {
         eventAddCacheButton.hidden = !available;
         eventAddCacheButton.disabled = !hasEntries;
+    }
+
+    if (eventAddCacheDeleteButton) {
+        eventAddCacheDeleteButton.hidden = !available;
+        eventAddCacheDeleteButton.disabled = !hasEntries;
     }
 };
 

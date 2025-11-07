@@ -259,7 +259,10 @@ export function setupEventCacheAutoSave() {
 function formatEntryLine(entry, index) {
     const date = entry.savedAt ? new Date(entry.savedAt) : null;
     const formatted = date ? date.toLocaleString("de-DE") : "Unbekannt";
-    return `${index + 1}. ${entry.name} (${formatted})`;
+    const label = entry.displayName && entry.displayName !== entry.name
+        ? `${entry.displayName} [${entry.name}]`
+        : entry.name;
+    return `${index + 1}. ${label} (${formatted})`;
 }
 
 export function promptLoadFromCache() {
@@ -293,6 +296,41 @@ export function promptLoadFromCache() {
         return null;
     }
     return entry;
+}
+
+export function promptRemoveCacheEntry() {
+    const summary = buildSummary();
+    if (!summary.available) {
+        alert("Der Browser-Cache ist nicht verfügbar.");
+        return false;
+    }
+    if (!summary.entries.length) {
+        alert("Es sind keine Veranstaltungen im Browser-Cache gespeichert.");
+        return false;
+    }
+    const messageLines = summary.entries.map((entry, index) => formatEntryLine(entry, index));
+    const input = window.prompt(
+        `Gespeicherte Veranstaltungen:\n\n${messageLines.join("\n")}\n\nBitte die Nummer der zu löschenden Veranstaltung eingeben:`
+    );
+    if (input == null) {
+        return false;
+    }
+    const index = Number.parseInt(input, 10);
+    if (!Number.isInteger(index) || index < 1 || index > summary.entries.length) {
+        alert("Ungültige Auswahl.");
+        return false;
+    }
+    const selectedMeta = summary.entries[index - 1];
+    const label = selectedMeta.displayName && selectedMeta.displayName !== selectedMeta.name
+        ? `${selectedMeta.displayName} (${selectedMeta.name})`
+        : selectedMeta.name;
+    const confirmed = window.confirm(`Soll die Veranstaltung "${label}" wirklich aus dem Cache gelöscht werden?`);
+    if (!confirmed) {
+        return false;
+    }
+    removeCacheEntryByKey(selectedMeta.key);
+    notifyCacheListeners();
+    return true;
 }
 
 export function removeCacheEntry(name) {
