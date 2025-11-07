@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="css/style.css">
     <!--<link rel="stylesheet" href="modal.css">-->
     <script type="module" src="js/main.js"></script>
+    <link rel="icon" href="img/SKV-Wappen.jpg">
     <title>Sandersdorfer Karnevalsverein e.V. - Tischreservierung</title>
 </head>
 <body>
@@ -194,6 +195,8 @@
     <button id="btn-search-bookings">Buchungen suchen</button>
     <button id="btn-open-internal-plan" type="button">Internen Saalplan öffnen</button>
     <button id="btn-open-external-plan" type="button">Externen Saalplan öffnen</button>
+    <button id="btn-open-customer-display" type="button">Kundendisplay öffnen</button>
+    <button id="btn-download-invoices" type="button">Rechnungen als ZIP herunterladen</button>
 </div>
 
 <!-- Modal: Verschieben / Tauschen -->
@@ -260,6 +263,27 @@
             <div class="modal__actions">
                 <button class="btn btn--ghost" id="moveModalCancel" type="button">Abbrechen</button>
                 <button class="btn" id="moveModalApply" type="button">Ausführen</button>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<!-- Modal: Abschluss des Verkaufs -->
+<div id="post-sale-modal" class="modal modal--compact hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="postSaleTitle">
+    <div class="modal__backdrop" data-close-modal="1"></div>
+    <div class="modal__dialog">
+        <header class="modal__header">
+            <h3 id="postSaleTitle">Verkauf abgeschlossen</h3>
+            <button type="button" class="modal__close" data-close-modal="1" aria-label="Schließen">×</button>
+        </header>
+        <div class="modal__body post-sale-modal__body">
+            <p id="post-sale-message" class="post-sale-modal__message"></p>
+            <p id="post-sale-details" class="post-sale-modal__details"></p>
+        </div>
+        <footer class="modal__footer">
+            <div class="modal__actions post-sale-modal__actions">
+                <a id="btn-download-latest-invoice" class="btn post-sale-modal__btn" href="#" download aria-disabled="true">Rechnung herunterladen</a>
+                <button id="btn-next-customer" class="btn post-sale-modal__btn btn--ghost" type="button">Nächster Kunde</button>
             </div>
         </footer>
     </div>

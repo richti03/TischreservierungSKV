@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Rechnung herunterladen – Sandersdorfer Karnevalsverein e.V.</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .download-card {
+            width: min(420px, 92vw);
+            background: #fff;
+            border-radius: 18px;
+            padding: 32px 28px;
+            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.18);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            text-align: center;
+        }
+
+        .download-card h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #4169E1;
+        }
+
+        .download-card p {
+            margin: 0;
+            font-size: 15px;
+            color: #475569;
+        }
+
+        .download-card strong {
+            color: #0f172a;
+        }
+
+        .download-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px 18px;
+            border-radius: 10px;
+            background: #4169E1;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .download-btn:hover,
+        .download-btn:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 30px rgba(65, 105, 225, 0.35);
+        }
+
+        .error {
+            color: #dc2626;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+<div class="download-card" id="download-card">
+    <h1>Rechnung wird vorbereitet …</h1>
+    <p id="download-info">Bitte einen Moment Geduld.</p>
+    <div class="download-actions" id="download-actions" hidden>
+        <a id="download-btn" class="download-btn" href="#" download>Rechnung herunterladen</a>
+        <p id="download-meta"></p>
+    </div>
+</div>
+<script type="module">
+    import { decodeInvoiceShareToken, buildPdfFromPayload } from './js/features/invoices.js';
+
+    const info = document.getElementById('download-info');
+    const actions = document.getElementById('download-actions');
+    const button = document.getElementById('download-btn');
+    const meta = document.getElementById('download-meta');
+    const card = document.getElementById('download-card');
+
+    function showError(message) {
+        card.querySelector('h1').textContent = 'Rechnung nicht verfügbar';
+        info.innerHTML = `<span class="error">${message}</span>`;
+        actions.hidden = true;
+    }
+
+    async function init() {
+        const token = window.location.hash ? window.location.hash.slice(1) : '';
+        if (!token) {
+            showError('Ungültiger QR-Code.');
+            return;
+        }
+        const payload = decodeInvoiceShareToken(token);
+        if (!payload) {
+            showError('Rechnungsdaten konnten nicht geladen werden.');
+            return;
+        }
+        let pdfBytes;
+        try {
+            pdfBytes = await buildPdfFromPayload(payload);
+        } catch (err) {
+            console.error('[INVOICE] PDF konnte nicht erzeugt werden:', err);
+            showError('Rechnung konnte nicht generiert werden.');
+            return;
+        }
+        if (!pdfBytes || !pdfBytes.length) {
+            showError('Rechnung konnte nicht generiert werden.');
+            return;
+        }
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const fileName = `Rechnung_${payload.invoiceNumber || 'SKV'}.pdf`;
+
+        card.querySelector('h1').textContent = 'Rechnung bereit zum Download';
+        info.textContent = 'Vielen Dank! Sie können die Rechnung jetzt speichern.';
+        actions.hidden = false;
+        button.href = url;
+        button.download = fileName;
+        meta.textContent = `${payload.totalCards || 0} Karten · Gesamtbetrag ${new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(payload.totalAmount || 0)} · Zahlart ${payload.paymentLabel || payload.paymentMethod || 'Bar'}`;
+
+        setTimeout(() => {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }, 500);
+
+        window.addEventListener('beforeunload', () => {
+            URL.revokeObjectURL(url);
+        }, { once: true });
+    }
+
+    init().catch(err => {
+        console.error('[INVOICE] Unbehandelter Fehler beim Laden der Rechnung:', err);
+        showError('Rechnung konnte nicht generiert werden.');
+    });
+</script>
+</body>
+</html>

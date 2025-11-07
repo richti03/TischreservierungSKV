@@ -8,6 +8,8 @@ import { onReservationTableClick } from "./events/actions.js";
 import { openBookingSearchModal } from "./features/searchModal.js"; // optional
 import { setupInternalPlanSync, openInternalPlanTab} from "./features/internalPlanSync.js";
 import { setupExternalPlanSync, openExternalPlanTab } from "./features/externalPlanSync.js";
+import { setupCustomerDisplaySync, openCustomerDisplayTab, signalNextCustomer } from "./features/customerDisplaySync.js";
+import { downloadInvoicesZip } from "./features/invoices.js";
 import {
     getCardPriceValue,
     onCardPriceChange,
@@ -722,6 +724,7 @@ updateCardPriceDisplay();
 // Warenkorb-Button im Header
 const cartToggle = document.getElementById("cart-toggle");
 const cartBadge = document.getElementById("cart-badge");
+const nextCustomerBtn = document.getElementById("btn-next-customer");
 
 const updateCartBadge = entries => {
     if (!cartBadge || !cartToggle) return;
@@ -743,6 +746,30 @@ cartToggle?.addEventListener("click", () => {
 onCartChange(updateCartBadge);
 updateCartBadge();
 
+function closeAllModals() {
+    document.dispatchEvent(new CustomEvent("customerFlow:close-modals"));
+    const modalNodes = document.querySelectorAll('.modal');
+    modalNodes.forEach(modal => {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    });
+    const paymentDialog = document.getElementById('paymentMethodDialog');
+    if (paymentDialog) {
+        paymentDialog.classList.add('hidden');
+        paymentDialog.setAttribute('aria-hidden', 'true');
+    }
+    const overlayIds = ['event-name-dialog', 'event-start-overlay'];
+    overlayIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (typeof el.hidden === 'boolean') {
+            el.hidden = true;
+        } else {
+            el.setAttribute('hidden', '');
+        }
+    });
+}
+
 // Hauptbuttons (IDs vorausgesetzt)
 const $ = id => document.getElementById(id);
 $("btn-book")              ?.addEventListener("click", berechneReservierung);
@@ -754,6 +781,14 @@ $("btn-import-res")        ?.addEventListener("click", importReservationsJSON);
 $("btn-search-bookings")   ?.addEventListener("click", () => openBookingSearchModal());
 $("btn-open-internal-plan")?.addEventListener("click", openInternalPlanTab);
 $("btn-open-external-plan")?.addEventListener("click", openExternalPlanTab);
+$("btn-open-customer-display")?.addEventListener("click", openCustomerDisplayTab);
+$("btn-download-invoices")?.addEventListener("click", downloadInvoicesZip);
+
+nextCustomerBtn?.addEventListener("click", () => {
+    closeAllModals();
+    document.dispatchEvent(new CustomEvent("customerFlow:next-customer"));
+    signalNextCustomer();
+});
 
 // NEU: Tische automatisch hinzufügen/entfernen
 $("btn-add-table")      ?.addEventListener("click", tischHinzufuegen);
@@ -782,4 +817,5 @@ window.openBookingSearchModal = window.openBookingSearchModal || openBookingSear
 // Initiales Rendering
 setupInternalPlanSync();
 setupExternalPlanSync();
+setupCustomerDisplaySync();
 rerenderActiveEvent();
