@@ -6,14 +6,13 @@
     <title>Kundendisplay – Sandersdorfer Karnevalsverein e.V.</title>
     <style>
         :root {
-            --skv-midnight: #04113a;
-            --skv-blue: #0b2a80;
-            --skv-blue-light: #1e48c2;
-            --skv-blue-soft: #e9f0ff;
-            --skv-gold: #f5b342;
-            --skv-text: #0f172a;
-            --skv-muted: #5e6d88;
-            --skv-surface: #f6f8fd;
+            --skv-blue: #4169E1;
+            --skv-blue-dark: #1f3f94;
+            --skv-text: #1f2937;
+            --skv-muted: #64748b;
+            --skv-border: #d9e2f1;
+            --skv-background: #f3f6ff;
+            --skv-card-shadow: rgba(15, 23, 42, 0.12);
         }
 
         *,
@@ -25,285 +24,162 @@
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: "Segoe UI", "Montserrat", system-ui, sans-serif;
-            background: radial-gradient(circle at top left, rgba(245, 179, 66, 0.18), transparent 55%),
-                        linear-gradient(135deg, rgba(4, 17, 58, 0.94), rgba(15, 41, 117, 0.9));
+            font-family: "Segoe UI", "Arial", sans-serif;
+            background: var(--skv-background);
             color: var(--skv-text);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: clamp(24px, 6vw, 48px);
+            padding: clamp(16px, 4vw, 32px);
         }
 
-        .display-app {
-            width: min(1200px, 96vw);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .display-surface {
-            position: relative;
-            width: 100%;
-            min-height: clamp(520px, 80vh, 780px);
-            padding: clamp(40px, 6vw, 72px) clamp(36px, 5vw, 64px);
-            border-radius: 40px;
-            background: var(--skv-surface);
-            box-shadow: 0 50px 120px rgba(4, 17, 58, 0.45);
-            overflow: hidden;
+        .display-wrapper {
+            width: min(960px, 96vw);
             display: flex;
             flex-direction: column;
-            gap: clamp(32px, 4vw, 48px);
-        }
-
-        .display-surface::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            background:
-                radial-gradient(circle at 18% 18%, rgba(245, 179, 66, 0.35), transparent 45%),
-                radial-gradient(circle at 88% 6%, rgba(14, 53, 154, 0.25), transparent 42%),
-                linear-gradient(160deg, rgba(255, 255, 255, 0.85), rgba(234, 240, 255, 0.75));
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .display-surface__content {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            flex-direction: column;
-            gap: clamp(32px, 4vw, 48px);
-            height: 100%;
+            gap: clamp(20px, 3vw, 28px);
         }
 
         .display-header {
-            text-align: center;
+            background: var(--skv-blue);
+            border-radius: 16px;
+            color: #fff;
+            padding: clamp(18px, 3vw, 28px);
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: clamp(18px, 3vw, 26px);
+            gap: clamp(18px, 3vw, 32px);
+            box-shadow: 0 18px 36px rgba(31, 63, 148, 0.25);
         }
 
-        .display-logo-wrap {
-            display: grid;
-            place-items: center;
-            width: clamp(160px, 22vw, 220px);
-            height: clamp(160px, 22vw, 220px);
-            border-radius: 50%;
-            background: linear-gradient(135deg, rgba(11, 42, 128, 0.95), rgba(30, 72, 194, 0.8));
-            box-shadow: 0 28px 70px rgba(4, 17, 58, 0.35);
-            padding: clamp(18px, 3vw, 26px);
-        }
-
-        .display-logo {
-            width: 100%;
-            height: 100%;
+        .display-header__logo {
+            width: clamp(82px, 14vw, 110px);
+            height: clamp(82px, 14vw, 110px);
+            border-radius: 12px;
             object-fit: cover;
-            border-radius: 50%;
             background: #fff;
+            box-shadow: 0 8px 18px rgba(255, 255, 255, 0.18);
         }
 
-        .display-header h1 {
+        .display-header__text h1 {
             margin: 0;
-            font-size: clamp(28px, 4vw, 42px);
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--skv-blue);
-            text-shadow: 0 20px 45px rgba(11, 42, 128, 0.35);
+            font-size: clamp(24px, 4vw, 32px);
+            font-weight: 600;
         }
 
-        .display-header p {
-            margin: 0;
-            max-width: 520px;
-            font-size: clamp(16px, 2.2vw, 18px);
-            color: var(--skv-muted);
+        .display-header__text p {
+            margin: 6px 0 0;
+            font-size: clamp(15px, 2.4vw, 18px);
+            color: rgba(255, 255, 255, 0.85);
         }
 
         .display-main {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-        }
-
-        .display-main[hidden] {
-            display: none;
-        }
-
-        .invoice-view {
-            width: min(1020px, 100%);
-        }
-
-        .invoice-card {
-            width: 100%;
-            border-radius: 28px;
-            background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 36px 80px rgba(14, 30, 70, 0.25);
-            overflow: hidden;
-        }
-
-        .invoice-card__content {
             display: flex;
             flex-direction: column;
-            gap: clamp(18px, 3vw, 28px);
+            gap: clamp(16px, 3vw, 24px);
         }
 
-        .invoice-card__hero {
-            background: linear-gradient(135deg, rgba(11, 42, 128, 0.95), rgba(30, 72, 194, 0.9));
-            padding: clamp(28px, 4vw, 40px);
-            color: #f8fafc;
+        .display-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: clamp(20px, 3vw, 32px);
+            box-shadow: 0 14px 32px var(--skv-card-shadow);
         }
 
-        .invoice-card__header {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        .display-card h2 {
+            margin: 0 0 16px;
+            font-size: clamp(20px, 3.2vw, 26px);
+            color: var(--skv-blue-dark);
         }
 
-        .invoice-card__header h2 {
+        .welcome-text {
             margin: 0;
-            font-size: clamp(26px, 4vw, 36px);
-            font-weight: 700;
-            letter-spacing: 0.04em;
-        }
-
-        .invoice-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px 18px;
-            font-size: 14px;
-            color: rgba(248, 250, 252, 0.88);
-        }
-
-        .invoice-meta strong {
-            color: #fff;
-            font-weight: 600;
-        }
-
-        .invoice-content {
-            padding: clamp(28px, 4vw, 36px);
-            display: flex;
-            flex-direction: column;
-            gap: clamp(24px, 3vw, 32px);
-        }
-
-        .invoice-table {
-            width: 100%;
-            border-collapse: collapse;
-            border-spacing: 0;
-            font-size: clamp(14px, 2vw, 16px);
-        }
-
-        .invoice-table thead th {
-            text-align: left;
-            font-weight: 600;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(11, 42, 128, 0.16);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            font-size: 12px;
+            font-size: clamp(16px, 2.6vw, 20px);
             color: var(--skv-muted);
-        }
-
-        .invoice-table tbody td {
-            padding: 16px 0;
-            border-bottom: 1px solid rgba(15, 32, 72, 0.08);
-            vertical-align: top;
-        }
-
-        .invoice-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .invoice-line-name {
-            font-weight: 600;
-            color: var(--skv-text);
-            font-size: 16px;
-        }
-
-        .invoice-line-detail {
-            margin-top: 4px;
-            color: var(--skv-muted);
-            font-size: 13px;
-            letter-spacing: 0.01em;
-        }
-
-        .invoice-summary {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 18px;
-            background: var(--skv-blue-soft);
-            border: 1px solid rgba(11, 42, 128, 0.12);
-            border-radius: 18px;
-            padding: clamp(18px, 2.5vw, 24px);
-        }
-
-        .invoice-summary__totals {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .invoice-summary__label {
-            font-size: 12px;
-            letter-spacing: 0.16em;
-            color: var(--skv-muted);
-            text-transform: uppercase;
-        }
-
-        .invoice-total {
-            font-size: clamp(26px, 4vw, 34px);
-            font-weight: 700;
-            color: var(--skv-blue);
-            letter-spacing: 0.03em;
-        }
-
-        .invoice-summary__meta {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .invoice-payment {
-            font-size: 15px;
-            color: var(--skv-muted);
-        }
-
-        .invoice-note {
-            margin: 0;
-            font-size: 13px;
-            color: rgba(15, 23, 42, 0.7);
-            letter-spacing: 0.02em;
-        }
-
-        .invoice-thankyou {
-            margin-top: clamp(18px, 3vw, 26px);
-            background: linear-gradient(135deg, rgba(245, 179, 66, 0.2), rgba(30, 72, 194, 0.18));
-            border: 1px solid rgba(11, 42, 128, 0.15);
-            border-radius: 22px;
-            padding: clamp(22px, 3vw, 30px);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: clamp(18px, 3vw, 24px);
             text-align: center;
         }
 
-        .invoice-thankyou[hidden] {
-            display: none;
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: clamp(14px, 2.4vw, 16px);
         }
 
-        .invoice-thankyou h2 {
-            margin: 0;
-            font-size: clamp(44px, 6vw, 60px);
-            letter-spacing: 0.3em;
+        .cart-table thead th {
+            text-align: left;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--skv-border);
+            font-size: 12px;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
-            color: var(--skv-blue);
+            color: var(--skv-muted);
+        }
+
+        .cart-table tbody td {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--skv-border);
+            vertical-align: top;
+        }
+
+        .cart-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .cart-line-name {
+            font-weight: 600;
+            color: var(--skv-text);
+        }
+
+        .cart-line-detail {
+            margin-top: 4px;
+            color: var(--skv-muted);
+            font-size: 12px;
+        }
+
+        .cart-summary {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid var(--skv-border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 24px;
+        }
+
+        .cart-summary__item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .cart-summary__label {
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--skv-muted);
+        }
+
+        .cart-summary__value {
+            font-size: clamp(18px, 3vw, 24px);
+            font-weight: 600;
+            color: var(--skv-blue-dark);
+        }
+
+        .cart-note {
+            margin: 18px 0 0;
+            font-size: 13px;
+            color: var(--skv-muted);
+        }
+
+        .invoice-thanks {
+            text-align: center;
+            font-size: clamp(28px, 5vw, 40px);
+            letter-spacing: 0.12em;
+        }
+
+        .invoice-subtitle {
+            margin: 8px 0 24px;
+            font-size: clamp(15px, 2.4vw, 18px);
+            color: var(--skv-muted);
+            text-align: center;
         }
 
         .invoice-qr {
@@ -311,116 +187,141 @@
             flex-direction: column;
             align-items: center;
             gap: 12px;
-        }
-
-        .invoice-qr[hidden] {
-            display: none;
+            margin-bottom: 24px;
         }
 
         .invoice-qr img {
-            width: clamp(220px, 30vw, 280px);
-            height: clamp(220px, 30vw, 280px);
-            border-radius: 18px;
-            background: #fff;
-            box-shadow: 0 26px 60px rgba(9, 25, 70, 0.28);
+            width: clamp(200px, 32vw, 260px);
+            height: clamp(200px, 32vw, 260px);
             object-fit: cover;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 18px 32px rgba(31, 63, 148, 0.25);
         }
 
         .invoice-qr-note {
+            font-size: 13px;
+            color: var(--skv-muted);
+            letter-spacing: 0.1em;
+        }
+
+        .invoice-details {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px 32px;
             margin: 0;
-            font-size: 14px;
-            letter-spacing: 0.12em;
+            padding: 0;
+        }
+
+        .invoice-details__item {
+            min-width: 140px;
+            text-align: center;
+        }
+
+        .invoice-details__item dt {
+            margin: 0 0 6px;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
             color: var(--skv-muted);
         }
 
-        .invoice-thankyou-total,
-        .invoice-thankyou-payment {
+        .invoice-details__item dd {
             margin: 0;
-            font-size: 16px;
-            color: rgba(15, 23, 42, 0.85);
-            letter-spacing: 0.04em;
+            font-size: clamp(18px, 3vw, 24px);
+            font-weight: 600;
+            color: var(--skv-blue-dark);
         }
 
-        .invoice-thankyou-payment {
-            color: var(--skv-muted);
+        [hidden] {
+            display: none !important;
         }
 
-        @media (max-width: 720px) {
-            body {
-                padding: 16px;
-            }
-
-            .display-surface {
-                border-radius: 28px;
-                padding: 32px 24px;
-            }
-
-            .invoice-summary {
+        @media (max-width: 640px) {
+            .display-header {
                 flex-direction: column;
-                align-items: flex-start;
+                text-align: center;
+            }
+
+            .display-header__logo {
+                width: 96px;
+                height: 96px;
+            }
+
+            .cart-summary,
+            .invoice-details {
+                justify-content: flex-start;
+            }
+
+            .invoice-thanks {
+                letter-spacing: 0.08em;
             }
         }
     </style>
 </head>
 <body>
-<div class="display-app">
-    <div class="display-surface">
-        <div class="display-surface__content">
-            <header class="display-header">
-                <div class="display-logo-wrap">
-                    <img src="../img/SKV-Wappen.jpg" alt="Logo des Sandersdorfer Karnevalsverein" class="display-logo" />
-                </div>
-                <h1 id="display-title">Herzlich willkommen beim Sandersdorfer Karnevalsverein</h1>
-                <p id="display-subtitle">Schön, dass Sie da sind – gleich sehen Sie Ihre Reservierung im Überblick.</p>
-            </header>
-            <main id="display-main" class="display-main" hidden>
-                <section class="invoice-view">
-                    <article class="invoice-card">
-                        <div id="cart-content" class="invoice-card__content">
-                            <section class="invoice-card__hero">
-                                <header class="invoice-card__header">
-                                    <h2 id="invoice-title">Rechnungsübersicht</h2>
-                                    <div class="invoice-meta" id="invoice-meta"></div>
-                                </header>
-                            </section>
-                            <div class="invoice-content" id="invoice-content">
-                                <table class="invoice-table" aria-describedby="invoice-title">
-                                    <thead>
-                                    <tr>
-                                <th scope="col">Position</th>
-                                <th scope="col" style="width:100px; text-align:right;">Karten</th>
-                                <th scope="col" style="width:140px; text-align:right;">Einzelpreis</th>
-                                <th scope="col" style="width:160px; text-align:right;">Gesamt</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="invoice-lines"></tbody>
-                                </table>
-                            </div>
-                            <div class="invoice-summary">
-                                <div class="invoice-summary__totals">
-                                    <span class="invoice-summary__label">Gesamtbetrag</span>
-                                    <div class="invoice-total" id="invoice-total">&mdash;</div>
-                                </div>
-                                <div class="invoice-summary__meta">
-                                    <div class="invoice-payment" id="invoice-payment">&nbsp;</div>
-                                    <p class="invoice-note">Die Rechnung gilt nicht als Eintrittskarte.</p>
-                                </div>
-                            </div>
-                            <div id="thankyou-content" class="invoice-thankyou" hidden>
-                                <h2 id="thankyou-title">DANKE!</h2>
-                                <div class="invoice-qr" id="invoice-qr" hidden>
-                                    <img id="invoice-qr-image" src="" alt="QR-Code zum Rechnungsdownload" />
-                                    <p class="invoice-qr-note" id="thankyou-note">(Rechnung)</p>
-                                </div>
-                                <p class="invoice-thankyou-total" id="thankyou-total" hidden></p>
-                                <p class="invoice-thankyou-payment" id="thankyou-payment" hidden></p>
-                            </div>
-                        </div>
-                    </article>
-                </section>
-            </main>
+<div class="display-wrapper">
+    <header class="display-header">
+        <img src="../img/SKV-Wappen.jpg" alt="Logo des Sandersdorfer Karnevalsverein" class="display-header__logo"/>
+        <div class="display-header__text">
+            <h1>Herzlich willkommen beim Sandersdorfer Karnevalsverein</h1>
+            <p id="display-subtitle">Schön, dass Sie da sind – gleich sehen Sie Ihre Reservierung im Überblick.</p>
         </div>
-    </div>
+    </header>
+    <main id="display-main" class="display-main">
+        <section id="welcome-view" class="display-card">
+            <p class="welcome-text">Sobald Reservierungen ausgewählt sind, erscheinen sie hier.</p>
+        </section>
+        <section id="cart-view" class="display-card" hidden>
+            <h2>Ihre Reservierungen</h2>
+            <table class="cart-table" aria-describedby="display-subtitle">
+                <thead>
+                <tr>
+                    <th scope="col">Position</th>
+                    <th scope="col" style="width:100px; text-align:right;">Karten</th>
+                    <th scope="col" style="width:140px; text-align:right;">Einzelpreis</th>
+                    <th scope="col" style="width:150px; text-align:right;">Gesamt</th>
+                </tr>
+                </thead>
+                <tbody id="cart-lines"></tbody>
+            </table>
+            <div class="cart-summary">
+                <div class="cart-summary__item">
+                    <span class="cart-summary__label">Gesamtbetrag</span>
+                    <span class="cart-summary__value" id="cart-total">—</span>
+                </div>
+                <div class="cart-summary__item">
+                    <span class="cart-summary__label">Karten</span>
+                    <span class="cart-summary__value" id="cart-count">—</span>
+                </div>
+            </div>
+            <p class="cart-note">Die Rechnung gilt nicht als Eintrittskarte.</p>
+        </section>
+        <section id="invoice-view" class="display-card" hidden>
+            <h2 class="invoice-thanks">DANKE!</h2>
+            <p class="invoice-subtitle">Scannen Sie den QR-Code, um Ihre Rechnung herunterzuladen.</p>
+            <div class="invoice-qr" id="invoice-qr" hidden>
+                <img id="invoice-qr-image" src="" alt="QR-Code zum Rechnungsdownload"/>
+                <span class="invoice-qr-note" id="invoice-qr-note">(Rechnung)</span>
+            </div>
+            <dl class="invoice-details">
+                <div class="invoice-details__item">
+                    <dt>Gesamtbetrag</dt>
+                    <dd id="invoice-total-text">—</dd>
+                </div>
+                <div class="invoice-details__item">
+                    <dt>Karten</dt>
+                    <dd id="invoice-count-text">—</dd>
+                </div>
+                <div class="invoice-details__item">
+                    <dt>Zahlart</dt>
+                    <dd id="invoice-payment-text">—</dd>
+                </div>
+            </dl>
+            <p class="cart-note">Die Rechnung gilt nicht als Eintrittskarte.</p>
+        </section>
+    </main>
 </div>
 <script>
     const CHANNEL_NAME = "skv-customer-display";
@@ -432,47 +333,61 @@
         minimumFractionDigits: 2,
     });
 
-    const displayTitle = document.getElementById('display-title');
     const displaySubtitle = document.getElementById('display-subtitle');
-    const displayMain = document.getElementById('display-main');
-    const cartContent = document.getElementById('cart-content');
-    const thankyouContent = document.getElementById('thankyou-content');
-    const invoiceMeta = document.getElementById('invoice-meta');
-    const invoiceLines = document.getElementById('invoice-lines');
-    const invoiceTotal = document.getElementById('invoice-total');
-    const invoicePayment = document.getElementById('invoice-payment');
+    const welcomeView = document.getElementById('welcome-view');
+    const cartView = document.getElementById('cart-view');
+    const invoiceView = document.getElementById('invoice-view');
+    const cartLines = document.getElementById('cart-lines');
+    const cartTotal = document.getElementById('cart-total');
+    const cartCount = document.getElementById('cart-count');
     const invoiceQr = document.getElementById('invoice-qr');
     const invoiceQrImage = document.getElementById('invoice-qr-image');
-    const thankyouTotal = document.getElementById('thankyou-total');
-    const thankyouPayment = document.getElementById('thankyou-payment');
-    const thankyouNote = document.getElementById('thankyou-note');
+    const invoiceTotalText = document.getElementById('invoice-total-text');
+    const invoiceCountText = document.getElementById('invoice-count-text');
+    const invoicePaymentText = document.getElementById('invoice-payment-text');
 
-    let channel = null;
-    let storageListenerBound = false;
+    let channel;
+    let currentMode = 'welcome';
 
     function ensureChannel() {
-        if (typeof BroadcastChannel !== 'undefined') {
-            if (!channel) {
-                channel = new BroadcastChannel(CHANNEL_NAME);
-                channel.addEventListener('message', onChannelMessage);
-            }
+        if (channel || typeof BroadcastChannel === 'undefined') {
+            return channel;
         }
-        if (!storageListenerBound && typeof window !== 'undefined') {
+        try {
+            channel = new BroadcastChannel(CHANNEL_NAME);
+            channel.addEventListener('message', handleIncomingMessage);
+        } catch (err) {
+            console.warn('[KUNDENDISPLAY] BroadcastChannel konnte nicht erstellt werden:', err);
+            channel = null;
+        }
+        if (typeof window !== 'undefined') {
+            window.addEventListener('beforeunload', () => {
+                try {
+                    channel?.close();
+                } catch (err) {
+                    console.warn('[KUNDENDISPLAY] BroadcastChannel konnte nicht geschlossen werden:', err);
+                }
+            }, { once: true });
             window.addEventListener('storage', onStorageMessage);
-            storageListenerBound = true;
+        }
+        return channel;
+    }
+
+    function initFromStorage() {
+        if (typeof localStorage === 'undefined' || localStorage === null) return;
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (!stored) return;
+            const parsed = JSON.parse(stored);
+            handleEnvelope(parsed);
+        } catch (err) {
+            console.warn('[KUNDENDISPLAY] Vorherigen Zustand konnte nicht geladen werden:', err);
         }
     }
 
-    function handleEnvelope(envelope) {
-        if (!envelope || envelope.marker !== MESSAGE_MARKER) return;
-        const data = envelope.data;
-        if (data?.type === 'state' && data.payload) {
-            applyState(data.payload);
-        }
-    }
-
-    function onChannelMessage(event) {
-        handleEnvelope(event?.data);
+    function handleIncomingMessage(event) {
+        const envelope = event?.data;
+        handleEnvelope(envelope);
     }
 
     function onStorageMessage(event) {
@@ -485,113 +400,95 @@
         }
     }
 
+    function handleEnvelope(envelope) {
+        if (!envelope || envelope.marker !== MESSAGE_MARKER) return;
+        const payload = envelope.data?.payload;
+        if (!payload) return;
+        applyState(payload);
+    }
+
     function setMode(mode) {
+        if (currentMode === mode) return;
+        currentMode = mode;
         if (mode === 'welcome') {
-            displayTitle.textContent = 'Herzlich willkommen beim Sandersdorfer Karnevalsverein';
+            welcomeView.hidden = false;
+            cartView.hidden = true;
+            invoiceView.hidden = true;
             if (displaySubtitle) {
                 displaySubtitle.textContent = 'Schön, dass Sie da sind – gleich sehen Sie Ihre Reservierung im Überblick.';
             }
-            displayMain.hidden = true;
-            cartContent.hidden = true;
-            thankyouContent.hidden = true;
         } else if (mode === 'cart') {
-            displayTitle.textContent = 'Rechnungsübersicht';
+            welcomeView.hidden = true;
+            cartView.hidden = false;
+            invoiceView.hidden = true;
             if (displaySubtitle) {
-                displaySubtitle.textContent = 'Ihre Reservierungen im Überblick.';
+                displaySubtitle.textContent = 'Bitte prüfen Sie Ihre Reservierungen.';
             }
-            displayMain.hidden = false;
-            cartContent.hidden = false;
-            thankyouContent.hidden = true;
         } else if (mode === 'invoice') {
-            displayTitle.textContent = 'Rechnungsübersicht';
+            welcomeView.hidden = true;
+            cartView.hidden = true;
+            invoiceView.hidden = false;
             if (displaySubtitle) {
-                displaySubtitle.textContent = 'Ihre Rechnung können Sie jetzt herunterladen.';
+                displaySubtitle.textContent = 'Scannen Sie den Code, um Ihre Rechnung zu erhalten.';
             }
-            displayMain.hidden = false;
-            cartContent.hidden = false;
-        } else {
-            displayTitle.textContent = 'Sandersdorfer Karnevalsverein';
-            if (displaySubtitle) {
-                displaySubtitle.textContent = 'Gemeinsam feiern wir die fünfte Jahreszeit!';
-            }
-            displayMain.hidden = true;
-            cartContent.hidden = true;
-            thankyouContent.hidden = true;
         }
     }
 
     function renderCart(cart) {
-        invoiceMeta.innerHTML = '';
-        invoiceLines.innerHTML = '';
-        invoiceTotal.textContent = cart ? euroFormatter.format(cart.totalAmount || 0) : '—';
-        if (cart && Number.isFinite(cart.totalCards)) {
-            const cards = cart.totalCards;
-            const label = cards === 1 ? '1 Karte insgesamt' : `${cards} Karten insgesamt`;
-            invoicePayment.textContent = label;
+        cartLines.innerHTML = '';
+        const totalAmount = Number.isFinite(cart?.totalAmount) ? cart.totalAmount : null;
+        cartTotal.textContent = totalAmount != null ? euroFormatter.format(totalAmount) : '—';
+        const cards = Number.isFinite(cart?.totalCards) ? cart.totalCards : null;
+        if (cards != null) {
+            cartCount.textContent = cards === 1 ? '1 Karte' : `${cards} Karten`;
         } else {
-            invoicePayment.textContent = '\u00a0';
+            cartCount.textContent = '—';
         }
-        invoiceQr.hidden = true;
-        invoiceQrImage.src = '';
-        thankyouContent.hidden = true;
-        thankyouTotal.hidden = true;
-        thankyouPayment.hidden = true;
+
         if (!cart || !Array.isArray(cart.lines) || cart.lines.length === 0) {
-            invoiceLines.innerHTML = '<tr><td colspan="4">Keine Positionen vorhanden.</td></tr>';
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="4">Aktuell sind keine Reservierungen ausgewählt.</td>';
+            cartLines.appendChild(row);
             return;
         }
-        for (const line of cart.lines) {
+
+        cart.lines.forEach(line => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
-                    <div class="invoice-line-name">${line.name || 'Position'}</div>
-                    ${line.detail ? `<div class="invoice-line-detail">${line.detail}</div>` : ''}
+                    <div class="cart-line-name">${line.name || 'Position'}</div>
+                    ${line.detail ? `<div class="cart-line-detail">${line.detail}</div>` : ''}
                 </td>
-                <td style="text-align:right; font-weight:600;">${line.quantity}</td>
+                <td style="text-align:right; font-weight:600;">${line.quantity ?? ''}</td>
                 <td style="text-align:right;">${line.unitPriceFormatted || ''}</td>
                 <td style="text-align:right; font-weight:600;">${line.totalFormatted || ''}</td>
             `;
-            invoiceLines.appendChild(tr);
-        }
+            cartLines.appendChild(tr);
+        });
     }
 
     function renderInvoice(invoice) {
-        invoiceMeta.innerHTML = '';
-        if (invoice.invoiceNumber || invoice.createdAt) {
-            const parts = [];
-            if (invoice.invoiceNumber) parts.push(`<strong>Rechnungsnummer:</strong> ${invoice.invoiceNumber}`);
-            if (invoice.createdAt) {
-                const date = new Date(invoice.createdAt);
-                if (!Number.isNaN(date.valueOf())) {
-                    parts.push(`<strong>Datum:</strong> ${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {
-                        hour: '2-digit', minute: '2-digit'
-                    })}`);
-                }
-            }
-            invoiceMeta.innerHTML = parts.join(' <span aria-hidden="true">•</span> ');
-        }
-        renderCart(invoice);
-        const totalAmount = Number.isFinite(invoice.totalAmount) ? invoice.totalAmount : null;
-        invoiceTotal.textContent = euroFormatter.format(totalAmount ?? 0);
-        const paymentLabel = invoice.paymentLabel ? `Zahlart: ${invoice.paymentLabel}` : '';
-        if (Number.isFinite(invoice.totalCards)) {
-            const cardLabel = invoice.totalCards === 1 ? '1 Karte insgesamt' : `${invoice.totalCards} Karten insgesamt`;
-            invoicePayment.textContent = paymentLabel ? `${cardLabel} · ${paymentLabel}` : cardLabel;
-        } else if (paymentLabel) {
-            invoicePayment.textContent = paymentLabel;
-        }
-        if (totalAmount != null) {
-            thankyouTotal.textContent = `Gesamtbetrag: ${euroFormatter.format(totalAmount)}`;
-            thankyouTotal.hidden = false;
+        const totalAmount = Number.isFinite(invoice?.totalAmount) ? invoice.totalAmount : null;
+        invoiceTotalText.textContent = totalAmount != null ? euroFormatter.format(totalAmount) : '—';
+
+        const cards = Number.isFinite(invoice?.totalCards) ? invoice.totalCards : null;
+        if (cards != null) {
+            invoiceCountText.textContent = cards === 1 ? '1 Karte' : `${cards} Karten`;
         } else {
-            thankyouTotal.hidden = true;
+            invoiceCountText.textContent = '—';
         }
-        thankyouPayment.textContent = paymentLabel;
-        thankyouPayment.hidden = !paymentLabel;
-        thankyouNote.textContent = '(Rechnung)';
-        const shareLink = invoice.shareUrl || (invoice.shareToken ? buildShareUrl(invoice.shareToken) : '');
+
+        const paymentLabel = invoice?.paymentLabel || invoice?.paymentMethodLabel || '';
+        if (paymentLabel) {
+            invoicePaymentText.textContent = paymentLabel;
+        } else if (invoice?.paymentMethod) {
+            invoicePaymentText.textContent = invoice.paymentMethod === 'card' ? 'Kartenzahlung' : 'Barzahlung';
+        } else {
+            invoicePaymentText.textContent = '—';
+        }
+
+        const shareLink = invoice?.shareUrl || (invoice?.shareToken ? buildShareUrl(invoice.shareToken) : '');
         const hasQr = Boolean(shareLink);
-        thankyouContent.hidden = !hasQr;
         if (hasQr) {
             invoiceQr.hidden = false;
             invoiceQrImage.src = buildQrSrc(shareLink);
@@ -602,7 +499,6 @@
         } else {
             invoiceQr.hidden = true;
             invoiceQrImage.src = '';
-            thankyouContent.hidden = true;
         }
     }
 
@@ -630,19 +526,20 @@
             return;
         }
         if (state.mode === 'cart') {
-            setMode('cart');
             renderCart(state.cart || null);
+            setMode('cart');
             return;
         }
         if (state.mode === 'invoice') {
-            setMode('invoice');
             renderInvoice(state.invoice || {});
+            setMode('invoice');
             return;
         }
         setMode('welcome');
     }
 
     ensureChannel();
+    initFromStorage();
 </script>
 </body>
 </html>

@@ -276,28 +276,13 @@ function buildPdfContent({
     paymentMethod,
     paymentLabel,
 }, { logo = null } = {}) {
-    const margin = 56;
+    const margin = 48;
     const width = 595.28;
     const height = 841.89;
     const contentWidth = width - margin * 2;
-    const headerHeight = 150;
-    const baseLine = 16;
+    const headerHeight = 120;
+    const baseLine = 18;
     const detailLine = 12;
-
-    const COLORS = {
-        background: hexToRgbString('#f6f8fd'),
-        headerDark: hexToRgbString('#0b2a80'),
-        headerLight: hexToRgbString('#1747c7'),
-        gold: hexToRgbString('#f5b342'),
-        text: hexToRgbString('#14213d'),
-        muted: hexToRgbString('#5e6d88'),
-        line: hexToRgbString('#c7d2e8'),
-        summaryBg: hexToRgbString('#eef2ff'),
-        summaryBorder: hexToRgbString('#cbd5f5'),
-        white: '1 1 1',
-    };
-
-    const content = [];
 
     function hexToRgbString(hex) {
         const clean = hex.replace('#', '');
@@ -307,6 +292,19 @@ function buildPdfContent({
         const b = (value & 0xff) / 255;
         return `${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)}`;
     }
+
+    const COLORS = {
+        page: hexToRgbString('#f8faff'),
+        primary: hexToRgbString('#4169e1'),
+        primaryDark: hexToRgbString('#1f3f94'),
+        text: hexToRgbString('#1f2937'),
+        muted: hexToRgbString('#64748b'),
+        line: hexToRgbString('#d7e3ff'),
+        row: hexToRgbString('#eef2ff'),
+        white: '1 1 1',
+    };
+
+    const content = [];
 
     function writeText(text, x, y, { font = 'F1', size = 12, align = 'left', color = COLORS.text } = {}) {
         const safe = escapePdfText(text);
@@ -352,15 +350,14 @@ function buildPdfContent({
     }
 
     const headerBottom = height - headerHeight;
-    fillRect(0, headerBottom, width, headerHeight, COLORS.headerDark);
-    fillRect(0, headerBottom + headerHeight * 0.45, width, headerHeight * 0.55, COLORS.headerLight);
-    fillRect(0, headerBottom - 6, width, 6, COLORS.gold);
-    fillRect(margin, margin, contentWidth, headerBottom - margin - 24, COLORS.background);
+    fillRect(0, 0, width, height, COLORS.page);
+    fillRect(0, headerBottom, width, headerHeight, COLORS.primary);
+    drawLine(0, headerBottom, width, headerBottom, COLORS.primaryDark, 2);
 
     const hasLogo = Boolean(logo?.name && logo?.width && logo?.height);
     if (hasLogo) {
         const aspect = logo.height > 0 ? logo.height / logo.width : 1;
-        let drawWidth = 100;
+        let drawWidth = 90;
         let drawHeight = drawWidth * aspect;
         const maxHeight = headerHeight - 32;
         if (drawHeight > maxHeight) {
@@ -372,37 +369,35 @@ function buildPdfContent({
         drawImage(logo.name, logoX, logoY, drawWidth, drawHeight);
     }
 
-    const headerTextLeft = hasLogo ? margin + 120 : margin + 24;
-    const headerTitleY = headerBottom + headerHeight - 36;
+    const headerTextLeft = hasLogo ? margin + 110 : margin;
+    const headerTitleY = headerBottom + headerHeight - 32;
     writeText('Sandersdorfer Karnevalsverein e. V.', headerTextLeft, headerTitleY, { font: 'F2', size: 18, color: COLORS.white });
     writeText('Rechnung', headerTextLeft, headerTitleY - 28, { font: 'F2', size: 30, color: COLORS.white });
 
-    let cursorY = headerBottom - 30;
+    let cursorY = headerBottom - 26;
     const displayDate = formatDisplayDate(createdAt);
-    writeText(`Rechnungsdatum: ${displayDate}`, margin, cursorY, { size: 12, color: COLORS.muted });
-    writeText(`Rechnungsnummer: ${invoiceNumber}`, margin + contentWidth, cursorY, { size: 12, color: COLORS.muted, align: 'right' });
-    cursorY -= baseLine * 1.4;
+    writeText(`Rechnungsdatum: ${displayDate}`, margin, cursorY, { size: 11, color: COLORS.muted });
+    writeText(`Rechnungsnummer: ${invoiceNumber}`, margin + contentWidth, cursorY, { size: 11, color: COLORS.muted, align: 'right' });
+    cursorY -= baseLine;
 
-    drawLine(margin, cursorY + 8, margin + contentWidth, cursorY + 8, COLORS.line, 0.5);
-    cursorY -= 12;
+    drawLine(margin, cursorY + 8, margin + contentWidth, cursorY + 8, COLORS.line, 0.8);
+    cursorY -= 6;
 
     const col1 = margin;
-    const colQty = margin + contentWidth * 0.52;
-    const colUnit = margin + contentWidth * 0.72;
-    const colTotal = margin + contentWidth * 0.9;
+    const colQty = margin + contentWidth * 0.55;
+    const colUnit = margin + contentWidth * 0.74;
+    const colTotal = margin + contentWidth;
 
-    writeText('Position', col1, cursorY, { font: 'F2', size: 11, color: COLORS.muted });
-    writeText('Karten', colQty, cursorY, { font: 'F2', size: 11, align: 'right', color: COLORS.muted });
-    writeText('Einzelpreis', colUnit, cursorY, { font: 'F2', size: 11, align: 'right', color: COLORS.muted });
-    writeText('Gesamt', colTotal, cursorY, { font: 'F2', size: 11, align: 'right', color: COLORS.muted });
+    writeText('Position', col1, cursorY, { size: 11, color: COLORS.muted });
+    writeText('Karten', colQty, cursorY, { size: 11, color: COLORS.muted, align: 'right' });
+    writeText('Einzelpreis', colUnit, cursorY, { size: 11, color: COLORS.muted, align: 'right' });
+    writeText('Gesamt', colTotal, cursorY, { size: 11, color: COLORS.muted, align: 'right' });
     cursorY -= baseLine;
-    drawLine(margin, cursorY + 6, margin + contentWidth, cursorY + 6, COLORS.line, 0.4);
-    cursorY -= 8;
 
     const safeLines = Array.isArray(lines) ? lines : [];
-    if (!safeLines.length) {
+    if (safeLines.length === 0) {
         writeText('Keine Positionen vorhanden.', col1, cursorY, { size: 12, color: COLORS.muted });
-        cursorY -= baseLine * 1.4;
+        cursorY -= baseLine;
     } else {
         safeLines.forEach((line, index) => {
             const name = line?.name || 'Position';
@@ -410,6 +405,12 @@ function buildPdfContent({
             const detail = line?.detail || '';
             const unitPrice = line?.unitPriceFormatted || '';
             const lineTotal = line?.totalFormatted || '';
+            const rowHeight = detail ? baseLine + detailLine : baseLine;
+
+            if (index % 2 === 1) {
+                const fillY = cursorY - rowHeight + 6;
+                fillRect(margin, fillY, contentWidth, rowHeight + 2, COLORS.row);
+            }
 
             writeText(String(name), col1, cursorY, { size: 12, color: COLORS.text });
             writeText(quantity === '' ? '' : String(quantity), colQty, cursorY, { size: 12, align: 'right', color: COLORS.text });
@@ -418,52 +419,48 @@ function buildPdfContent({
             cursorY -= detailLine;
             if (detail) {
                 writeText(detail, col1 + 6, cursorY, { size: 10, color: COLORS.muted });
-                cursorY -= baseLine * 0.9;
+                cursorY -= baseLine;
             } else {
-                cursorY -= baseLine * 0.6;
+                cursorY -= baseLine * 0.7;
             }
-            if (index < safeLines.length - 1) {
-                drawLine(margin, cursorY + 6, margin + contentWidth, cursorY + 6, COLORS.line, 0.25);
-            }
+            drawLine(margin, cursorY + 10, margin + contentWidth, cursorY + 10, COLORS.line, 0.3);
         });
     }
 
-    cursorY -= baseLine * 0.6;
+    cursorY -= baseLine * 0.2;
+    drawLine(margin, cursorY + 14, margin + contentWidth, cursorY + 14, COLORS.line, 0.8);
+    cursorY -= baseLine;
 
-    const summaryHeight = 78;
-    const summaryPadding = 18;
-    const summaryBottom = cursorY - summaryHeight;
-    fillRect(margin, summaryBottom, contentWidth, summaryHeight, COLORS.summaryBg);
-    drawLine(margin, summaryBottom, margin + contentWidth, summaryBottom, COLORS.summaryBorder, 0.7);
-    drawLine(margin, summaryBottom + summaryHeight, margin + contentWidth, summaryBottom + summaryHeight, COLORS.summaryBorder, 0.3);
-
-    const summaryTitleY = summaryBottom + summaryHeight - summaryPadding;
     const resolvedPaymentLabel = (paymentLabel && paymentLabel.trim()) || getPaymentLabel(paymentMethod) || '';
     const cardsLabel = Number.isFinite(totalCards)
         ? (totalCards === 1 ? '1 Karte insgesamt' : `${totalCards} Karten insgesamt`)
         : '';
 
-    writeText('Gesamtbetrag', margin + summaryPadding, summaryTitleY, { size: 11, color: COLORS.muted });
-    writeText(formatEuro(totalAmount), margin + summaryPadding, summaryTitleY - 22, { font: 'F2', size: 20, color: COLORS.headerDark });
+    writeText('Gesamtbetrag', margin, cursorY, { size: 11, color: COLORS.muted });
+    cursorY -= detailLine;
+    writeText(formatEuro(totalAmount), margin, cursorY, { font: 'F2', size: 22, color: COLORS.primaryDark });
     if (cardsLabel) {
-        writeText(cardsLabel, margin + contentWidth - summaryPadding, summaryTitleY, { size: 11, color: COLORS.muted, align: 'right' });
+        writeText(cardsLabel, margin + contentWidth, cursorY + detailLine, { size: 11, color: COLORS.muted, align: 'right' });
     }
     if (resolvedPaymentLabel) {
-        writeText(`Zahlart ${resolvedPaymentLabel}`, margin + contentWidth - summaryPadding, summaryTitleY - 22, { size: 12, color: COLORS.text, align: 'right' });
+        writeText(`Zahlart ${resolvedPaymentLabel}`, margin + contentWidth, cursorY, { size: 12, color: COLORS.text, align: 'right' });
     }
 
-    cursorY = summaryBottom - baseLine * 1.2;
+    cursorY -= baseLine * 1.4;
     writeText('Hinweis: Diese Rechnung gilt nicht als Eintrittskarte.', margin, cursorY, { size: 11, color: COLORS.muted });
-    cursorY -= baseLine * 1.2;
-    writeText('Vielen Dank für Ihren Besuch!', margin, cursorY, { size: 12, color: COLORS.headerDark });
+    cursorY -= baseLine;
+    writeText('Vielen Dank für Ihren Besuch!', margin, cursorY, { size: 12, color: COLORS.primaryDark });
 
-    const footerSeparatorY = margin + 26;
-    drawLine(margin, footerSeparatorY, margin + contentWidth, footerSeparatorY, COLORS.line, 0.5);
-    writeText('Verkäufer: Sandersdorfer Karnevalsverein e. V.', margin + contentWidth / 2, footerSeparatorY - 16, { size: 10, color: COLORS.muted, align: 'center' });
-    writeText('Am Sportzentrum 19 · 06792 Sandersdorf-Brehna', margin + contentWidth / 2, footerSeparatorY - 30, { size: 10, color: COLORS.muted, align: 'center' });
+    const footerY = margin + 32;
+    drawLine(margin, footerY, margin + contentWidth, footerY, COLORS.line, 0.6);
+    writeText('Sandersdorfer Karnevalsverein e. V.', margin + contentWidth / 2, footerY - 16, { size: 10, color: COLORS.muted, align: 'center' });
+    writeText('Am Sportzentrum 19 · 06792 Sandersdorf-Brehna', margin + contentWidth / 2, footerY - 30, { size: 10, color: COLORS.muted, align: 'center' });
 
-    return content.join('\n') + '\n';
+    return content.join('
+') + '
+';
 }
+
 
 function crc32(bytes) {
     let crc = -1;
