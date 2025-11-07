@@ -7,24 +7,54 @@ const ESCAPED_EVENT_TYPES = EVENT_TYPES.map(type => type.replace(/[.*+?^${}()|[\
 const EVENT_NAME_PATTERN = new RegExp(`^(\\d{4}-\\d{2}-\\d{2})-(${ESCAPED_EVENT_TYPES.join("|")})$`);
 const RESERVATION_FILENAME_PATTERN = new RegExp(`${EVENT_NAME_PATTERN.source}\\.json$`);
 
-function isValidDateString(value) {
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) {
-        return false;
+function normalizeDateInput(value) {
+    if (!value) {
+        return null;
     }
-    const [year, month, day] = value.split("-").map(part => Number.parseInt(part, 10));
+    if (value instanceof Date) {
+        if (Number.isNaN(value.valueOf())) {
+            return null;
+        }
+        return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+    }
+    if (typeof value !== "string") {
+        return null;
+    }
+    const trimmed = value.trim();
+    const match = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (!match) {
+        return null;
+    }
+    const [, yearPart, monthPart, dayPart] = match;
+    const year = Number.parseInt(yearPart, 10);
+    const month = Number.parseInt(monthPart, 10);
+    const day = Number.parseInt(dayPart, 10);
     if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
-        return false;
+        return null;
     }
     const date = new Date(Date.UTC(year, month - 1, day));
-    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
+        return null;
+    }
+    return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function isValidDateString(value) {
+    if (typeof value !== "string") {
+        return false;
+    }
+    const trimmed = value.trim();
+    const normalized = normalizeDateInput(trimmed);
+    return normalized != null && normalized === trimmed;
 }
 
 export function buildEventName(date, type) {
-    if (!isValidDateString(date)) {
+    const normalizedDate = normalizeDateInput(date);
+    if (!normalizedDate) {
         return null;
     }
     const normalizedType = EVENT_TYPES.includes(type) ? type : DEFAULT_EVENT_TYPE;
-    return `${date}-${normalizedType}`;
+    return `${normalizedDate}-${normalizedType}`;
 }
 
 export function parseEventName(name) {
