@@ -9,6 +9,7 @@ import {
     tableLabel,
     onCardPriceChange,
 } from "../core/state.js";
+import { getActiveEvent, setActiveEvent } from "../core/events.js";
 import { getCartEntries, removeFromCart, markCartAsSold, onCartChange, calculateCartTotal, markCartDirty } from "./cart.js";
 import { printTischArray, renderReservationsForSelectedTable, setSelectedTableNr } from "../ui/tableView.js";
 import { openMoveModal } from "./modalMoveSwap.js";
@@ -39,6 +40,21 @@ function iconBtn({ action, title, ghost = false }) {
 
 let wired = false;
 
+function ensureEventActive(eventId) {
+    if (!eventId) {
+        return true;
+    }
+    const active = getActiveEvent();
+    if (active?.id === eventId) {
+        return true;
+    }
+    const success = setActiveEvent(eventId);
+    if (!success) {
+        console.warn("[CART MODAL] Veranstaltung konnte nicht aktiviert werden:", eventId);
+    }
+    return success;
+}
+
 function ensureCartModal() {
     let el = document.getElementById("cartModal");
     if (el) return el;
@@ -67,6 +83,7 @@ function ensureCartModal() {
             <thead>
               <tr>
                 <th style="min-width:160px; text-align:left;">Name (+ Booking-ID)</th>
+                <th style="min-width:160px;">Veranstaltung</th>
                 <th style="width:110px;">Tisch</th>
                 <th style="width:90px;">Karten</th>
                 <th>Notizen</th>
@@ -98,12 +115,13 @@ function renderCartTable() {
     const entries = getCartEntries();
 
     if (entries.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; opacity:.7;">Keine Reservierungen im Warenkorb.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; opacity:.7;">Keine Reservierungen im Warenkorb.</td></tr>`;
     } else {
-        tbody.innerHTML = entries.map(({ tableNr, reservation }) => {
+        tbody.innerHTML = entries.map(entry => {
+            const { tableNr, reservation, eventId, eventDisplayName, eventName, eventState } = entry;
             const bid = reservation.bookingId ? String(reservation.bookingId) : "—";
             const baseNotes = noteToHtml(reservation.notes);
-            const splitInfo = buildSplitInfoText(reservation.bookingId, tableNr);
+            const splitInfo = buildSplitInfoText(reservation.bookingId, tableNr, eventState?.reservationsByTable);
             const splitHtml = splitInfo ? `<div style="font-size:12px;opacity:.75;">${escapeHtml(splitInfo)}</div>` : "";
             const actions = [
                 iconBtn({ action: "edit", title: "Bearbeiten" }),
@@ -111,14 +129,22 @@ function renderCartTable() {
                 iconBtn({ action: "cart-remove", title: "Aus Warenkorb entfernen" }),
                 iconBtn({ action: "delete", title: "Löschen", ghost: true })
             ].join(" ");
+            const eventLabel = escapeHtml(eventDisplayName || eventName || "—");
+            const tableText = escapeHtml(tableLabel(tableNr));
+            const cardValue = typeof reservation?.cards === 'number'
+                ? reservation.cards
+                : (reservation?.cards != null ? reservation.cards : "");
+            const cardText = escapeHtml(String(cardValue));
+            const nameText = escapeHtml(reservation?.name || "—");
             return `
-      <tr data-id="${reservation.id}" data-table="${tableNr}">
+      <tr data-id="${reservation.id}" data-table="${tableNr}" data-event="${eventId ?? ""}">
         <td>
-          ${escapeHtml(reservation.name)}
+          ${nameText}
           <div style="font-size:12px;opacity:.7;">Buchung-ID: ${escapeHtml(bid)}</div>
         </td>
-        <td>${escapeHtml(tableLabel(tableNr))}</td>
-        <td>${reservation.cards}</td>
+        <td>${eventLabel}</td>
+        <td>${tableText}</td>
+        <td>${cardText}</td>
         <td>${baseNotes}${splitHtml}</td>
         <td class="actions" style="display:flex;gap:6px;flex-wrap:wrap;">${actions}</td>
       </tr>`;
@@ -182,11 +208,20 @@ function wire() {
         const action = btn.getAttribute("data-action");
         const id = tr.getAttribute("data-id");
         const tableNr = parseInt(tr.getAttribute("data-table"), 10);
+        const eventId = tr.getAttribute("data-event") || null;
+        if (!Number.isInteger(tableNr)) return;
+
+        if (!ensureEventActive(eventId)) {
+            return;
+        }
+
         ensureBucket(tableNr);
         const list = reservationsByTable[tableNr] || [];
         const idx = list.findIndex(r => r.id === id);
         if (idx < 0) return;
         const rec = list[idx];
+
+        setSelectedTableNr(tableNr);
 
         if (action === "edit") {
             if (rec.sold) return alert("Diese Buchung ist als verkauft markiert und kann nicht bearbeitet werden.");
@@ -211,12 +246,11 @@ function wire() {
         if (action === "move") {
             if (rec.sold) return alert("Diese Buchung ist als verkauft markiert und kann nicht verschoben werden.");
             closeModal();
-            setSelectedTableNr(tableNr);
             openMoveModal(tableNr, id);
         }
 
         if (action === "cart-remove") {
-            removeFromCart(tableNr, id);
+            removeFromCart(tableNr, id, eventId);
             renderReservationsForSelectedTable();
             renderCartTable();
         }

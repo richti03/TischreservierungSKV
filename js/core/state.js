@@ -300,13 +300,16 @@ export function noteToHtml(note) {
     return escapeHtml(normalizeWishNote(note)).replace(/\n/g, "<br>");
 }
 
-export function buildSplitInfoText(bookingId, currentTable) {
+export function buildSplitInfoText(bookingId, currentTable, sourceReservations = reservationsByTable) {
     if (!bookingId) return "";
+    const source = sourceReservations && typeof sourceReservations === "object"
+        ? sourceReservations
+        : reservationsByTable;
     const parts = [];
-    for (const key of Object.keys(reservationsByTable)) {
+    for (const key of Object.keys(source)) {
         const tableNr = parseInt(key, 10);
         if (!Number.isInteger(tableNr) || tableNr === currentTable) continue;
-        const arr = reservationsByTable[tableNr] || [];
+        const arr = source[tableNr] || [];
         for (const r of arr) {
             if (r.bookingId === bookingId) parts.push(`${tableLabel(tableNr)} (${r.cards})`);
         }

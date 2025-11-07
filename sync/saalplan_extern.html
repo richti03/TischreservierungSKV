@@ -9,6 +9,7 @@
       --line: #111;
       --muted: #666;
       --royal-blue: #4169E1;
+      --bg: #fff;
     }
 
     * {
@@ -18,36 +19,50 @@
     body {
       margin: 0;
       font-family: system-ui, sans-serif;
-      background: #fff;
+      background: var(--bg);
       color: #111;
     }
 
+    .app {
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 48px;
+      align-items: center;
+      background: var(--bg);
+    }
+
+    .event-block {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
     .frame {
-      height: 100%;
       border: 2px solid var(--line);
-      margin: 24px auto;
       padding: 8px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       background: #fff;
+      gap: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     }
 
     h1 {
-      margin: 0 0 8px 0;
+      margin: 0;
       text-align: center;
       font-size: 22px;
       letter-spacing: 0.5px;
     }
 
     .main-area {
-      flex: 1;
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       align-items: center;
       justify-content: center;
       gap: 40px;
-      margin-bottom: 10px;
     }
 
     .col {
@@ -56,6 +71,10 @@
       gap: 20px;
       align-items: center;
       justify-content: center;
+    }
+
+    .col--right {
+      flex-direction: column-reverse;
     }
 
     .parkett-wrapper {
@@ -128,7 +147,7 @@
     }
 
     .standing-area {
-      margin: 20px 40px 0;
+      margin: 0 40px 16px;
       padding: 0 0 16px 0;
       border: 2px solid var(--line);
       display: flex;
@@ -145,6 +164,7 @@
       font-size: 14px;
       text-align: center;
       letter-spacing: 0.5px;
+      margin: 12px 0 0;
     }
 
     .standing-grid {
@@ -172,7 +192,7 @@
       justify-content: space-between;
       align-items: flex-end;
       gap: 6px;
-      padding: 0 40px;
+      padding: 0 40px 12px;
     }
 
     .table {
@@ -236,26 +256,51 @@
     .side-right {
       right: -8px;
     }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 80px 16px;
+      border: 2px dashed rgba(65, 105, 225, 0.4);
+      border-radius: 16px;
+      background: rgba(65, 105, 225, 0.04);
+      text-align: center;
+      max-width: 520px;
+    }
+
+    .empty-state__logo {
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      border: 8px solid var(--royal-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      letter-spacing: 4px;
+      font-weight: 700;
+      color: var(--royal-blue);
+      background: #fff;
+    }
+
+    .empty-state__text {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: #1f2555;
+    }
   </style>
 </head>
 <body>
-<div class="frame">
-  <h1>Saalplan –  Sandersdorfer Karnevalsverein e.V.</h1>
-
-  <div class="main-area">
-    <div class="col" id="leftCol"></div>
-    <div class="parkett-wrapper">
-      <div class="parkett" id="parkett">
-        <div class="parkett-display" id="parkett-display">
-          <p class="parkett-placeholder">HERZLICH WILLKOMMEN</p>
-        </div>
-      </div>
-    </div>
-    <div class="col" id="rightCol"></div>
+<div class="app" id="app">
+  <div class="empty-state">
+    <div class="empty-state__logo">LOGO</div>
+    <p class="empty-state__text">Herzlich willkommen beim Sandersdorfer Karnevalsverein</p>
   </div>
-
-  <div class="bottom-row" id="bottomRow"></div>
-  <div class="standing-area" id="standing-area"></div>
 </div>
 
 <script>
@@ -265,28 +310,19 @@
   const MAX_SEEN_MESSAGES = 200;
   const ROYAL_BLUE = '#4169E1';
 
-  const leftCol = document.getElementById('leftCol');
-  const rightCol = document.getElementById('rightCol');
-  const bottomRow = document.getElementById('bottomRow');
-  const standingArea = document.getElementById('standing-area');
-  const frame = document.querySelector('.frame');
-  const parkettDisplay = document.getElementById('parkett-display');
-
-  const DEFAULT_STANDING_TOTAL = 76;
-
-  let standingLabelEl = null;
-  let standingGridEl = null;
-
   const TABLE_THICKNESS = 32;
   const PX_PER_SEAT = 7.5;
   const PARKETT_WIDTH = 260;
   const FRAME_EXTRA_WIDTH = 120;
+  const DEFAULT_STANDING_TOTAL = 76;
 
   const euroFormatter = new Intl.NumberFormat('de-DE', {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 2,
   });
+
+  const appRoot = document.getElementById('app');
 
   let channel = null;
   let storageListenerBound = false;
@@ -592,53 +628,9 @@
     }
   }
 
-  function setupStandingArea() {
-    if (!standingArea) return;
-
-    standingArea.innerHTML = '';
-
-    const label = document.createElement('p');
-    label.className = 'standing-label';
-    standingArea.appendChild(label);
-
-    const grid = document.createElement('div');
-    grid.className = 'standing-grid';
-    standingArea.appendChild(grid);
-
-    standingLabelEl = label;
-    standingGridEl = grid;
-
-    updateStandingInfo(null);
-  }
-
-  function updateStandingInfo(table) {
-    if (!standingArea) return;
-
-    const total = Math.max(parseInt(table?.total, 10) || DEFAULT_STANDING_TOTAL, 0);
-    const reserved = Math.max(parseInt(table?.reserved, 10) || 0, 0);
-    const labelText = `STEHPLÄTZE`;
-
-    if (standingLabelEl) {
-      standingLabelEl.textContent = labelText;
-    }
-
-    if (!standingGridEl) return;
-
-    const seatSource = table || { nr: 0, segments: [] };
-    const seats = expandSegmentsToSeats(seatSource, total);
-    clearChildren(standingGridEl);
-    seats.forEach(seat => {
-      const seatEl = document.createElement('div');
-      seatEl.className = 'standing-seat chair';
-      seatEl.dataset.tableNr = 0;
-      applySeatVisual(seatEl, seat);
-      standingGridEl.appendChild(seatEl);
-    });
-  }
-
-  function renderParkettDisplay(cart) {
-    if (!parkettDisplay) return;
-    clearChildren(parkettDisplay);
+  function createParkettDisplay(cart) {
+    const display = document.createElement('div');
+    display.className = 'parkett-display';
 
     const lines = Array.isArray(cart?.lines) ? cart.lines : [];
     const totalAmount = Number.isFinite(cart?.totalAmount) ? cart.totalAmount : 0;
@@ -647,8 +639,8 @@
       const placeholder = document.createElement('p');
       placeholder.className = 'parkett-placeholder';
       placeholder.textContent = 'HERZLICH WILLKOMMEN';
-      parkettDisplay.appendChild(placeholder);
-      return;
+      display.appendChild(placeholder);
+      return display;
     }
 
     lines.forEach(line => {
@@ -673,12 +665,12 @@
 
       row.appendChild(label);
       row.appendChild(amount);
-      parkettDisplay.appendChild(row);
+      display.appendChild(row);
     });
 
     const divider = document.createElement('div');
     divider.className = 'parkett-divider';
-    parkettDisplay.appendChild(divider);
+    display.appendChild(divider);
 
     const totalRow = document.createElement('div');
     totalRow.className = 'parkett-line parkett-total';
@@ -692,53 +684,134 @@
     totalAmountEl.textContent = euroFormatter.format(totalAmount);
     totalRow.appendChild(totalAmountEl);
 
-    parkettDisplay.appendChild(totalRow);
+    display.appendChild(totalRow);
+    return display;
   }
 
-  function renderPlan(payload) {
-    const tables = Array.isArray(payload?.tables) ? payload.tables : [];
+  function createStandingArea(table) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'standing-area';
+
+    const label = document.createElement('p');
+    label.className = 'standing-label';
+    label.textContent = 'STEHPLÄTZE';
+    wrapper.appendChild(label);
+
+    const grid = document.createElement('div');
+    grid.className = 'standing-grid';
+    wrapper.appendChild(grid);
+
+    const total = Math.max(parseInt(table?.total, 10) || DEFAULT_STANDING_TOTAL, 0);
+    const seatSource = table || { nr: 0, segments: [] };
+    const seats = expandSegmentsToSeats(seatSource, total);
+    seats.forEach(seat => {
+      const seatEl = document.createElement('div');
+      seatEl.className = 'standing-seat chair';
+      seatEl.dataset.tableNr = 0;
+      applySeatVisual(seatEl, seat);
+      grid.appendChild(seatEl);
+    });
+
+    return wrapper;
+  }
+
+  function createEventFrame(event) {
+    const tables = Array.isArray(event?.tables) ? event.tables : [];
     const leftTables = tables.filter(t => t.position === 'left').sort((a, b) => a.nr - b.nr);
     const rightTables = tables.filter(t => t.position === 'right').sort((a, b) => a.nr - b.nr);
     const bottomTables = tables.filter(t => !['left', 'right', 'standing'].includes(t.position)).sort((a, b) => a.nr - b.nr);
     const standingTable = tables.find(t => t.position === 'standing');
 
-    if (frame) {
-      const longestLeft = leftTables.length ? Math.max(...leftTables.map(getHorizontalLength)) : 0;
-      const longestRight = rightTables.length ? Math.max(...rightTables.map(getHorizontalLength)) : 0;
-      const computedWidth = longestLeft + longestRight + PARKETT_WIDTH + FRAME_EXTRA_WIDTH;
-      frame.style.width = computedWidth + 'px';
-    }
+    const frame = document.createElement('div');
+    frame.className = 'frame';
 
-    clearChildren(leftCol);
+    const name = event?.displayName || event?.name || '';
+    const title = document.createElement('h1');
+    title.textContent = name ? `Saalplan – ${name}` : 'Saalplan';
+    frame.appendChild(title);
+
+    const mainArea = document.createElement('div');
+    mainArea.className = 'main-area';
+
+    const leftCol = document.createElement('div');
+    leftCol.className = 'col';
     leftTables.forEach(cfg => {
       const el = makeTableEl(cfg, 'horizontal');
       if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
-      leftCol?.appendChild(el);
+      leftCol.appendChild(el);
     });
+    mainArea.appendChild(leftCol);
 
-    clearChildren(bottomRow);
+    const parkettWrapper = document.createElement('div');
+    parkettWrapper.className = 'parkett-wrapper';
+    const parkett = document.createElement('div');
+    parkett.className = 'parkett';
+    parkett.appendChild(createParkettDisplay(event?.cart));
+    parkettWrapper.appendChild(parkett);
+    mainArea.appendChild(parkettWrapper);
+
+    const rightCol = document.createElement('div');
+    rightCol.className = 'col col--right';
+    rightTables.forEach(cfg => {
+      const el = makeTableEl(cfg, 'horizontal');
+      if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+      rightCol.appendChild(el);
+    });
+    mainArea.appendChild(rightCol);
+
+    frame.appendChild(mainArea);
+
+    const bottomRow = document.createElement('div');
+    bottomRow.className = 'bottom-row';
     bottomTables.forEach(cfg => {
       const el = makeTableEl(cfg, 'vertical');
       if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
-      bottomRow?.appendChild(el);
+      bottomRow.appendChild(el);
     });
+    frame.appendChild(bottomRow);
 
-    clearChildren(rightCol);
-    if (rightCol) {
-      rightCol.style.display = 'flex';
-      rightCol.style.flexDirection = 'column-reverse';
-      rightTables.forEach(cfg => {
-        const el = makeTableEl(cfg, 'horizontal');
-        if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
-        rightCol.appendChild(el);
-      });
-    }
+    frame.appendChild(createStandingArea(standingTable));
 
-    updateStandingInfo(standingTable);
-    renderParkettDisplay(payload?.cart);
+    const longestLeft = leftTables.length ? Math.max(...leftTables.map(getHorizontalLength)) : 0;
+    const longestRight = rightTables.length ? Math.max(...rightTables.map(getHorizontalLength)) : 0;
+    const computedWidth = longestLeft + longestRight + PARKETT_WIDTH + FRAME_EXTRA_WIDTH;
+    frame.style.width = computedWidth + 'px';
+
+    return frame;
   }
 
-  setupStandingArea();
+  function createEmptyState() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'empty-state';
+    const logo = document.createElement('div');
+    logo.className = 'empty-state__logo';
+    logo.textContent = 'LOGO';
+    wrapper.appendChild(logo);
+    const text = document.createElement('p');
+    text.className = 'empty-state__text';
+    text.textContent = 'Herzlich willkommen beim Sandersdorfer Karnevalsverein';
+    wrapper.appendChild(text);
+    return wrapper;
+  }
+
+  function renderPlan(payload) {
+    if (!appRoot) return;
+    clearChildren(appRoot);
+    const events = Array.isArray(payload?.events) ? payload.events.filter(evt => Array.isArray(evt?.tables)) : [];
+
+    if (!events.length) {
+      appRoot.appendChild(createEmptyState());
+      return;
+    }
+
+    events.forEach(event => {
+      const section = document.createElement('section');
+      section.className = 'event-block';
+      section.appendChild(createEventFrame(event));
+      appRoot.appendChild(section);
+    });
+  }
+
   ensureChannel();
   sendMessage({ type: 'request_state' });
 </script>
