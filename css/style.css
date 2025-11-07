@@ -983,3 +983,31 @@ tfoot td{
 .table tr.is-in-cart td {
     background: transparent;
 }
+.cart-options {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.cart-options__label {
+    font-weight: 600;
+}
+
+.cart-options__select {
+    min-width: 150px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    font-size: 14px;
+    color: #0f172a;
+}
+
+.cart-options__hint {
+    margin: 0;
+    font-size: 12px;
+    color: #475569;
+    flex-basis: 100%;
+}

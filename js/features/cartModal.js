@@ -13,6 +13,7 @@ import { getActiveEvent, setActiveEvent } from "../core/events.js";
 import { getCartEntries, removeFromCart, markCartAsSold, onCartChange, calculateCartTotal, markCartDirty } from "./cart.js";
 import { printTischArray, renderReservationsForSelectedTable, setSelectedTableNr } from "../ui/tableView.js";
 import { openMoveModal } from "./modalMoveSwap.js";
+import { createInvoiceFromCart, getPaymentLabel } from "./invoices.js";
 
 const euroFormatter = new Intl.NumberFormat("de-DE", {
     style: "currency",
@@ -77,6 +78,14 @@ function ensureCartModal() {
           <div style="font-size:16px;">
             Gesamtpreis: <strong id="cart-summary-total">0,00 €</strong>
           </div>
+        </div>
+        <div class="cart-options" id="cart-options">
+          <label class="cart-options__label" for="cartPaymentMethod">Zahlart</label>
+          <select class="cart-options__select" id="cartPaymentMethod">
+            <option value="cash">Bar</option>
+            <option value="card">Karte</option>
+          </select>
+          <p class="cart-options__hint">Beim Verkauf wird automatisch eine Rechnung erstellt.</p>
         </div>
         <div class="table-wrap">
           <table class="table table--compact" id="cart-table" style="width:100%;">
@@ -153,6 +162,9 @@ function renderCartTable() {
 
     const sellBtn = modal.querySelector("#cartModalSell");
     if (sellBtn) sellBtn.disabled = entries.length === 0;
+
+    const paymentSelect = modal.querySelector("#cartPaymentMethod");
+    if (paymentSelect) paymentSelect.disabled = entries.length === 0;
 
     const countEl = modal.querySelector("#cart-summary-count");
     const emptyHint = modal.querySelector("#cart-summary-empty");
@@ -267,19 +279,30 @@ function wire() {
         }
     });
 
-    btnSell?.addEventListener("click", () => {
+    btnSell?.addEventListener("click", async () => {
         const entries = getCartEntries();
         if (entries.length === 0) return;
-        if (!confirm("Alle Reservierungen im Warenkorb als verkauft markieren?")) return;
-        const { sold, totalCards } = markCartAsSold();
-        printTischArray();
-        renderReservationsForSelectedTable();
-        renderCartTable();
-        if (sold > 0) {
-            const msg = sold === 1
-                ? `1 Reservierung mit insgesamt ${totalCards} Karten wurde als verkauft markiert.`
-                : `${sold} Reservierungen mit insgesamt ${totalCards} Karten wurden als verkauft markiert.`;
-            alert(msg);
+        if (!confirm("Alle Reservierungen im Warenkorb als verkauft markieren und Rechnung erstellen?")) return;
+
+        const paymentSelect = el.querySelector("#cartPaymentMethod");
+        const paymentMethod = paymentSelect?.value || "cash";
+
+        try {
+            const invoice = await createInvoiceFromCart(entries, { paymentMethod });
+            const { sold, totalCards } = markCartAsSold();
+            printTischArray();
+            renderReservationsForSelectedTable();
+            renderCartTable();
+            const paymentLabel = getPaymentLabel(paymentMethod);
+            if (sold > 0) {
+                const baseMsg = sold === 1
+                    ? `1 Reservierung mit insgesamt ${totalCards} Karten wurde als verkauft markiert.`
+                    : `${sold} Reservierungen mit insgesamt ${totalCards} Karten wurden als verkauft markiert.`;
+                alert(`${baseMsg}\nRechnung ${invoice.invoiceNumber} (${paymentLabel}) wurde erstellt.`);
+            }
+        } catch (err) {
+            console.error("[CART MODAL] Rechnung konnte nicht erstellt werden:", err);
+            alert(`Rechnung konnte nicht erstellt werden: ${err?.message || err}`);
         }
     });
 

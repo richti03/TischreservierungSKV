@@ -8,6 +8,8 @@ import { onReservationTableClick } from "./events/actions.js";
 import { openBookingSearchModal } from "./features/searchModal.js"; // optional
 import { setupInternalPlanSync, openInternalPlanTab} from "./features/internalPlanSync.js";
 import { setupExternalPlanSync, openExternalPlanTab } from "./features/externalPlanSync.js";
+import { setupCustomerDisplaySync, openCustomerDisplayTab, signalNextCustomer } from "./features/customerDisplaySync.js";
+import { downloadInvoicesZip } from "./features/invoices.js";
 import {
     getCardPriceValue,
     onCardPriceChange,
@@ -754,6 +756,9 @@ $("btn-import-res")        ?.addEventListener("click", importReservationsJSON);
 $("btn-search-bookings")   ?.addEventListener("click", () => openBookingSearchModal());
 $("btn-open-internal-plan")?.addEventListener("click", openInternalPlanTab);
 $("btn-open-external-plan")?.addEventListener("click", openExternalPlanTab);
+$("btn-open-customer-display")?.addEventListener("click", openCustomerDisplayTab);
+$("btn-download-invoices")?.addEventListener("click", downloadInvoicesZip);
+$("btn-next-customer")?.addEventListener("click", () => signalNextCustomer());
 
 // NEU: Tische automatisch hinzufügen/entfernen
 $("btn-add-table")      ?.addEventListener("click", tischHinzufuegen);
@@ -782,4 +787,5 @@ window.openBookingSearchModal = window.openBookingSearchModal || openBookingSear
 // Initiales Rendering
 setupInternalPlanSync();
 setupExternalPlanSync();
+setupCustomerDisplaySync();
 rerenderActiveEvent();
