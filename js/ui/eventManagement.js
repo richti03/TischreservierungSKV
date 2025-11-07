@@ -489,8 +489,6 @@ export function initializeEventManagement({ rerenderActiveEvent, logger = consol
         const hasEntries = entries.length > 0;
 
         if (eventStartCacheButton) {
-            eventStartCacheButton.hidden = !available;
-            eventStartCacheButton.disabled = !available;
             if (!available) {
                 eventStartCacheButton.title = "Browser-Cache nicht verfügbar";
             } else if (!hasEntries) {
