@@ -88,6 +88,17 @@
             border-radius: 6px;
             margin: 16px 0;
         }
+        .flow {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            margin: 24px 0;
+        }
+        .flow pre {
+            margin: 0;
+            overflow-x: auto;
+        }
         .steps {
             counter-reset: step;
             list-style: none;
@@ -146,198 +157,234 @@
 <body>
     <header>
         <h1>Tischreservierung · How-To</h1>
-        <p>Diese Seite beschreibt Schritt für Schritt, wie du das Reservierungstool des Sandersdorfer Karnevalsvereins im Arbeitsalltag einsetzt. Alle Funktionen aus dem Hauptwerkzeug sind dokumentiert – von der Veranstaltungsanlage über den Sitzplan bis zu Exporten, Synchronisationen und Rechnungen.</p>
+        <p>Diese Seite erklärt dir ganz leicht verständlich, wie du das Reservierungstool des Sandersdorfer Karnevalsvereins benutzt. Jeder Knopf und jeder Ablauf ist beschrieben. Bewahre die Seite gerne als Lesezeichen auf.</p>
     </header>
     <main>
         <nav aria-label="Inhaltsverzeichnis">
             <h2>Direkt zu …</h2>
             <ul>
-                <li><a href="#grundlagen">Grundlagen &amp; Aufbau</a></li>
-                <li><a href="#start">Erststart &amp; Veranstaltungen</a></li>
-                <li><a href="#einstellungen">Einstellungen &amp; Aktionen</a></li>
-                <li><a href="#sitzplan">Sitzplan &amp; Tischverwaltung</a></li>
-                <li><a href="#reservierungen">Reservierungen erfassen</a></li>
-                <li><a href="#daten">Datenexport &amp; Import</a></li>
-                <li><a href="#suche">Suche, Warenkorb &amp; Bearbeitung</a></li>
-                <li><a href="#sync">Synchronisation &amp; Zusatzansichten</a></li>
-                <li><a href="#verkauf">Verkauf &amp; Rechnungen</a></li>
-                <li><a href="#tipps">Tipps &amp; Troubleshooting</a></li>
+                <li><a href="#ueberblick">Kurzer Überblick</a></li>
+                <li><a href="#start">Startbildschirm</a></li>
+                <li><a href="#hauptbereich">Hauptbereich</a></li>
+                <li><a href="#einstellungen">Seitliches Menü</a></li>
+                <li><a href="#sitzplaetze">Sitzplätze und Tische</a></li>
+                <li><a href="#reservierungen">Reservierungen anlegen</a></li>
+                <li><a href="#warenkorb">Warenkorb &amp; Verkauf</a></li>
+                <li><a href="#extras">Zusatzansichten</a></li>
+                <li><a href="#speichern">Speichern &amp; Laden</a></li>
+                <li><a href="#rechnungen">Rechnungen</a></li>
+                <li><a href="#tipps">Hilfe &amp; Tipps</a></li>
             </ul>
         </nav>
 
-        <section id="grundlagen">
-            <h2>Grundlagen &amp; Aufbau</h2>
-            <p>Das Tool besteht aus einem Kopfbereich mit den wichtigsten Schaltern, einem flexiblen Einstellungsmenü (öffnet sich über das Zahnrad-Symbol) und dem Arbeitsbereich mit Tischliste und Reservierungstabelle. Über das Fragezeichen im Einstellungsmenü gelangst du jederzeit wieder auf diese Anleitung. Solange keine Veranstaltung aktiv ist, bleibt das Start-Overlay sichtbar.</p>
-            <div class="tip">
-                <strong>Barrierefreiheit:</strong> Sämtliche klickbaren Elemente im Tischbereich lassen sich auch per Tastatur steuern. Mit <kbd>Tab</kbd> navigierst du durch die Schaltflächen, <kbd>Enter</kbd> oder <kbd>Leertaste</kbd> wählen Tabellenzeilen und Tischkacheln aus.
+        <section id="ueberblick">
+            <h2>Kurzer Überblick</h2>
+            <p>Das Tool ist wie ein Schreibtisch aufgebaut: Oben findest du wichtige Schalter, links liegt ein aufklappbares Menü, in der Mitte siehst du die Tische und die Liste aller Reservierungen.</p>
+            <div class="flow" aria-label="Überblick als Ablaufplan">
+                <pre class="mermaid">flowchart LR
+    Start((Du)) -->|öffnet Tool| Kopfbereich[Obere Leiste]
+    Kopfbereich --> Einstellungen[Seitliches Menü öffnen]
+    Kopfbereich --> Sitzbereich[Tische anzeigen]
+    Sitzbereich --> Liste[Reservierungen bearbeiten]
+    Liste --> Warenkorb[Warenkorb öffnen]
+    Warenkorb --> Abschluss[Verkauf abschließen]
+</pre>
             </div>
+            <div class="tip">
+                <strong>Schnellhilfe:</strong> Klicke jederzeit auf das Fragezeichen im seitlichen Menü. Die Seite öffnet sich dann in einem neuen Tab.
+            </div>
+        </section>
+
+        <section id="start">
+            <h2>Startbildschirm</h2>
+            <p>Beim ersten Öffnen siehst du ein Fenster mit drei großen Knöpfen. Du brauchst eine Veranstaltung, um loszulegen.</p>
+            <ul>
+                <li><strong>„Neue Veranstaltung anlegen“:</strong> Beginnt komplett neu. Du vergibst Datum und Namen.</li>
+                <li><strong>„Veranstaltung importieren“:</strong> Lädt eine gespeicherte Datei von deinem Computer.</li>
+                <li><strong>„Aus Cache laden“:</strong> Stellt den letzten Stand wieder her, falls du ihn nicht gelöscht hast.</li>
+            </ul>
+            <p>Nach der Auswahl erscheint ein weiteres Fenster, in dem du Datum und Art der Veranstaltung einträgst. Klicke auf „Speichern“, um den Namen festzulegen.</p>
+            <div class="flow" aria-label="Ablauf Startbildschirm">
+                <pre class="mermaid">flowchart TD
+    A[Startbildschirm] --> B{Was möchtest du?}
+    B -->|Alles neu| C[Neue Veranstaltung]
+    B -->|Datei nutzen| D[Import wählen]
+    B -->|Letzten Stand| E[Aus Cache laden]
+    C --> F[Datum und Art eintragen]
+    D --> F
+    E --> G[Direkt weiterarbeiten]
+    F --> H[Speichern und starten]
+</pre>
+            </div>
+        </section>
+
+        <section id="hauptbereich">
+            <h2>Hauptbereich</h2>
+            <p>Oben in der Leiste siehst du den Vereinsnamen, daneben Reiter für laufende Veranstaltungen und rechts das Symbol für den Warenkorb.</p>
             <table>
                 <thead>
                     <tr>
-                        <th>Bereich</th>
-                        <th>Funktion</th>
+                        <th>Element</th>
+                        <th>Was passiert?</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>App-Header</td>
-                        <td>Veranstaltungstabs, Warenkorb, Schnellzugriffe auf Zusatzansichten</td>
+                        <td>Zahnrad</td>
+                        <td>Öffnet das seitliche Menü mit allen Einstellungen.</td>
                     </tr>
                     <tr>
-                        <td>Einstellungsmenü</td>
-                        <td>Eventverwaltung, Import/Export, Kartenpreis, Cache-Optionen</td>
+                        <td>Veranstaltungs-Reiter</td>
+                        <td>Wechselt zwischen geöffneten Veranstaltungen.</td>
                     </tr>
                     <tr>
-                        <td>Arbeitsbereich</td>
-                        <td>Tischauswahl, Reservierungstabelle, Aktionsknöpfe</td>
+                        <td>Plus-Zeichen neben den Reitern</td>
+                        <td>Legt neue Veranstaltungen an oder lädt eine vorhandene.</td>
+                    </tr>
+                    <tr>
+                        <td>Einkaufswagen</td>
+                        <td>Zeigt den Warenkorb. Das rote Abzeichen zeigt die Anzahl der Plätze.</td>
                     </tr>
                 </tbody>
             </table>
-        </section>
-
-        <section id="start">
-            <h2>Erststart &amp; Veranstaltungen</h2>
-            <h3>Erste Schritte</h3>
-            <ol class="steps">
-                <li>Öffne <code>index.html</code> im Browser oder starte einen lokalen Webserver (z. B. <code>npx serve</code> im Projektverzeichnis).</li>
-                <li>Nutze das Start-Overlay, um<br>• <strong>Neue Veranstaltung anlegen</strong> – öffnet den Dialog zur Datums- &amp; Typwahl.<br>• <strong>Veranstaltung importieren</strong> – wählt direkt eine JSON-Datei und erzeugt daraus einen neuen Tab.<br>• <strong>Aus Cache laden</strong> – zeigt gespeicherte Browser-Snapshots und stellt sie mit einem Klick wieder her.</li>
-                <li>Beim Anlegen fragt der Dialog nach Datum und Veranstaltungsart. Der vorgeschlagene Dateiname folgt dem Muster <code>YYYY-MM-DD_TYP.json</code>. Bestätige mit <em>Anlegen</em>.</li>
-            </ol>
-            <h3>Veranstaltungen verwalten</h3>
-            <ul>
-                <li>Die Tabs erscheinen doppelt: im Kopfbereich und im Einstellungsmenü. Ein Klick wechselt die Veranstaltung.</li>
-                <li>Doppelklick auf einen Tab oder der Button <em>Namen ändern</em> öffnet den Umbenennungsdialog mit Datum &amp; Typ.</li>
-                <li><em>Anzeigenamen ändern</em> steuert den externen Titel (z. B. für Sync-Ansichten).</li>
-                <li><em>Veranstaltung entfernen</em> löscht den aktiven Tab samt Reservierungen nach Bestätigung.</li>
-                <li>Das Plus-Symbol blendet ein Menü ein:<br>• <em>Neue Veranstaltung anlegen</em><br>• <em>Veranstaltung importieren</em> (Import direkt nach dem Anlegen)<br>• <em>Aus Cache laden</em> (übernimmt gespeicherte Stände)</li>
-                <li>Der Cache kann aus dem Start-Overlay oder über den Button <em>Veranstaltung aus Cache entfernen</em> bereinigt werden.</li>
-            </ul>
+            <p>Unter der Leiste findest du zwei Bereiche: links eine Kachelübersicht mit allen Tischen, rechts die Liste aller Reservierungen.</p>
         </section>
 
         <section id="einstellungen">
-            <h2>Einstellungen &amp; Aktionen</h2>
-            <p>Das Zahnrad-Symbol öffnet das Einstellungsmenü. Es bleibt fokussierbar und lässt sich mit <kbd>Esc</kbd> wieder schließen.</p>
+            <h2>Seitliches Menü</h2>
+            <p>Das Menü öffnest du über das Zahnrad. Es besteht aus drei Teilen: Veranstaltungen, Aktionen und Werte.</p>
+            <h3>Veranstaltungen verwalten</h3>
             <ul>
-                <li><strong>Hilfebutton (? Symbol):</strong> Öffnet diese How-To-Seite in einem neuen Tab.</li>
-                <li><strong>Sitzplätze exportieren (JSON):</strong> Speichert den aktuellen Saalplan inklusive Positionen und Gang-Informationen.</li>
-                <li><strong>Sitzplätze importieren:</strong> Lädt eine zuvor exportierte Tischkonfiguration. Bestehende Tische werden ersetzt.</li>
-                <li><strong>Reservierungen exportieren (JSON):</strong> Erstellt eine Datei mit allen Reservierungen, Preisen und Rechnungsdaten.</li>
-                <li><strong>Reservierungen importieren:</strong> Importiert komplette Veranstaltungssnapshots. Nach erfolgreichem Import wird automatisch neu gerendert.</li>
-                <li><strong>Veranstaltung aus Cache entfernen:</strong> Löscht den Browser-Zwischenspeicher für den aktiven Tab.</li>
+                <li><strong>„-” (Minus):</strong> Entfernt den aktuell geöffneten Reiter nach einer Sicherheitsfrage.</li>
+                <li><strong>„+” (Plus):</strong> Öffnet ein kleines Auswahlfeld mit drei Punkten (neu, importieren, aus Cache laden).</li>
+                <li><strong>Fragezeichen:</strong> Öffnet diese Anleitung in einem neuen Tab.</li>
+                <li><strong>„×“:</strong> Schließt das Menü.</li>
             </ul>
-            <h3>Werte bearbeiten</h3>
+            <h3>Aktionen</h3>
+            <p>Hier findest du Knöpfe zum Speichern und Wiederherstellen. Die Dateien haben die Endung „.json“. Du musst den Begriff nicht verstehen – merke dir nur, dass du genau diese Datei beim Laden wieder auswählst.</p>
             <ul>
-                <li><strong>Kartenpreis bearbeiten:</strong> Stiftsymbol anklicken, neuen Preis (z. B. <code>22</code> oder <code>22,00</code>) eingeben. Der Betrag wird automatisch formatiert.</li>
-                <li><strong>Veranstaltungsname:</strong> Zeigt den Dateinamen. Über <em>Namen ändern</em> lässt er sich anpassen.</li>
-                <li><strong>Anzeigename (extern):</strong> Frei wählbarer Titel für Sync-Tabs und Rechnungen.</li>
+                <li><strong>„Sitzplätze exportieren (JSON)“:</strong> Speichert alle Tische samt Sitzordnung als Datei auf deinem Rechner.</li>
+                <li><strong>„Sitzplätze importieren“:</strong> Lädt eine zuvor gespeicherte Sitzplatz-Datei.</li>
+                <li><strong>„Reservierungen exportieren (JSON)“:</strong> Speichert alle Namen, Plätze und Notizen.</li>
+                <li><strong>„Reservierungen importieren“:</strong> Lädt die gespeicherten Einträge wieder ein.</li>
+                <li><strong>„Veranstaltung aus Cache entfernen“:</strong> Löscht den zuletzt gemerkten Stand. Nutze das nur, wenn du wirklich neu anfangen möchtest.</li>
+            </ul>
+            <h3>Werte</h3>
+            <ul>
+                <li><strong>Kartenpreis:</strong> Zeigt den aktuellen Betrag pro Platz. Über den Stift passt du den Preis an.</li>
+                <li><strong>Veranstaltungsname:</strong> Zeigt den Dateinamen. Mit „Namen ändern“ passt du ihn an.</li>
+                <li><strong>Anzeigename (extern):</strong> Text, der für Gäste sichtbar sein kann. Mit „Anzeigenamen ändern“ passt du ihn an.</li>
             </ul>
         </section>
 
-        <section id="sitzplan">
-            <h2>Sitzplan &amp; Tischauswahl</h2>
-            <p>Die linke Tischübersicht listet alle verfügbaren Tische inklusive verbleibender Plätze. Ein Klick (oder <kbd>Enter</kbd> / <kbd>Leertaste</kbd>) markiert den Tisch und zeigt rechts alle Reservierungen.</p>
-            <div class="tip">
-                <strong>Schneller Wechsel:</strong> Das Dropdown <em>Bitte Tisch auswählen</em> synchronisiert sich mit den Tischkacheln. Änderungen lösen automatisch ein UI-Update aus.</div>
-            <h3>Tische anpassen</h3>
+        <section id="sitzplaetze">
+            <h2>Sitzplätze und Tische</h2>
+            <p>Die Kacheln zeigen jeden Tisch. Farben helfen beim Überblick: frei, teilweise belegt oder komplett belegt.</p>
+            <div class="flow" aria-label="Sitzplatz-Ablauf">
+                <pre class="mermaid">flowchart LR
+    Tischkachel -->|anklicken| Optionen{{Was möchtest du tun?}}
+    Optionen -->|Reservierung ansehen| Übersicht
+    Optionen -->|Reservierung hinzufügen| Eingabe
+    Eingabe --> Tischkachel
+</pre>
+            </div>
             <ul>
-                <li><strong>Sitzplatzanzahl ändern:</strong> Öffnet das Modal „Tische &amp; Sitzplätze bearbeiten“. Hier kannst du pro Tisch Kapazität, Position (links/mittig/rechts/stehend) und angrenzenden Gang festlegen.</li>
-                <li><strong>Tisch hinzufügen:</strong> Innerhalb des Modals fügt der Button automatisch die nächste freie Tischnummer mit Standardplätzen hinzu.</li>
-                <li><strong>Tisch entfernen:</strong> Entfernt den höchsten Tisch. Bei vorhandenen Reservierungen erscheint eine Sicherheitsabfrage.</li>
-                <li><strong>Speichern:</strong> Übernimmt alle Änderungen sofort, aktualisiert die Tischauswahl und synchronisiert Zusatzansichten.</li>
+                <li>Klicke eine Kachel an, um Details zu sehen.</li>
+                <li>Mit Tabulator und Eingabetaste kannst du auch per Tastatur navigieren.</li>
+                <li>Leere Plätze siehst du auf einen Blick am hellen Farbton.</li>
             </ul>
         </section>
 
         <section id="reservierungen">
-            <h2>Reservierungen erfassen</h2>
-            <h3>Standard-Buchung</h3>
+            <h2>Reservierungen anlegen</h2>
+            <p>Rechts in der Liste legst du neue Einträge an oder bearbeitest bestehende.</p>
             <ol class="steps">
-                <li>Klicke auf <em>Reservierung berechnen</em>.</li>
-                <li>Gib Name, Kartenanzahl und optional einen Tischwunsch an.</li>
-                <li>Das System sucht automatisch passende freie Plätze, verteilt ggf. auf mehrere Tische, und markiert die betroffenen Tische.</li>
-                <li>Im Anschluss erscheint eine Zusammenfassung sowie die aktualisierte Reservierungsliste.</li>
+                <li>Klicke unten in der Liste auf „Reservierung hinzufügen“.</li>
+                <li>Trage Name, Anzahl der Personen, Wunsch-Tisch und Notizen ein.</li>
+                <li>Speichere den Eintrag. Der Platz erscheint nun farbig im Tischbereich.</li>
             </ol>
-            <h3>Nachträgliche Bearbeitung</h3>
+            <p>Jede Zeile besitzt kleine Knöpfe:</p>
             <ul>
-                <li><strong>Bearbeiten:</strong> Stiftsymbol anklicken, neue Kartenanzahl eingeben. Das System prüft automatisch, ob noch Plätze frei sind.</li>
-                <li><strong>Notiz hinzufügen:</strong> Sprechblasen-Symbol verwenden, um Hinweise wie Allergien oder Zahlungsstatus zu hinterlegen.</li>
-                <li><strong>Verschieben / Tauschen:</strong> Pfeil-Symbol öffnet das Modal zum Verschieben oder Tauschen. Es zeigt Quellen- und Zieltabellen mit frei wählbarer Kartenanzahl.</li>
-                <li><strong>In den Warenkorb:</strong> Einkaufswagen-Symbol legt die Reservierung für den Verkauf bereit.</li>
-                <li><strong>Als verkauft markieren:</strong> Häkchen-Symbol kennzeichnet die Reservierung als abgeschlossen (ohne Warenkorb).</li>
-                <li><strong>Verkauf zurücksetzen:</strong> Rückgängig-Symbol hebt den Verkauf wieder auf.</li>
-                <li><strong>Aus dem Warenkorb entfernen:</strong> Durchgestrichenes Einkaufswagen-Symbol entfernt die Reservierung aus dem aktuellen Verkauf.</li>
-                <li><strong>Löschen:</strong> Das Papierkorb-Symbol entfernt Einträge und gibt Plätze wieder frei.</li>
-            </ul>
-            <p>Alle Aktionen aktualisieren sofort den lokalen Datenbestand und markieren die Veranstaltung als „dirty“, wodurch Exporte und Synchronisationen erkennen, dass neue Daten vorliegen.</p>
-        </section>
-
-        <section id="daten">
-            <h2>Datenexport &amp; Import</h2>
-            <ul>
-                <li><strong>Sitzplätze exportieren (JSON):</strong> Sichere vor Umbauten den Saalplan, um ihn später wiederherzustellen.</li>
-                <li><strong>Sitzplätze importieren:</strong> Ideal, wenn unterschiedliche Saalpläne (z. B. Fasching vs. Narrengipfel) genutzt werden.</li>
-                <li><strong>Reservierungen exportieren (JSON):</strong> Vollständiges Backup inklusive Kartenpreis, Rechnungen, Notizen und Split-Informationen.</li>
-                <li><strong>Reservierungen importieren:</strong> Stellt komplette Veranstaltungen wieder her. Nach dem Import erscheinen alle Daten inklusive Warenkorb- &amp; Verkaufsstatus.</li>
-                <li><strong>Cache-Tipps:</strong> Nutze den Browser-Cache für schnelle Zwischenstände, exportiere aber zusätzlich regelmäßig JSON-Dateien.</li>
-            </ul>
-        </section>
-
-        <section id="suche">
-            <h2>Suche, Warenkorb &amp; Bearbeitung</h2>
-            <p>Der Button <strong>Buchungen suchen</strong> öffnet eine filterbare Liste über alle Veranstaltungen.</p>
-            <ul>
-                <li>Suche nach Namen oder Booking-ID. Optional lässt sich die Veranstaltung eingrenzen.</li>
-                <li>Jede Zeile bietet dieselben Aktionen wie die Reservierungstabelle (Bearbeiten, Verschieben, Warenkorb, Verkauf zurücknehmen, Löschen).</li>
-                <li>Über die Warenkorbsymbole können Reservierungen auch veranstaltungsübergreifend in den Verkauf übernommen werden.</li>
-            </ul>
-            <p>Der Warenkorb-Button im Kopfbereich zeigt die Anzahl der ausgewählten Reservierungen. Ein Klick öffnet das Verkaufsmodal.</p>
-            <ul>
-                <li>Innerhalb des Warenkorbs können Reservierungen erneut bearbeitet, verschoben, gelöscht oder aus dem Warenkorb entfernt werden.</li>
-                <li>Die Gesamtsumme berechnet sich automatisch aus Kartenanzahl &times; Kartenpreis.</li>
-                <li>Mit <strong>Verkauf abschließen</strong> startest du den Zahlungsablauf.</li>
-            </ul>
-        </section>
-
-        <section id="sync">
-            <h2>Synchronisation &amp; Zusatzansichten</h2>
-            <p>Das System nutzt <code>BroadcastChannel</code> und einen lokalen Speicher-Fallback, um Daten mit weiteren Browser-Tabs zu teilen. Die folgenden Buttons öffnen Spezialansichten in neuen Tabs. Halte diese Seiten parallel offen, um Live-Updates zu erhalten.</p>
-            <ul>
-                <li><strong>Internen Saalplan öffnen:</strong> Detailansicht für das Team mit Farbmarkierungen, verbleibenden Plätzen, Notizen und Split-Hinweisen.</li>
-                <li><strong>Externen Saalplan öffnen:</strong> Öffentlich nutzbare Übersicht mit Fokus auf freie Plätze und Anzeigenamen.</li>
-                <li><strong>Kundendisplay öffnen:</strong> Kundenansicht mit Fortschrittsleiste, QR-Code zum Rechnungsdownload und Statusmeldungen. Der Button <em>Nächster Kunde</em> im Abschlussmodal setzt die Anzeige zurück.</li>
+                <li><strong>Stift:</strong> Öffnet die Bearbeitung.</li>
+                <li><strong>Mülleimer:</strong> Löscht den Eintrag nach einer Nachfrage.</li>
+                <li><strong>Häkchen:</strong> Markiert den Eintrag als verkauft und legt ihn in den Warenkorb.</li>
             </ul>
             <div class="tip">
-                <strong>Synchronität:</strong> Solange alle Tabs im selben Browser laufen, werden Änderungen nahezu in Echtzeit gespiegelt. Der LocalStorage-Fallback greift automatisch, wenn <code>BroadcastChannel</code> nicht verfügbar ist.</div>
+                <strong>Schnellsuche:</strong> Über das Suchfeld filterst du nach Namen. So findest du Reservierungen sofort wieder.
+            </div>
         </section>
 
-        <section id="verkauf">
-            <h2>Verkauf &amp; Rechnungen</h2>
-            <ol class="steps">
-                <li>Öffne den Warenkorb und kontrolliere die ausgewählten Reservierungen.</li>
-                <li>Klicke auf <strong>Verkauf abschließen</strong>. Wähle anschließend im Zahlungsdialog <em>Barzahlung</em> oder <em>Kartenzahlung</em>.</li>
-                <li>Nach Bestätigung erstellt das System automatisch Rechnungs-PDFs, markiert die Reservierungen als verkauft und zeigt das Abschlussmodal.</li>
-            </ol>
+        <section id="warenkorb">
+            <h2>Warenkorb &amp; Verkauf</h2>
+            <p>Der Warenkorb sammelt alle Einträge, die du verkaufen oder abrechnen möchtest.</p>
             <ul>
-                <li><strong>Rechnung herunterladen:</strong> Der Button im Abschlussmodal lädt das PDF der zuletzt abgeschlossenen Bestellung.</li>
-                <li><strong>Nächster Kunde:</strong> Schließt alle Modale, setzt das Kundendisplay zurück und startet den nächsten Verkaufsvorgang.</li>
-                <li><strong>Rechnungen als ZIP herunterladen:</strong> Der separate Button auf der Startseite sammelt alle vorhandenen Rechnungen in einer ZIP-Datei.</li>
-                <li><strong>Verkauf rückgängig:</strong> Über die Aktionen „Verkauf zurücksetzen“ in Tabelle, Suche oder Warenkorb lassen sich Verkäufe wieder öffnen.</li>
+                <li>Öffne ihn über das Einkaufswagen-Symbol.</li>
+                <li>Prüfe die Liste. Du kannst einzelne Einträge wieder entfernen.</li>
+                <li>Klicke auf „Verkauf abschließen“, um die Plätze fest zu buchen.</li>
             </ul>
+            <div class="flow" aria-label="Verkaufsablauf">
+                <pre class="mermaid">flowchart TD
+    A[Reservierung markieren] --> B[Warenkorb öffnen]
+    B --> C{Alles korrekt?}
+    C -->|Nein| D[Einträge anpassen]
+    C -->|Ja| E[Verkauf abschließen]
+    E --> F[Quittung oder Rechnung erstellen]
+</pre>
+            </div>
+        </section>
+
+        <section id="extras">
+            <h2>Zusatzansichten</h2>
+            <p>Oben in der Leiste findest du weitere kleine Symbole. Sie helfen beim Überblick.</p>
+            <ul>
+                <li><strong>Pfeile-Symbol (Abgleich):</strong> Zeigt dir, ob Daten gerade mit anderen Geräten abgeglichen werden.</li>
+                <li><strong>Listen-Symbol:</strong> Öffnet eine Ansicht mit freien Plätzen oder offenen Zahlungen.</li>
+                <li><strong>Verschiebe-Symbol:</strong> Hier kannst du Personen mit der Maus auf andere Tische ziehen.</li>
+            </ul>
+            <p>Jede Zusatzansicht lässt sich mit einem Klick öffnen und über das Kreuz wieder schließen.</p>
+        </section>
+
+        <section id="speichern">
+            <h2>Speichern &amp; Laden</h2>
+            <p>Damit nichts verloren geht, solltest du regelmäßig Dateien sichern.</p>
+            <ol class="steps">
+                <li>Öffne das seitliche Menü.</li>
+                <li>Klicke auf den gewünschten Export-Knopf.</li>
+                <li>Wähle einen Speicherort auf deinem Rechner.</li>
+            </ol>
+            <p>Zum Laden gehst du genauso vor, nur mit den Import-Knöpfen. Die Dateien erkennst du an der Endung „.json“.</p>
+            <div class="tip">
+                <strong>Merke:</strong> Speichere vor großen Änderungen immer eine Kopie. So kannst du schnell zurückwechseln, falls etwas schiefgeht.
+            </div>
+        </section>
+
+        <section id="rechnungen">
+            <h2>Rechnungen</h2>
+            <p>Nach dem Verkauf kannst du Rechnungen erstellen.</p>
+            <ul>
+                <li>Markiere die gewünschten Einträge im Warenkorb.</li>
+                <li>Klicke auf „Rechnung erstellen“.</li>
+                <li>Eine neue Seite mit der Rechnung öffnet sich. Drucke oder speichere sie als PDF.</li>
+            </ul>
+            <p>Die Rechnungsansicht zeigt dir Betrag, Datum und alle Plätze, die zur Rechnung gehören.</p>
         </section>
 
         <section id="tipps">
-            <h2>Tipps &amp; Troubleshooting</h2>
+            <h2>Hilfe &amp; Tipps</h2>
             <ul>
-                <li><strong>Browser-Cache leeren:</strong> Bei Anzeigeproblemen die Funktion „Veranstaltung aus Cache entfernen“ nutzen oder den Browser-Cache komplett leeren.</li>
-                <li><strong>Backup-Strategie:</strong> Nach jedem Verkaufstag sowohl Sitzplätze als auch Reservierungen exportieren. So kannst du den Stand jederzeit rekonstruieren.</li>
-                <li><strong>Fehlende BroadcastChannel-Unterstützung:</strong> Ältere Browser synchronisieren ausschließlich über LocalStorage. In diesem Fall Tabs kurz neu laden.</li>
-                <li><strong>Importfehler:</strong> Prüfe, ob die JSON-Datei die Felder <code>tisch</code> und <code>reservationsByTable</code> enthält und nicht manuell verändert wurde.</li>
-                <li><strong>Rechnung fehlt:</strong> Stelle sicher, dass der Verkauf über den Warenkorb abgeschlossen und eine Zahlungsart gewählt wurde.</li>
-                <li><strong>Kundendisplay reagiert nicht:</strong> Betätige <em>Nächster Kunde</em> und lade die Anzeige bei Bedarf neu.</li>
+                <li><strong>Speichere regelmäßig:</strong> Nutze nach jeder größeren Änderung einen Export.</li>
+                <li><strong>Nutze Farben:</strong> Grüne Tische sind frei, gelbe teilweise belegt, rote ausgebucht.</li>
+                <li><strong>Teste im Team:</strong> Mehrere Geräte können dieselbe Datei nutzen, solange ihr euch absprecht.</li>
+                <li><strong>Bei Fragen:</strong> Wende dich an das Organisationsteam oder schreib eine kurze Notiz in die Reservierung.</li>
             </ul>
         </section>
     </main>
     <footer>
-        Stand: <time datetime="2024-06-15">Juni 2024</time> · Für Rückfragen bitte an das Entwicklerteam oder den Technikverantwortlichen wenden.
+        <p>Stand: <time datetime="2024-01-01">Januar 2024</time> · Diese Anleitung wird bei Änderungen am Tool aktualisiert.</p>
     </footer>
+    <script type="module">
+        import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+        mermaid.initialize({ startOnLoad: true, theme: "neutral" });
+    </script>
 </body>
 </html>
