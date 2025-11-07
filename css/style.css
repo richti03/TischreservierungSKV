@@ -187,6 +187,39 @@ button:hover {
     gap: 12px;
 }
 
+.settings-panel__header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-panel__help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.settings-panel__help:hover,
+.settings-panel__help:focus {
+    background: #cbd5f5;
+    color: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.settings-panel__help:focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: 2px;
+}
+
 .settings-panel__header h3 {
     margin: 0;
     font-size: 20px;

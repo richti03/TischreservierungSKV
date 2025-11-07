@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How-To · Tischreservierung</title>
+    <link rel="icon" href="img/SKV-Wappen.jpg">
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f8fafc;
+            color: #0f172a;
+            line-height: 1.6;
+        }
+
+        header {
+            background: royalblue;
+            color: #fff;
+            padding: 32px 24px 24px;
+        }
+
+        header h1 {
+            margin: 0 0 12px;
+            font-size: clamp(28px, 3vw, 42px);
+        }
+
+        header p {
+            margin: 0;
+            max-width: 720px;
+        }
+
+        main {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 32px 24px 64px;
+        }
+
+        nav {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+            margin-bottom: 32px;
+        }
+
+        nav h2 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        nav ul {
+            margin: 0;
+            padding-left: 20px;
+            columns: 2;
+            gap: 24px;
+            list-style: none;
+        }
+
+        nav li::before {
+            content: "›";
+            color: royalblue;
+            margin-right: 6px;
+        }
+
+        nav li {
+            break-inside: avoid;
+            margin-bottom: 8px;
+        }
+
+        nav a {
+            color: royalblue;
+            text-decoration: none;
+        }
+
+        nav a:hover,
+        nav a:focus {
+            text-decoration: underline;
+        }
+
+        section {
+            margin-bottom: 48px;
+        }
+
+        section h2 {
+            font-size: 26px;
+            margin-bottom: 16px;
+        }
+
+        section h3 {
+            font-size: 20px;
+            margin-top: 28px;
+        }
+
+        .tip {
+            background: #e0f2fe;
+            border-left: 4px solid #0284c7;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin: 16px 0;
+        }
+
+        .flow {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            margin: 24px 0;
+        }
+
+        .flow pre {
+            margin: 0;
+            overflow-x: auto;
+        }
+
+        .steps {
+            counter-reset: step;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .steps li {
+            counter-increment: step;
+            margin-bottom: 18px;
+            position: relative;
+            padding-left: 42px;
+        }
+
+        .steps li::before {
+            content: counter(step);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: royalblue;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        th, td {
+            border: 1px solid #cbd5f5;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #e0e7ff;
+        }
+
+        footer {
+            border-top: 1px solid #cbd5f5;
+            padding: 24px;
+            text-align: center;
+            color: #334155;
+        }
+
+        @media (max-width: 720px) {
+            nav ul {
+                columns: 1;
+            }
+
+            .steps li {
+                padding-left: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Tischreservierung · How-To</h1>
+    <p>Diese Seite erklärt dir ganz leicht verständlich, wie du das Reservierungstool des Sandersdorfer Karnevalsvereins
+        benutzt. Jeder Knopf und jeder Ablauf ist beschrieben. Bewahre die Seite gerne als Lesezeichen auf.</p>
+</header>
+<main>
+    <nav aria-label="Inhaltsverzeichnis">
+        <h2>Direkt zu …</h2>
+        <ul>
+            <li><a href="#ueberblick">Kurzer Überblick</a></li>
+            <li><a href="#start">Startbildschirm</a></li>
+            <li><a href="#hauptbereich">Hauptbereich</a></li>
+            <li><a href="#einstellungen">Seitliches Menü</a></li>
+            <li><a href="#sitzplaetze">Sitzplätze und Tische</a></li>
+            <li><a href="#reservierungen">Reservierungen anlegen</a></li>
+            <li><a href="#verschieben">Reservierungen verschieben &amp; tauschen</a></li>
+            <li><a href="#warenkorb">Warenkorb &amp; Verkauf</a></li>
+            <li><a href="#extras">Zusatzansichten</a></li>
+            <li><a href="#speichern">Speichern &amp; Laden</a></li>
+            <li><a href="#rechnungen">Rechnungen</a></li>
+            <li><a href="#tipps">Hilfe &amp; Tipps</a></li>
+        </ul>
+    </nav>
+
+    <section id="ueberblick">
+        <h2>Kurzer Überblick</h2>
+        <p>Das Tool ist wie ein Schreibtisch aufgebaut: Oben findest du wichtige Schalter, links liegt ein aufklappbares
+            Menü, in der Mitte siehst du die Tische und die Liste aller Reservierungen.</p>
+        <div class="flow" aria-label="Überblick als Ablaufplan">
+                <pre class="mermaid">flowchart LR
+    Start((Du)) -->|öffnet Tool| Kopfbereich[Obere Leiste]
+    Kopfbereich --> Einstellungen[Seitliches Menü öffnen]
+    Kopfbereich --> Sitzbereich[Tische anzeigen]
+    Sitzbereich --> Liste[Reservierungen bearbeiten]
+    Liste --> Warenkorb[Warenkorb öffnen]
+    Warenkorb --> Abschluss[Verkauf abschließen]
+</pre>
+        </div>
+        <div class="tip">
+            <strong>Schnellhilfe:</strong> Klicke jederzeit auf das Fragezeichen im seitlichen Menü. Die Seite öffnet
+            sich dann in einem neuen Tab.
+        </div>
+    </section>
+
+    <section id="start">
+        <h2>Startbildschirm</h2>
+        <p>Beim ersten Öffnen siehst du ein Fenster mit drei großen Knöpfen. Du brauchst eine Veranstaltung, um
+            loszulegen.</p>
+        <ul>
+            <li><strong>„Neue Veranstaltung anlegen“:</strong> Beginnt komplett neu. Du vergibst Datum und Namen.</li>
+            <li><strong>„Veranstaltung importieren“:</strong> Lädt eine gespeicherte Datei von deinem Computer.</li>
+            <li><strong>„Aus Cache laden“:</strong> Stellt den letzten Stand wieder her, falls du ihn nicht gelöscht
+                hast.
+            </li>
+        </ul>
+        <p>Nach der Auswahl erscheint ein weiteres Fenster, in dem du Datum und Art der Veranstaltung einträgst. Klicke
+            auf „Speichern“, um den Namen festzulegen.</p>
+        <div class="flow" aria-label="Ablauf Startbildschirm">
+                <pre class="mermaid">flowchart TD
+    A[Startbildschirm] --> B{Was möchtest du?}
+    B -->|Alles neu| C[Neue Veranstaltung]
+    B -->|Datei nutzen| D[Import wählen]
+    B -->|Letzten Stand| E[Aus Cache laden]
+    C --> F[Datum und Art eintragen]
+    D --> H[Los geht´s]
+    E --> G[Direkt weiterarbeiten]
+    F --> H
+</pre>
+        </div>
+    </section>
+
+    <section id="hauptbereich">
+        <h2>Hauptbereich</h2>
+        <p>Oben in der Leiste siehst du den Vereinsnamen, daneben Reiter für laufende Veranstaltungen und rechts das
+            Symbol für den Warenkorb.</p>
+        <table>
+            <thead>
+            <tr>
+                <th>Element</th>
+                <th>Was passiert?</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Zahnrad</td>
+                <td>Öffnet das seitliche Menü mit allen Einstellungen.</td>
+            </tr>
+            <tr>
+                <td>Veranstaltungs-Reiter</td>
+                <td>Wechselt zwischen geöffneten Veranstaltungen.</td>
+            </tr>
+            <tr>
+                <td>Plus-Zeichen neben den Reitern</td>
+                <td>Legt neue Veranstaltungen an oder lädt eine vorhandene.</td>
+            </tr>
+            <tr>
+                <td>Einkaufswagen</td>
+                <td>Zeigt den Warenkorb. Das rote Abzeichen zeigt die Anzahl der Plätze.</td>
+            </tr>
+            </tbody>
+        </table>
+        <p>Unter der Leiste findest du zwei Bereiche: links eine Kachelübersicht mit allen Tischen, rechts die Liste
+            aller Reservierungen.</p>
+    </section>
+
+    <section id="einstellungen">
+        <h2>Seitliches Menü</h2>
+        <p>Das Menü öffnest du über das Zahnrad. Es besteht aus drei Teilen: Veranstaltungen, Aktionen und Werte.</p>
+        <h3>Veranstaltungen verwalten</h3>
+        <ul>
+            <li><strong>„-” (Minus):</strong> Entfernt den aktuell geöffneten Reiter nach einer Sicherheitsfrage.</li>
+            <li><strong>„+” (Plus):</strong> Öffnet ein kleines Auswahlfeld mit drei Punkten (neu, importieren, aus
+                Cache laden).
+            </li>
+            <li><strong>Fragezeichen:</strong> Öffnet diese Anleitung in einem neuen Tab.</li>
+            <li><strong>„×“:</strong> Schließt das Menü.</li>
+        </ul>
+        <h3>Aktionen</h3>
+        <p>Hier findest du Knöpfe zum Speichern und Wiederherstellen. Die Dateien haben die Endung „.json“. Du musst den
+            Begriff nicht verstehen – merke dir nur, dass du genau diese Datei beim Laden wieder auswählst.</p>
+        <ul>
+            <li><strong>„Sitzplätze exportieren (JSON)“:</strong> Speichert alle Tische samt Sitzordnung als Datei auf
+                deinem Rechner.
+            </li>
+            <li><strong>„Sitzplätze importieren“:</strong> Lädt eine zuvor gespeicherte Sitzplatz-Datei.</li>
+            <li><strong>„Reservierungen exportieren (JSON)“:</strong> Speichert alle Namen, Plätze und Notizen.</li>
+            <li><strong>„Reservierungen importieren“:</strong> Lädt die gespeicherten Einträge wieder ein.</li>
+            <li><strong>„Veranstaltung aus Cache entfernen“:</strong> Löscht den zuletzt gemerkten Stand. Nutze das nur,
+                wenn du wirklich neu anfangen möchtest.
+            </li>
+        </ul>
+        <h3>Werte</h3>
+        <ul>
+            <li><strong>Kartenpreis:</strong> Zeigt den aktuellen Betrag pro Platz. Über den Stift passt du den Preis
+                an.
+            </li>
+            <li><strong>Veranstaltungsname:</strong> Zeigt den Dateinamen. Mit „Namen ändern“ passt du ihn an.</li>
+            <li><strong>Anzeigename (extern):</strong> Text, der für Gäste sichtbar sein kann. Mit „Anzeigenamen ändern“
+                passt du ihn an.
+            </li>
+        </ul>
+    </section>
+
+    <section id="sitzplaetze">
+        <h2>Sitzplätze und Tische</h2>
+        <p>Die Kacheln zeigen jeden Tisch. Farben helfen beim Überblick: frei, teilweise belegt oder komplett
+            belegt.</p>
+        <div class="flow" aria-label="Sitzplatz-Ablauf">
+                <pre class="mermaid">flowchart LR
+    Tischkachel -->|anklicken| Optionen{{Was möchtest du tun?}}
+    Optionen -->|Reservierung ansehen| Übersicht
+    Optionen -->|Reservierung hinzufügen| Eingabe
+    Eingabe --> Tischkachel
+</pre>
+        </div>
+        <ul>
+            <li>Klicke eine Kachel an, um Details zu sehen.</li>
+            <li>Mit Tabulator und Eingabetaste kannst du auch per Tastatur navigieren.</li>
+            <li>Leere Plätze siehst du auf einen Blick am hellen Farbton.</li>
+        </ul>
+    </section>
+
+    <section id="reservierungen">
+        <h2>Reservierungen anlegen</h2>
+        <p>Rechts in der Liste legst du neue Einträge an oder bearbeitest bestehende.</p>
+        <ol class="steps">
+            <li>Klicke unten in der Liste auf „Reservierung hinzufügen“.</li>
+            <li>Trage Name, Anzahl der Personen, Wunsch-Tisch und Notizen ein.</li>
+            <li>Speichere den Eintrag. Der Platz erscheint nun farbig im Tischbereich.</li>
+        </ol>
+        <p>Jede Zeile besitzt kleine Knöpfe:</p>
+        <ul>
+            <li><strong>Stift:</strong> Öffnet die Bearbeitung.</li>
+            <li><strong>Mülleimer:</strong> Löscht den Eintrag nach einer Nachfrage.</li>
+            <li><strong>Häkchen:</strong> Markiert den Eintrag als verkauft und legt ihn in den Warenkorb.</li>
+        </ul>
+        <div class="tip">
+            <strong>Schnellsuche:</strong> Über das Suchfeld filterst du nach Namen. So findest du Reservierungen sofort
+            wieder.
+        </div>
+    </section>
+
+    <section id="verschieben">
+        <h2>Reservierungen verschieben &amp; tauschen</h2>
+        <p>Der Knopf „Verschieben“ in jeder Zeile hilft dir, Plätze zu verlegen oder zwei Gruppen die Tische tauschen zu
+            lassen.</p>
+        <ol class="steps">
+            <li>Klicke in der gewünschten Zeile auf „Verschieben“. Ein neues Fenster öffnet sich.</li>
+            <li>Oben wählst du aus, ob du nur verschieben oder zwei Tische tauschen möchtest.</li>
+            <li>Markiere links die Gruppe, die wechseln soll, und passe bei Bedarf die Anzahl der Plätze an.</li>
+            <li>Wähle rechts den Ziel-Tisch. Beim Tauschen kannst du dort ebenfalls Gäste markieren.</li>
+            <li>Klicke auf „Prüfen“. Das Fenster zeigt dir, ob genug Stühle frei bleiben.</li>
+            <li>Erst wenn alles passt, wird der Knopf „Ausführen“ aktiv. Mit ihm bestätigst du die Änderung.</li>
+        </ol>
+        <p>Bereits verkaufte Einträge lassen sich nicht verschieben. In diesem Fall erscheint ein Hinweis. Du kannst die
+            Funktion außerdem aus der Suche oder dem Warenkorb starten – sie sieht überall gleich aus.</p>
+        <div class="flow" aria-label="Ablauf fürs Verschieben oder Tauschen">
+                <pre class="mermaid">flowchart TD
+    Start["Verschieben klicken"] --> Quelle["Quelle markieren"]
+    Quelle --> Ziel["Ziel-Tisch auswählen"]
+    Ziel --> Modus{Modus wählen}
+    Modus -->|Verschieben| Pruefen["Prüfen drücken"]
+    Modus -->|Tauschen| Zurueck["Zu tauschende Karten auswählen"]
+    Zurueck --> Pruefen
+    Pruefen -->|Alles passt| Ausfuehren["Ausführen"]
+    Pruefen -->|Zu wenig Plätze| Anpassung["Auswahl anpassen"]
+    Anpassung --> Pruefen
+    Ausfuehren --> Ende["Tische aktualisiert"]
+</pre>
+        </div>
+    </section>
+
+    <section id="warenkorb">
+        <h2>Warenkorb &amp; Verkauf</h2>
+        <p>Der Warenkorb sammelt alle Einträge, die du verkaufen oder abrechnen möchtest.</p>
+        <ul>
+            <li>Öffne ihn über das Einkaufswagen-Symbol.</li>
+            <li>Prüfe die Liste. Du kannst einzelne Einträge wieder entfernen.</li>
+            <li>Klicke auf „Verkauf abschließen“, um die Plätze fest zu buchen.</li>
+        </ul>
+        <div class="flow" aria-label="Verkaufsablauf">
+                <pre class="mermaid">flowchart TD
+    A[Reservierung markieren] --> B[Warenkorb öffnen]
+    B --> C{Alles korrekt?}
+    C -->|Nein| D[Einträge anpassen]
+    D --> C
+    C -->|Ja| E[Verkauf abschließen]
+    E --> F[Quittung oder Rechnung erstellen]
+</pre>
+        </div>
+    </section>
+
+    <section id="extras">
+        <h2>Zusatzansichten</h2>
+        <p>Oben in der Leiste findest du weitere kleine Symbole. Sie helfen beim Überblick.</p>
+        <ul>
+            <li><strong>Pfeile-Symbol (Abgleich):</strong> Zeigt dir, ob Daten gerade mit anderen Geräten abgeglichen
+                werden.
+            </li>
+            <li><strong>Listen-Symbol:</strong> Öffnet eine Ansicht mit freien Plätzen oder offenen Zahlungen.</li>
+            <li><strong>Verschiebe-Symbol:</strong> Hier kannst du Personen mit der Maus auf andere Tische ziehen.</li>
+        </ul>
+        <p>Jede Zusatzansicht lässt sich mit einem Klick öffnen und über das Kreuz wieder schließen.</p>
+    </section>
+
+    <section id="speichern">
+        <h2>Speichern &amp; Laden</h2>
+        <p>Damit nichts verloren geht, solltest du regelmäßig Dateien sichern.</p>
+        <ol class="steps">
+            <li>Öffne das seitliche Menü.</li>
+            <li>Klicke auf den gewünschten Export-Knopf.</li>
+            <li>Wähle einen Speicherort auf deinem Rechner.</li>
+        </ol>
+        <p>Zum Laden gehst du genauso vor, nur mit den Import-Knöpfen. Die Dateien erkennst du an der Endung
+            „.json“.</p>
+        <div class="tip">
+            <strong>Merke:</strong> Speichere vor großen Änderungen immer eine Kopie. So kannst du schnell
+            zurückwechseln, falls etwas schiefgeht.
+        </div>
+    </section>
+
+    <section id="rechnungen">
+        <h2>Rechnungen</h2>
+        <p>Nach dem Verkauf kannst du Rechnungen erstellen.</p>
+        <ul>
+            <li>Markiere die gewünschten Einträge im Warenkorb.</li>
+            <li>Klicke auf „Rechnung erstellen“.</li>
+            <li>Eine neue Seite mit der Rechnung öffnet sich. Drucke oder speichere sie als PDF.</li>
+        </ul>
+        <p>Die Rechnungsansicht zeigt dir Betrag, Datum und alle Plätze, die zur Rechnung gehören.</p>
+    </section>
+
+    <section id="tipps">
+        <h2>Hilfe &amp; Tipps</h2>
+        <ul>
+            <li><strong>Speichere regelmäßig:</strong> Nutze nach jeder größeren Änderung einen Export.</li>
+            <li><strong>Nutze Farben:</strong> Grüne Tische sind frei, gelbe teilweise belegt, rote ausgebucht.</li>
+            <li><strong>Teste im Team:</strong> Mehrere Geräte können dieselbe Datei nutzen, solange ihr euch absprecht.
+            </li>
+            <li><strong>Bei Fragen:</strong> Wende dich an das Organisationsteam oder schreib eine kurze Notiz in die
+                Reservierung.
+            </li>
+        </ul>
+    </section>
+</main>
+<footer>
+    <p>Stand:
+        <time datetime="2024-01-01">Januar 2024</time>
+        · Diese Anleitung wird bei Änderungen am Tool aktualisiert.
+    </p>
+</footer>
+<script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+
+    mermaid.initialize({startOnLoad: true, theme: "neutral"});
+</script>
+</body>
+</html>
