@@ -456,9 +456,7 @@ function buildPdfContent({
     writeText('Sandersdorfer Karnevalsverein e. V.', margin + contentWidth / 2, footerY - 16, { size: 10, color: COLORS.muted, align: 'center' });
     writeText('Am Sportzentrum 19 · 06792 Sandersdorf-Brehna', margin + contentWidth / 2, footerY - 30, { size: 10, color: COLORS.muted, align: 'center' });
 
-    return content.join('
-') + '
-';
+    return content.join('') + '';
 }
 
 
