@@ -169,6 +169,7 @@
                 <li><a href="#einstellungen">Seitliches Menü</a></li>
                 <li><a href="#sitzplaetze">Sitzplätze und Tische</a></li>
                 <li><a href="#reservierungen">Reservierungen anlegen</a></li>
+                <li><a href="#verschieben">Reservierungen verschieben &amp; tauschen</a></li>
                 <li><a href="#warenkorb">Warenkorb &amp; Verkauf</a></li>
                 <li><a href="#extras">Zusatzansichten</a></li>
                 <li><a href="#speichern">Speichern &amp; Laden</a></li>
@@ -311,6 +312,33 @@
             </ul>
             <div class="tip">
                 <strong>Schnellsuche:</strong> Über das Suchfeld filterst du nach Namen. So findest du Reservierungen sofort wieder.
+            </div>
+        </section>
+
+        <section id="verschieben">
+            <h2>Reservierungen verschieben &amp; tauschen</h2>
+            <p>Der Knopf „Verschieben“ in jeder Zeile hilft dir, Plätze zu verlegen oder zwei Gruppen die Tische tauschen zu lassen.</p>
+            <ol class="steps">
+                <li>Klicke in der gewünschten Zeile auf „Verschieben“. Ein neues Fenster öffnet sich.</li>
+                <li>Oben wählst du aus, ob du nur verschieben oder zwei Tische tauschen möchtest.</li>
+                <li>Markiere links die Gruppe, die wechseln soll, und passe bei Bedarf die Anzahl der Plätze an.</li>
+                <li>Wähle rechts den Ziel-Tisch. Beim Tauschen kannst du dort ebenfalls Gäste markieren.</li>
+                <li>Klicke auf „Prüfen“. Das Fenster zeigt dir, ob genug Stühle frei bleiben.</li>
+                <li>Erst wenn alles passt, wird der Knopf „Ausführen“ aktiv. Mit ihm bestätigst du die Änderung.</li>
+            </ol>
+            <p>Bereits verkaufte Einträge lassen sich nicht verschieben. In diesem Fall erscheint ein Hinweis. Du kannst die Funktion außerdem aus der Suche oder dem Warenkorb starten – sie sieht überall gleich aus.</p>
+            <div class="flow" aria-label="Ablauf fürs Verschieben oder Tauschen">
+                <pre class="mermaid">flowchart TD
+    Start["Verschieben klicken"] --> Modus{Modus wählen}
+    Modus -->|Verschieben| Quelle["Quelle markieren"]
+    Modus -->|Tauschen| Quelle
+    Quelle --> Ziel["Ziel-Tisch auswählen"]
+    Ziel --> Pruefen["Prüfen drücken"]
+    Pruefen -->|Alles passt| Ausfuehren["Ausführen"]
+    Pruefen -->|Zu wenig Plätze| Anpassung["Auswahl anpassen"]
+    Anpassung --> Quelle
+    Ausfuehren --> Ende["Tische aktualisiert"]
+</pre>
             </div>
         </section>
 

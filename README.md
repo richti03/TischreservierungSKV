@@ -237,6 +237,9 @@ sequenceDiagram
 - **Cart-Header & Modal (`js/ui/cartHeader.js`, `js/features/cartModal.js`)**: Warenkorb-Badge, Zahlungsdialog, Abschlussmodal mit Rechnungsdownload und „Nächster Kunde“ Workflow.
 - **Suchmodal (`js/features/searchModal.js`)**: Globale Suche über alle Veranstaltungen mit Aktionen (Bearbeiten, Verschieben, Warenkorb, Verkauf rückgängig, Löschen).
 - **Bewegungs-/Tauschmodal (`js/features/modalMoveSwap.js`)**: Verschiebt Reservierungen zwischen Tischen, inklusive Split-Unterstützung.
+  - Einstiegspunkte sind die `data-action="move"`-Buttons in der Reservierungstabelle, dem Warenkorb und der Suchansicht (`openMoveModal(sourceNr, preselectId)`).
+  - Das Modul erzwingt einen dreistufigen Ablauf: Auswahl der Quellenreservierungen, Wahl des Ziel-Tischs (bzw. Gegenspielers beim Tausch) und eine Vorschauprüfung. Erst wenn die Vorschau freie Plätze bestätigt (`previewOk`), wird `applyMove()` aktiviert.
+  - Beim Modus „Verschieben“ wird `setSeatsByTableNumber()` nur auf dem Zieltisch erhöht, während Quelle/Gesamtbilanz via `ensureBucket()` und `markEventStateDirty()` synchronisiert werden. Im Modus „Tauschen“ werden beide Seiten gespiegelt geprüft; verkaufte Reservierungen (`rec.sold`) sind generell gesperrt.
 - **Invoice-Generator (`js/features/invoices.js`)**: Erstellt PDF-Inhalte, verschickt Share-Token an das Kundendisplay und aktualisiert ZIP-Downloads.
 
 ### Buttons & Aktionen (Kurzreferenz)
