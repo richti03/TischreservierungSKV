@@ -13,6 +13,7 @@ import { getActiveEvent, setActiveEvent } from "../core/events.js";
 import { getCartEntries, removeFromCart, markCartAsSold, onCartChange, calculateCartTotal, markCartDirty } from "./cart.js";
 import { printTischArray, renderReservationsForSelectedTable, setSelectedTableNr } from "../ui/tableView.js";
 import { openMoveModal } from "./modalMoveSwap.js";
+import { createInvoiceFromCart, getPaymentLabel } from "./invoices.js";
 
 const euroFormatter = new Intl.NumberFormat("de-DE", {
     style: "currency",
@@ -39,6 +40,210 @@ function iconBtn({ action, title, ghost = false }) {
 }
 
 let wired = false;
+let paymentDialogOpen = false;
+let postSaleModalWired = false;
+let postSaleModal = null;
+let postSaleMessageEl = null;
+let postSaleDetailsEl = null;
+let postSaleDownloadBtn = null;
+
+function ensurePostSaleModal() {
+    if (postSaleModal) {
+        return postSaleModal;
+    }
+    const modal = document.getElementById("post-sale-modal");
+    if (!modal) {
+        return null;
+    }
+    postSaleModal = modal;
+    postSaleMessageEl = modal.querySelector("#post-sale-message");
+    postSaleDetailsEl = modal.querySelector("#post-sale-details");
+    postSaleDownloadBtn = document.getElementById("btn-download-latest-invoice");
+
+    if (!postSaleModalWired) {
+        const closeTargets = modal.querySelectorAll('[data-close-modal]');
+        closeTargets.forEach(target => {
+            target.addEventListener("click", evt => {
+                evt.preventDefault();
+                closePostSaleModal();
+            });
+        });
+
+        if (postSaleDownloadBtn) {
+            postSaleDownloadBtn.addEventListener("click", evt => {
+                if (postSaleDownloadBtn.getAttribute("aria-disabled") === "true") {
+                    evt.preventDefault();
+                }
+            });
+        }
+
+        document.addEventListener("customerFlow:close-modals", closePostSaleModal);
+        document.addEventListener("customerFlow:next-customer", () => {
+            clearPostSaleModal();
+        });
+
+        document.addEventListener("keydown", evt => {
+            if (evt.key === "Escape" && postSaleModal && !postSaleModal.classList.contains("hidden")) {
+                closePostSaleModal();
+            }
+        });
+
+        postSaleModalWired = true;
+    }
+
+    return postSaleModal;
+}
+
+function clearPostSaleModal() {
+    if (postSaleMessageEl) {
+        postSaleMessageEl.textContent = "";
+    }
+    if (postSaleDetailsEl) {
+        postSaleDetailsEl.textContent = "";
+    }
+    if (postSaleDownloadBtn) {
+        postSaleDownloadBtn.removeAttribute("href");
+        postSaleDownloadBtn.removeAttribute("download");
+        postSaleDownloadBtn.setAttribute("aria-disabled", "true");
+    }
+}
+
+function closePostSaleModal() {
+    const modal = ensurePostSaleModal();
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+    clearPostSaleModal();
+}
+
+function openPostSaleModal(invoice, { sold = 0, totalCards = 0, paymentMethod = "cash" } = {}) {
+    const modal = ensurePostSaleModal();
+    if (!modal || !postSaleDownloadBtn) {
+        return false;
+    }
+
+    clearPostSaleModal();
+
+    const paymentLabel = getPaymentLabel(paymentMethod);
+    const reservationLabel = sold === 1 ? "1 Reservierung" : `${sold} Reservierungen`;
+    const cardLabel = totalCards === 1 ? "1 Karte" : `${totalCards} Karten`;
+
+    if (postSaleMessageEl) {
+        postSaleMessageEl.textContent = `Rechnung ${invoice.invoiceNumber} wurde erstellt.`;
+    }
+
+    const parts = [];
+    if (sold > 0) {
+        parts.push(reservationLabel);
+    }
+    if (totalCards > 0) {
+        parts.push(cardLabel);
+    }
+    if (Number.isFinite(invoice?.totalAmount)) {
+        parts.push(`Gesamtbetrag ${euroFormatter.format(invoice.totalAmount)}`);
+    }
+    if (paymentLabel) {
+        parts.push(`Zahlart ${paymentLabel}`);
+    }
+    parts.push("QR-Code am Kundendisplay verfügbar");
+
+    if (postSaleDetailsEl) {
+        postSaleDetailsEl.textContent = parts.join(" · ");
+    }
+
+    if (invoice?.dataUrl) {
+        postSaleDownloadBtn.href = invoice.dataUrl;
+        postSaleDownloadBtn.download = invoice.fileName || "Rechnung.pdf";
+        postSaleDownloadBtn.removeAttribute("aria-disabled");
+    } else {
+        postSaleDownloadBtn.removeAttribute("href");
+        postSaleDownloadBtn.removeAttribute("download");
+        postSaleDownloadBtn.setAttribute("aria-disabled", "true");
+    }
+
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+    postSaleDownloadBtn?.focus({ preventScroll: true });
+    return true;
+}
+
+function ensurePaymentDialog() {
+    let el = document.getElementById("paymentMethodDialog");
+    if (el) return el;
+    const wrap = document.createElement("div");
+    wrap.innerHTML = `
+  <div id="paymentMethodDialog" class="payment-dialog hidden" aria-hidden="true">
+    <div class="payment-dialog__backdrop" data-cancel="1"></div>
+    <div class="payment-dialog__panel" role="dialog" aria-modal="true" aria-labelledby="payment-dialog-title">
+      <button type="button" class="payment-dialog__close" data-cancel="1" aria-label="Dialog schließen">×</button>
+      <h2 class="payment-dialog__title" id="payment-dialog-title">Wie hat der Kunde bezahlt?</h2>
+      <p class="payment-dialog__text">Bitte wählen Sie die Zahlart.</p>
+      <div class="payment-dialog__actions">
+        <button type="button" class="btn payment-dialog__btn" data-method="cash">Barzahlung</button>
+        <button type="button" class="btn payment-dialog__btn" data-method="card">Kartenzahlung</button>
+        <button type="button" class="btn payment-dialog__btn payment-dialog__btn--secondary" data-cancel="1">Abbrechen</button>
+      </div>
+    </div>
+  </div>`;
+    document.body.appendChild(wrap.firstElementChild);
+    return document.getElementById("paymentMethodDialog");
+}
+
+function promptPaymentMethod() {
+    const el = ensurePaymentDialog();
+    const methodButtons = Array.from(el.querySelectorAll("[data-method]"));
+    const cancelTargets = Array.from(el.querySelectorAll("[data-cancel]"));
+    return new Promise(resolve => {
+        if (paymentDialogOpen) {
+            resolve(null);
+            return;
+        }
+        paymentDialogOpen = true;
+        let finished = false;
+
+        const cleanup = value => {
+            if (finished) return;
+            finished = true;
+            paymentDialogOpen = false;
+            el.classList.add("hidden");
+            el.setAttribute("aria-hidden", "true");
+            methodButtons.forEach(btn => btn.removeEventListener("click", onSelect));
+            cancelTargets.forEach(btn => btn.removeEventListener("click", onCancel));
+            document.removeEventListener("keydown", onKey);
+            document.removeEventListener("customerFlow:close-modals", onGlobalClose);
+            resolve(value);
+        };
+
+        const onSelect = evt => {
+            const method = evt.currentTarget?.getAttribute("data-method") || "";
+            if (method === "cash" || method === "card") {
+                cleanup(method);
+            } else {
+                cleanup(null);
+            }
+        };
+
+        const onCancel = () => cleanup(null);
+
+        const onKey = evt => {
+            if (evt.key === "Escape") {
+                evt.preventDefault();
+                cleanup(null);
+            }
+        };
+
+        const onGlobalClose = () => cleanup(null);
+
+        methodButtons.forEach(btn => btn.addEventListener("click", onSelect));
+        cancelTargets.forEach(btn => btn.addEventListener("click", onCancel));
+        document.addEventListener("keydown", onKey);
+        document.addEventListener("customerFlow:close-modals", onGlobalClose);
+
+        el.classList.remove("hidden");
+        el.setAttribute("aria-hidden", "false");
+        methodButtons[0]?.focus();
+    });
+}
 
 function ensureEventActive(eventId) {
     if (!eventId) {
@@ -267,19 +472,41 @@ function wire() {
         }
     });
 
-    btnSell?.addEventListener("click", () => {
+    btnSell?.addEventListener("click", async () => {
         const entries = getCartEntries();
         if (entries.length === 0) return;
-        if (!confirm("Alle Reservierungen im Warenkorb als verkauft markieren?")) return;
-        const { sold, totalCards } = markCartAsSold();
-        printTischArray();
-        renderReservationsForSelectedTable();
-        renderCartTable();
-        if (sold > 0) {
-            const msg = sold === 1
-                ? `1 Reservierung mit insgesamt ${totalCards} Karten wurde als verkauft markiert.`
-                : `${sold} Reservierungen mit insgesamt ${totalCards} Karten wurden als verkauft markiert.`;
-            alert(msg);
+
+        const paymentMethod = await promptPaymentMethod();
+        if (!paymentMethod) {
+            return;
+        }
+
+        const originalLabel = btnSell.textContent;
+        btnSell.disabled = true;
+        btnSell.textContent = "Verarbeitung …";
+
+        try {
+            const invoice = await createInvoiceFromCart(entries, { paymentMethod });
+            const { sold, totalCards } = markCartAsSold();
+            printTischArray();
+            renderReservationsForSelectedTable();
+            renderCartTable();
+            closeModal();
+
+            const opened = openPostSaleModal(invoice, { sold, totalCards, paymentMethod });
+            if (!opened) {
+                const paymentLabel = getPaymentLabel(paymentMethod);
+                const baseMsg = sold === 1
+                    ? `1 Reservierung mit insgesamt ${totalCards} Karten wurde als verkauft markiert.`
+                    : `${sold} Reservierungen mit insgesamt ${totalCards} Karten wurden als verkauft markiert.`;
+                alert(`${baseMsg}\nRechnung ${invoice.invoiceNumber} (${paymentLabel}) wurde erstellt.`);
+            }
+        } catch (err) {
+            console.error("[CART MODAL] Rechnung konnte nicht erstellt werden:", err);
+            alert(`Rechnung konnte nicht erstellt werden: ${err?.message || err}`);
+        } finally {
+            btnSell.textContent = originalLabel;
+            btnSell.disabled = getCartEntries().length === 0;
         }
     });
 

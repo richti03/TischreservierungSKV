@@ -11,6 +11,7 @@ import {
     getCardPriceValue,
     setCardPriceValue,
     getExternalEventName,
+    markEventStateDirty,
 } from "../core/state.js";
 import {
     getActiveEventFileSafeName,
@@ -104,6 +105,7 @@ export function importSeatsJSON() {
         printTischArray(tisch);
         updateFooter();
         renderReservationsForSelectedTable();
+        markEventStateDirty("seats-import");
         console.log("[IMPORT] Sitzplätze importiert:", entries);
     });
 }
@@ -237,6 +239,7 @@ function processReservationsImport(obj, filename) {
     console.log("[IMPORT] Kapazität je Tisch (errechnet):", capacity);
     console.log("[IMPORT] Neue Belegungssummen:", newSums);
     console.log("[IMPORT] Neue freie Plätze:", newFree);
+    markEventStateDirty("reservations-import");
     return true;
 }
 

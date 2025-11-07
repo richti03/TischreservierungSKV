@@ -2,7 +2,8 @@ import {
     tisch,
     findIndexByTableNumber,
     reservationsByTable,
-    sortTischArrayNr
+    sortTischArrayNr,
+    markEventStateDirty
 } from "../core/state.js";
 import { printTischArray, setSelectedTableNr, renderReservationsForSelectedTable } from "../ui/tableView.js";
 
@@ -89,6 +90,7 @@ export function tischHinzufuegen() {
     setSelectedTableNr(nr);
 
     console.log("[TABLES] Tisch hinzugefügt:", { nr, seats });
+    markEventStateDirty("table-added");
 }
 
 /** Letzten (höchsten) Tisch entfernen. Falls Reservierungen vorhanden: Sicherheitsabfrage. */
@@ -152,6 +154,7 @@ export function tischEntfernen() {
     }
 
     console.log("[TABLES] Tisch entfernt:", { removed: maxNr });
+    markEventStateDirty("table-removed");
 }
 
 function ensureSeatsModal() {
@@ -289,6 +292,7 @@ function onSeatsModalSave() {
 
     printTischArray(tisch);
     renderReservationsForSelectedTable();
+    markEventStateDirty("tables-updated");
     closeSeatsModal();
     console.log("[TABLES] Tische aktualisiert:", updated);
 }

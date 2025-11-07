@@ -47,6 +47,30 @@ export function getCurrentEventState() {
     return currentEventState;
 }
 
+const eventStateDirtyListeners = new Set();
+
+function notifyEventStateDirty(reason = "unknown") {
+    for (const cb of eventStateDirtyListeners) {
+        try {
+            cb({ reason, state: currentEventState });
+        } catch (err) {
+            console.error("[STATE] Dirty listener error", err);
+        }
+    }
+}
+
+export function onEventStateDirty(cb) {
+    if (typeof cb !== "function") {
+        return () => {};
+    }
+    eventStateDirtyListeners.add(cb);
+    return () => eventStateDirtyListeners.delete(cb);
+}
+
+export function markEventStateDirty(reason = "unknown") {
+    notifyEventStateDirty(reason);
+}
+
 export let tisch = currentEventState.tisch;
 export let alleAktionen = currentEventState.alleAktionen;
 export let alleExportCodes = currentEventState.alleExportCodes;
@@ -147,6 +171,7 @@ export function setCardPriceValue(value) {
     cardPriceValue = value;
     currentEventState.cardPriceValue = value;
     notifyCardPriceListeners();
+    notifyEventStateDirty("card-price");
 }
 
 export function onCardPriceChange(cb) {
@@ -173,6 +198,7 @@ export function setExternalEventName(value) {
     externalEventName = normalized;
     currentEventState.externalEventName = normalized;
     notifyExternalEventNameListeners();
+    notifyEventStateDirty("external-event-name");
 }
 
 export function onExternalEventNameChange(cb) {
@@ -221,6 +247,7 @@ export function bumpBookingSeqFromExisting(map) {
 export function setLastReservationsFilename(name) {
     lastReservationsFilename = name || null;
     currentEventState.lastReservationsFilename = lastReservationsFilename;
+    notifyEventStateDirty("reservations-filename");
 }
 
 // ---- Helpers (DOM-frei) ----
