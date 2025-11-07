@@ -81,7 +81,10 @@
         <div class="settings-panel__header">
             <div class="settings-panel__header-top">
                 <h3>Einstellungen</h3>
-                <button type="button" class="settings-panel__close" id="settings-close" aria-label="Einstellungen schließen">×</button>
+                <div class="settings-panel__header-actions">
+                    <a class="settings-panel__help" href="how-to.html" target="_blank" rel="noopener" title="How-To in neuem Tab öffnen" aria-label="How-To in neuem Tab öffnen">?</a>
+                    <button type="button" class="settings-panel__close" id="settings-close" aria-label="Einstellungen schließen">×</button>
+                </div>
             </div>
             <div class="settings-panel__events">
                 <div class="event-tabs" id="event-tabs" role="tablist" aria-label="Veranstaltungen"></div>
@@ -270,11 +273,9 @@
 
 <!-- Modal: Abschluss des Verkaufs -->
 <div id="post-sale-modal" class="modal modal--compact hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="postSaleTitle">
-    <div class="modal__backdrop" data-close-modal="1"></div>
     <div class="modal__dialog">
         <header class="modal__header">
             <h3 id="postSaleTitle">Verkauf abgeschlossen</h3>
-            <button type="button" class="modal__close" data-close-modal="1" aria-label="Schließen">×</button>
         </header>
         <div class="modal__body post-sale-modal__body">
             <p id="post-sale-message" class="post-sale-modal__message"></p>
