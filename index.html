@@ -196,7 +196,10 @@
     <button id="btn-open-external-plan" type="button">Externen Saalplan öffnen</button>
     <button id="btn-open-customer-display" type="button">Kundendisplay öffnen</button>
     <button id="btn-download-invoices" type="button">Rechnungen als ZIP herunterladen</button>
-    <button id="btn-next-customer" type="button">Nächster Kunde</button>
+    <div class="customer-flow-actions" id="customer-flow-actions" hidden>
+        <a id="btn-download-latest-invoice" class="btn customer-flow-actions__btn" href="#" download>Rechnung herunterladen</a>
+        <button id="btn-next-customer" class="btn customer-flow-actions__btn" type="button">Nächster Kunde</button>
+    </div>
 </div>
 
 <!-- Modal: Verschieben / Tauschen -->

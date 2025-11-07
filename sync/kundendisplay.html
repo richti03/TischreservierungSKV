@@ -22,80 +22,81 @@
             font-family: "Segoe UI", system-ui, sans-serif;
             background: radial-gradient(circle at top, rgba(65,105,225,0.12), rgba(15,23,42,0.95));
             color: #0f172a;
+            display: flex;
+            justify-content: center;
         }
 
         .display-app {
             min-height: 100vh;
+            width: min(1100px, 96vw);
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 32px 24px 48px;
             gap: 32px;
+            padding: 48px 24px 64px;
         }
 
         .display-header {
             text-align: center;
             color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .display-logo {
+            width: clamp(160px, 24vw, 220px);
+            height: clamp(160px, 24vw, 220px);
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.45);
+            background: #fff;
+            padding: 12px;
         }
 
         .display-header h1 {
             margin: 0;
-            font-size: clamp(28px, 4vw, 42px);
-            letter-spacing: 1.2px;
-        }
-
-        .display-header p {
-            margin: 8px 0 0;
-            font-size: clamp(18px, 2.5vw, 24px);
-            opacity: 0.85;
+            font-size: clamp(26px, 5vw, 38px);
+            letter-spacing: 1px;
+            text-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
         }
 
         .display-main {
-            width: min(1200px, 95vw);
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 24px;
-            align-items: stretch;
-            justify-items: center;
-        }
-
-        .plan-frame {
-            width: 100%;
-            border: 0;
-            border-radius: 18px;
-            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
-            min-height: 640px;
-        }
-
-        .invoice-view {
             width: 100%;
             display: flex;
             justify-content: center;
         }
 
-        .invoice-card {
-            width: min(900px, 95%);
-            background: var(--panel-bg);
-            border-radius: 24px;
-            padding: 32px;
-            box-shadow: 0 25px 80px rgba(15, 23, 42, 0.3);
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
+        .display-main[hidden] {
+            display: none;
         }
 
-        .invoice-card h2 {
+        .invoice-view {
+            width: min(900px, 100%);
+        }
+
+        .invoice-card {
+            background: var(--panel-bg);
+            border-radius: 28px;
+            padding: clamp(24px, 4vw, 36px);
+            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.35);
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .invoice-card__header h2 {
             margin: 0;
-            font-size: clamp(26px, 3vw, 32px);
+            font-size: clamp(22px, 3vw, 30px);
             color: var(--royal-blue);
         }
 
         .invoice-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 16px 32px;
-            font-size: 16px;
+            gap: 12px 24px;
+            font-size: 15px;
             color: var(--muted);
         }
 
@@ -106,14 +107,13 @@
         .invoice-table {
             width: 100%;
             border-collapse: collapse;
-            border-spacing: 0;
         }
 
         .invoice-table thead th {
             text-align: left;
             font-weight: 600;
-            padding-bottom: 8px;
-            border-bottom: 2px solid rgba(99, 102, 241, 0.15);
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(65, 105, 225, 0.2);
             font-size: 14px;
             color: var(--muted);
         }
@@ -139,14 +139,14 @@
 
         .invoice-summary {
             display: flex;
-            flex-wrap: wrap;
             justify-content: space-between;
             gap: 24px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .invoice-total {
-            font-size: clamp(26px, 4vw, 32px);
+            font-size: clamp(24px, 4vw, 32px);
             font-weight: 700;
             color: #0f172a;
         }
@@ -158,99 +158,111 @@
 
         .invoice-note {
             margin: 0;
-            font-size: 14px;
+            font-size: 13px;
             color: var(--muted);
+        }
+
+        .invoice-thankyou {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 12px 0 4px;
+        }
+
+        .invoice-thankyou h2 {
+            margin: 0;
+            font-size: clamp(48px, 8vw, 72px);
+            letter-spacing: 1.5px;
+            color: var(--royal-blue);
         }
 
         .invoice-qr {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
+        }
+
+        .invoice-qr[hidden] {
+            display: none;
         }
 
         .invoice-qr img {
-            width: clamp(220px, 30vw, 280px);
-            height: clamp(220px, 30vw, 280px);
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+            width: clamp(220px, 32vw, 300px);
+            height: clamp(220px, 32vw, 300px);
+            border-radius: 18px;
+            box-shadow: 0 24px 50px rgba(15, 23, 42, 0.28);
             background: #fff;
             object-fit: cover;
         }
 
-        .invoice-download {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 18px;
-            border-radius: 999px;
-            border: 0;
-            background: var(--royal-blue);
-            color: #fff;
-            font-weight: 600;
-            font-size: 15px;
-            text-decoration: none;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        .invoice-qr-note {
+            margin: 0;
+            font-size: 16px;
+            color: var(--muted);
         }
 
-        .invoice-download:hover,
-        .invoice-download:focus {
-            transform: translateY(-2px);
-            box-shadow: 0 18px 36px rgba(65, 105, 225, 0.35);
+        .invoice-thankyou-total,
+        .invoice-thankyou-payment {
+            margin: 0;
+            font-size: 18px;
+            color: #0f172a;
         }
 
-        .invoice-placeholder {
-            text-align: center;
-            font-size: clamp(22px, 3vw, 28px);
-            color: #fff;
-            opacity: 0.85;
-            margin-top: 120px;
+        .invoice-thankyou-payment {
+            font-size: 16px;
+            color: var(--muted);
         }
     </style>
 </head>
 <body>
 <div class="display-app">
     <header class="display-header">
-        <h1>Sandersdorfer Karnevalsverein e. V.</h1>
-        <p>Kundendisplay</p>
+        <img src="../img/SKV-Wappen.jpg" alt="Logo des Sandersdorfer Karnevalsverein" class="display-logo" />
+        <h1 id="display-title">Herzlich willkommen beim Sandersdorfer Karnevalsverein</h1>
     </header>
-    <main class="display-main">
-        <iframe id="plan-frame" class="plan-frame" src="saalplan_extern.html" title="Saalplan" loading="lazy"></iframe>
-        <section id="invoice-view" class="invoice-view" hidden>
+    <main id="display-main" class="display-main" hidden>
+        <section class="invoice-view">
             <article class="invoice-card">
-                <header>
-                    <h2 id="invoice-title">Rechnungsübersicht</h2>
-                    <div class="invoice-meta" id="invoice-meta"></div>
-                </header>
-                <div class="invoice-content" id="invoice-content">
-                    <table class="invoice-table" aria-describedby="invoice-title">
-                        <thead>
-                        <tr>
-                            <th scope="col">Position</th>
-                            <th scope="col" style="width:100px; text-align:right;">Karten</th>
-                            <th scope="col" style="width:140px; text-align:right;">Einzelpreis</th>
-                            <th scope="col" style="width:160px; text-align:right;">Gesamt</th>
-                        </tr>
-                        </thead>
-                        <tbody id="invoice-lines"></tbody>
-                    </table>
-                </div>
-                <div class="invoice-summary">
-                    <div>
-                        <div class="invoice-total" id="invoice-total">&mdash;</div>
-                        <div class="invoice-payment" id="invoice-payment">&nbsp;</div>
-                        <p class="invoice-note">Die Rechnung gilt nicht als Eintrittskarte.</p>
+                <div id="cart-content">
+                    <header class="invoice-card__header">
+                        <h2 id="invoice-title">Rechnungsübersicht</h2>
+                        <div class="invoice-meta" id="invoice-meta"></div>
+                    </header>
+                    <div class="invoice-content" id="invoice-content">
+                        <table class="invoice-table" aria-describedby="invoice-title">
+                            <thead>
+                            <tr>
+                                <th scope="col">Position</th>
+                                <th scope="col" style="width:100px; text-align:right;">Karten</th>
+                                <th scope="col" style="width:140px; text-align:right;">Einzelpreis</th>
+                                <th scope="col" style="width:160px; text-align:right;">Gesamt</th>
+                            </tr>
+                            </thead>
+                            <tbody id="invoice-lines"></tbody>
+                        </table>
                     </div>
+                    <div class="invoice-summary">
+                        <div>
+                            <div class="invoice-total" id="invoice-total">&mdash;</div>
+                            <div class="invoice-payment" id="invoice-payment">&nbsp;</div>
+                            <p class="invoice-note">Die Rechnung gilt nicht als Eintrittskarte.</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="thankyou-content" class="invoice-thankyou" hidden>
+                    <h2 id="thankyou-title">DANKE!</h2>
                     <div class="invoice-qr" id="invoice-qr" hidden>
                         <img id="invoice-qr-image" src="" alt="QR-Code zum Rechnungsdownload" />
-                        <a id="invoice-download" class="invoice-download" href="#" download>Rechnung herunterladen</a>
+                        <p class="invoice-qr-note" id="thankyou-note">(Rechnung)</p>
                     </div>
+                    <p class="invoice-thankyou-total" id="thankyou-total" hidden></p>
+                    <p class="invoice-thankyou-payment" id="thankyou-payment" hidden></p>
                 </div>
             </article>
         </section>
-        <div id="invoice-placeholder" class="invoice-placeholder" hidden>
-            Kundendisplay wartet auf neue Bestellung …
-        </div>
     </main>
 </div>
 <script>
@@ -263,16 +275,19 @@
         minimumFractionDigits: 2,
     });
 
-    const planFrame = document.getElementById('plan-frame');
-    const invoiceView = document.getElementById('invoice-view');
+    const displayTitle = document.getElementById('display-title');
+    const displayMain = document.getElementById('display-main');
+    const cartContent = document.getElementById('cart-content');
+    const thankyouContent = document.getElementById('thankyou-content');
     const invoiceMeta = document.getElementById('invoice-meta');
     const invoiceLines = document.getElementById('invoice-lines');
     const invoiceTotal = document.getElementById('invoice-total');
     const invoicePayment = document.getElementById('invoice-payment');
     const invoiceQr = document.getElementById('invoice-qr');
     const invoiceQrImage = document.getElementById('invoice-qr-image');
-    const invoiceDownload = document.getElementById('invoice-download');
-    const placeholder = document.getElementById('invoice-placeholder');
+    const thankyouTotal = document.getElementById('thankyou-total');
+    const thankyouPayment = document.getElementById('thankyou-payment');
+    const thankyouNote = document.getElementById('thankyou-note');
 
     let channel = null;
     let storageListenerBound = false;
@@ -313,27 +328,38 @@
     }
 
     function setMode(mode) {
-        if (mode === 'plan') {
-            planFrame.hidden = false;
-            invoiceView.hidden = true;
-            placeholder.hidden = true;
-        } else if (mode === 'cart' || mode === 'invoice') {
-            planFrame.hidden = true;
-            invoiceView.hidden = false;
-            placeholder.hidden = true;
+        if (mode === 'welcome') {
+            displayTitle.textContent = 'Herzlich willkommen beim Sandersdorfer Karnevalsverein';
+            displayMain.hidden = true;
+            cartContent.hidden = true;
+            thankyouContent.hidden = true;
+        } else if (mode === 'cart') {
+            displayTitle.textContent = 'Rechnungsübersicht';
+            displayMain.hidden = false;
+            cartContent.hidden = false;
+            thankyouContent.hidden = true;
+        } else if (mode === 'invoice') {
+            displayTitle.textContent = 'Sandersdorfer Karnevalsverein';
+            displayMain.hidden = false;
+            cartContent.hidden = true;
+            thankyouContent.hidden = false;
         } else {
-            planFrame.hidden = true;
-            invoiceView.hidden = true;
-            placeholder.hidden = false;
+            displayTitle.textContent = 'Sandersdorfer Karnevalsverein';
+            displayMain.hidden = true;
+            cartContent.hidden = true;
+            thankyouContent.hidden = true;
         }
     }
 
     function renderCart(cart) {
         invoiceMeta.innerHTML = '';
         invoiceLines.innerHTML = '';
-        invoiceQr.hidden = true;
         invoiceTotal.textContent = cart ? euroFormatter.format(cart.totalAmount || 0) : '—';
-        invoicePayment.textContent = cart ? `${cart.totalCards || 0} Karten im Warenkorb` : '';
+        invoicePayment.textContent = cart ? `${cart.totalCards || 0} Karten insgesamt` : '\u00a0';
+        invoiceQr.hidden = true;
+        invoiceQrImage.src = '';
+        thankyouTotal.hidden = true;
+        thankyouPayment.hidden = true;
         if (!cart || !Array.isArray(cart.lines) || cart.lines.length === 0) {
             invoiceLines.innerHTML = '<tr><td colspan="4">Keine Positionen vorhanden.</td></tr>';
             return;
@@ -355,24 +381,32 @@
 
     function renderInvoice(invoice) {
         invoiceMeta.innerHTML = '';
-        const metaParts = [];
-        if (invoice.invoiceNumber) metaParts.push(`<strong>Rechnungsnummer:</strong> ${invoice.invoiceNumber}`);
-        if (invoice.createdAt) {
-            const date = new Date(invoice.createdAt);
-            if (!Number.isNaN(date.valueOf())) {
-                metaParts.push(`<strong>Datum:</strong> ${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`);
+        if (invoice.invoiceNumber || invoice.createdAt) {
+            const parts = [];
+            if (invoice.invoiceNumber) parts.push(`<strong>Rechnungsnummer:</strong> ${invoice.invoiceNumber}`);
+            if (invoice.createdAt) {
+                const date = new Date(invoice.createdAt);
+                if (!Number.isNaN(date.valueOf())) {
+                    parts.push(`<strong>Datum:</strong> ${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {
+                        hour: '2-digit', minute: '2-digit'
+                    })}`);
+                }
             }
-        }
-        if (metaParts.length) {
-            invoiceMeta.innerHTML = metaParts.join('<span aria-hidden="true">•</span>');
+            invoiceMeta.innerHTML = parts.join('<span aria-hidden="true">•</span>');
         }
         renderCart(invoice);
-        invoicePayment.textContent = invoice.paymentLabel ? `Zahlart: ${invoice.paymentLabel}` : '';
-        invoiceTotal.textContent = euroFormatter.format(invoice.totalAmount || 0);
-        if (invoice.dataUrl) {
-            invoiceDownload.href = invoice.dataUrl;
-            invoiceDownload.download = invoice.fileName || 'Rechnung.pdf';
+        const totalAmount = Number.isFinite(invoice.totalAmount) ? invoice.totalAmount : null;
+        invoiceTotal.textContent = euroFormatter.format(totalAmount ?? 0);
+        const paymentLabel = invoice.paymentLabel ? `Zahlart: ${invoice.paymentLabel}` : '';
+        if (totalAmount != null) {
+            thankyouTotal.textContent = `Gesamtbetrag: ${euroFormatter.format(totalAmount)}`;
+            thankyouTotal.hidden = false;
+        } else {
+            thankyouTotal.hidden = true;
         }
+        thankyouPayment.textContent = paymentLabel;
+        thankyouPayment.hidden = !paymentLabel;
+        thankyouNote.textContent = '(Rechnung)';
         if (invoice.shareUrl || invoice.shareToken) {
             const href = invoice.shareUrl || buildShareUrl(invoice.shareToken);
             invoiceQr.hidden = false;
@@ -383,6 +417,7 @@
             };
         } else {
             invoiceQr.hidden = true;
+            invoiceQrImage.src = '';
         }
     }
 
@@ -405,8 +440,8 @@
 
     function applyState(state) {
         if (!state) return;
-        if (state.mode === 'plan') {
-            setMode('plan');
+        if (state.mode === 'welcome') {
+            setMode('welcome');
             return;
         }
         if (state.mode === 'cart') {
@@ -419,7 +454,7 @@
             renderInvoice(state.invoice || {});
             return;
         }
-        setMode('idle');
+        setMode('welcome');
     }
 
     ensureChannel();

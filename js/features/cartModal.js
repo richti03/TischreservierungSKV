@@ -40,6 +40,85 @@ function iconBtn({ action, title, ghost = false }) {
 }
 
 let wired = false;
+let paymentDialogOpen = false;
+
+function ensurePaymentDialog() {
+    let el = document.getElementById("paymentMethodDialog");
+    if (el) return el;
+    const wrap = document.createElement("div");
+    wrap.innerHTML = `
+  <div id="paymentMethodDialog" class="payment-dialog hidden" aria-hidden="true">
+    <div class="payment-dialog__backdrop" data-cancel="1"></div>
+    <div class="payment-dialog__panel" role="dialog" aria-modal="true" aria-labelledby="payment-dialog-title">
+      <button type="button" class="payment-dialog__close" data-cancel="1" aria-label="Dialog schließen">×</button>
+      <h2 class="payment-dialog__title" id="payment-dialog-title">Wie hat der Kunde bezahlt?</h2>
+      <p class="payment-dialog__text">Bitte wählen Sie die Zahlart.</p>
+      <div class="payment-dialog__actions">
+        <button type="button" class="btn payment-dialog__btn" data-method="cash">Barzahlung</button>
+        <button type="button" class="btn payment-dialog__btn" data-method="card">Kartenzahlung</button>
+        <button type="button" class="btn payment-dialog__btn payment-dialog__btn--secondary" data-cancel="1">Abbrechen</button>
+      </div>
+    </div>
+  </div>`;
+    document.body.appendChild(wrap.firstElementChild);
+    return document.getElementById("paymentMethodDialog");
+}
+
+function promptPaymentMethod() {
+    const el = ensurePaymentDialog();
+    const methodButtons = Array.from(el.querySelectorAll("[data-method]"));
+    const cancelTargets = Array.from(el.querySelectorAll("[data-cancel]"));
+    return new Promise(resolve => {
+        if (paymentDialogOpen) {
+            resolve(null);
+            return;
+        }
+        paymentDialogOpen = true;
+        let finished = false;
+
+        const cleanup = value => {
+            if (finished) return;
+            finished = true;
+            paymentDialogOpen = false;
+            el.classList.add("hidden");
+            el.setAttribute("aria-hidden", "true");
+            methodButtons.forEach(btn => btn.removeEventListener("click", onSelect));
+            cancelTargets.forEach(btn => btn.removeEventListener("click", onCancel));
+            document.removeEventListener("keydown", onKey);
+            document.removeEventListener("customerFlow:close-modals", onGlobalClose);
+            resolve(value);
+        };
+
+        const onSelect = evt => {
+            const method = evt.currentTarget?.getAttribute("data-method") || "";
+            if (method === "cash" || method === "card") {
+                cleanup(method);
+            } else {
+                cleanup(null);
+            }
+        };
+
+        const onCancel = () => cleanup(null);
+
+        const onKey = evt => {
+            if (evt.key === "Escape") {
+                evt.preventDefault();
+                cleanup(null);
+            }
+        };
+
+        const onGlobalClose = () => cleanup(null);
+
+        methodButtons.forEach(btn => btn.addEventListener("click", onSelect));
+        cancelTargets.forEach(btn => btn.addEventListener("click", onCancel));
+        document.addEventListener("keydown", onKey);
+        document.addEventListener("customerFlow:close-modals", onGlobalClose);
+
+        el.classList.remove("hidden");
+        el.setAttribute("aria-hidden", "false");
+        methodButtons[0]?.focus();
+    });
+}
 
 function ensureEventActive(eventId) {
     if (!eventId) {
@@ -78,14 +157,6 @@ function ensureCartModal() {
           <div style="font-size:16px;">
             Gesamtpreis: <strong id="cart-summary-total">0,00 €</strong>
           </div>
-        </div>
-        <div class="cart-options" id="cart-options">
-          <label class="cart-options__label" for="cartPaymentMethod">Zahlart</label>
-          <select class="cart-options__select" id="cartPaymentMethod">
-            <option value="cash">Bar</option>
-            <option value="card">Karte</option>
-          </select>
-          <p class="cart-options__hint">Beim Verkauf wird automatisch eine Rechnung erstellt.</p>
         </div>
         <div class="table-wrap">
           <table class="table table--compact" id="cart-table" style="width:100%;">
@@ -162,9 +233,6 @@ function renderCartTable() {
 
     const sellBtn = modal.querySelector("#cartModalSell");
     if (sellBtn) sellBtn.disabled = entries.length === 0;
-
-    const paymentSelect = modal.querySelector("#cartPaymentMethod");
-    if (paymentSelect) paymentSelect.disabled = entries.length === 0;
 
     const countEl = modal.querySelector("#cart-summary-count");
     const emptyHint = modal.querySelector("#cart-summary-empty");
@@ -282,10 +350,15 @@ function wire() {
     btnSell?.addEventListener("click", async () => {
         const entries = getCartEntries();
         if (entries.length === 0) return;
-        if (!confirm("Alle Reservierungen im Warenkorb als verkauft markieren und Rechnung erstellen?")) return;
 
-        const paymentSelect = el.querySelector("#cartPaymentMethod");
-        const paymentMethod = paymentSelect?.value || "cash";
+        const paymentMethod = await promptPaymentMethod();
+        if (!paymentMethod) {
+            return;
+        }
+
+        const originalLabel = btnSell.textContent;
+        btnSell.disabled = true;
+        btnSell.textContent = "Verarbeitung …";
 
         try {
             const invoice = await createInvoiceFromCart(entries, { paymentMethod });
@@ -293,6 +366,7 @@ function wire() {
             printTischArray();
             renderReservationsForSelectedTable();
             renderCartTable();
+            closeModal();
             const paymentLabel = getPaymentLabel(paymentMethod);
             if (sold > 0) {
                 const baseMsg = sold === 1
@@ -303,6 +377,9 @@ function wire() {
         } catch (err) {
             console.error("[CART MODAL] Rechnung konnte nicht erstellt werden:", err);
             alert(`Rechnung konnte nicht erstellt werden: ${err?.message || err}`);
+        } finally {
+            btnSell.textContent = originalLabel;
+            btnSell.disabled = getCartEntries().length === 0;
         }
     });
 

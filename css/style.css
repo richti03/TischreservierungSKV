@@ -983,31 +983,117 @@ tfoot td{
 .table tr.is-in-cart td {
     background: transparent;
 }
-.cart-options {
+
+a.btn {
+    text-decoration: none;
+}
+
+.customer-flow-actions {
+    margin-top: 16px;
     display: flex;
     gap: 12px;
-    align-items: center;
     flex-wrap: wrap;
-    margin-bottom: 16px;
+    justify-content: center;
 }
 
-.cart-options__label {
-    font-weight: 600;
+.customer-flow-actions[hidden] {
+    display: none;
 }
 
-.cart-options__select {
-    min-width: 150px;
-    padding: 6px 10px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
-    background: #fff;
-    font-size: 14px;
+.customer-flow-actions__btn {
+    min-width: 220px;
+    text-align: center;
+}
+
+.customer-flow-actions__btn[aria-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.payment-dialog {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+
+.payment-dialog.hidden {
+    display: none;
+}
+
+.payment-dialog__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.payment-dialog__panel {
+    position: relative;
+    background: #ffffff;
+    padding: 32px 28px 28px;
+    border-radius: 18px;
+    box-shadow: 0 22px 45px rgba(15, 23, 42, 0.25);
+    width: min(420px, 92vw);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+}
+
+.payment-dialog__title {
+    margin: 0;
+    font-size: 24px;
+    color: #1d3b7a;
+}
+
+.payment-dialog__text {
+    margin: 0;
+    color: #475569;
+    font-size: 15px;
+}
+
+.payment-dialog__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.payment-dialog__btn {
+    font-size: 16px;
+    padding: 12px;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.payment-dialog__btn:hover,
+.payment-dialog__btn:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(65, 105, 225, 0.25);
+}
+
+.payment-dialog__btn--secondary {
+    background: #f1f5f9;
     color: #0f172a;
 }
 
-.cart-options__hint {
-    margin: 0;
-    font-size: 12px;
-    color: #475569;
-    flex-basis: 100%;
+.payment-dialog__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    border: 0;
+    background: rgba(15, 23, 42, 0.08);
+    color: #0f172a;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.payment-dialog__close:hover,
+.payment-dialog__close:focus {
+    background: rgba(15, 23, 42, 0.16);
 }

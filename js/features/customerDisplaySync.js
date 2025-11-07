@@ -117,7 +117,7 @@ function buildModePayload() {
     if (visibleInvoiceId && latestInvoice?.id !== visibleInvoiceId) {
         visibleInvoiceId = null;
     }
-    let mode = "plan";
+    let mode = "welcome";
     let cart = null;
     let invoice = null;
 

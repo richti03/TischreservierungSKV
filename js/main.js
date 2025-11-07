@@ -9,7 +9,7 @@ import { openBookingSearchModal } from "./features/searchModal.js"; // optional
 import { setupInternalPlanSync, openInternalPlanTab} from "./features/internalPlanSync.js";
 import { setupExternalPlanSync, openExternalPlanTab } from "./features/externalPlanSync.js";
 import { setupCustomerDisplaySync, openCustomerDisplayTab, signalNextCustomer } from "./features/customerDisplaySync.js";
-import { downloadInvoicesZip } from "./features/invoices.js";
+import { downloadInvoicesZip, onInvoicesChange, getLatestInvoice } from "./features/invoices.js";
 import {
     getCardPriceValue,
     onCardPriceChange,
@@ -724,6 +724,9 @@ updateCardPriceDisplay();
 // Warenkorb-Button im Header
 const cartToggle = document.getElementById("cart-toggle");
 const cartBadge = document.getElementById("cart-badge");
+const customerFlowActions = document.getElementById("customer-flow-actions");
+const latestInvoiceDownloadBtn = document.getElementById("btn-download-latest-invoice");
+const nextCustomerBtn = document.getElementById("btn-next-customer");
 
 const updateCartBadge = entries => {
     if (!cartBadge || !cartToggle) return;
@@ -745,6 +748,64 @@ cartToggle?.addEventListener("click", () => {
 onCartChange(updateCartBadge);
 updateCartBadge();
 
+function updateCustomerFlowActions(invoice) {
+    if (!customerFlowActions || !latestInvoiceDownloadBtn) {
+        return;
+    }
+    if (!invoice) {
+        customerFlowActions.hidden = true;
+        latestInvoiceDownloadBtn.removeAttribute("href");
+        latestInvoiceDownloadBtn.removeAttribute("download");
+        latestInvoiceDownloadBtn.removeAttribute("aria-disabled");
+        return;
+    }
+    customerFlowActions.hidden = false;
+    if (invoice.dataUrl) {
+        latestInvoiceDownloadBtn.href = invoice.dataUrl;
+        latestInvoiceDownloadBtn.download = invoice.fileName || "Rechnung.pdf";
+        latestInvoiceDownloadBtn.removeAttribute("aria-disabled");
+    } else {
+        latestInvoiceDownloadBtn.removeAttribute("href");
+        latestInvoiceDownloadBtn.removeAttribute("download");
+        latestInvoiceDownloadBtn.setAttribute("aria-disabled", "true");
+    }
+}
+
+function resetCustomerFlowActions() {
+    updateCustomerFlowActions(null);
+}
+
+function closeAllModals() {
+    document.dispatchEvent(new CustomEvent("customerFlow:close-modals"));
+    const modalNodes = document.querySelectorAll('.modal');
+    modalNodes.forEach(modal => {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    });
+    const paymentDialog = document.getElementById('paymentMethodDialog');
+    if (paymentDialog) {
+        paymentDialog.classList.add('hidden');
+        paymentDialog.setAttribute('aria-hidden', 'true');
+    }
+    const overlayIds = ['event-name-dialog', 'event-start-overlay'];
+    overlayIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (typeof el.hidden === 'boolean') {
+            el.hidden = true;
+        } else {
+            el.setAttribute('hidden', '');
+        }
+    });
+}
+
+resetCustomerFlowActions();
+
+const initialInvoice = getLatestInvoice();
+if (initialInvoice) {
+    updateCustomerFlowActions(initialInvoice);
+}
+
 // Hauptbuttons (IDs vorausgesetzt)
 const $ = id => document.getElementById(id);
 $("btn-book")              ?.addEventListener("click", berechneReservierung);
@@ -758,7 +819,18 @@ $("btn-open-internal-plan")?.addEventListener("click", openInternalPlanTab);
 $("btn-open-external-plan")?.addEventListener("click", openExternalPlanTab);
 $("btn-open-customer-display")?.addEventListener("click", openCustomerDisplayTab);
 $("btn-download-invoices")?.addEventListener("click", downloadInvoicesZip);
-$("btn-next-customer")?.addEventListener("click", () => signalNextCustomer());
+
+nextCustomerBtn?.addEventListener("click", () => {
+    closeAllModals();
+    resetCustomerFlowActions();
+    signalNextCustomer();
+});
+
+onInvoicesChange(event => {
+    if (event?.reason === "created" && event.invoice) {
+        updateCustomerFlowActions(event.invoice);
+    }
+});
 
 // NEU: Tische automatisch hinzufügen/entfernen
 $("btn-add-table")      ?.addEventListener("click", tischHinzufuegen);
