@@ -3,13 +3,53 @@
 
 import {
     reservationsByTable, ensureBucket, escapeHtml, noteToHtml,
-    getSeatsByTableNumber, setSeatsByTableNumber, buildSplitInfoText
+    getSeatsByTableNumber, setSeatsByTableNumber, buildSplitInfoText,
+    tableLabel,
 } from "../core/state.js";
 import { printTischArray, renderReservationsForSelectedTable, setSelectedTableNr } from "../ui/tableView.js";
 import { openMoveModal } from "./modalMoveSwap.js";
 import { addToCart, removeFromCart, markCartDirty } from "./cart.js";
+import { getEventsWithState, getActiveEvent, setActiveEvent, onEventsChange } from "../core/events.js";
 
 let wired = false;
+let unsubscribeEvents = null;
+let lastEventFilterId = "";
+
+function ensureEventActive(eventId) {
+    if (!eventId) {
+        return true;
+    }
+    const active = getActiveEvent();
+    if (active?.id === eventId) {
+        return true;
+    }
+    const success = setActiveEvent(eventId);
+    if (!success) {
+        console.warn("[SEARCH MODAL] Veranstaltung konnte nicht aktiviert werden:", eventId);
+    }
+    return success;
+}
+
+function updateEventFilterOptions(select) {
+    if (!select) return;
+    const events = getEventsWithState();
+    const previous = select.value || lastEventFilterId || "";
+    const options = ['<option value="">Alle Veranstaltungen</option>'];
+    events.forEach(event => {
+        if (!event?.id) return;
+        const label = escapeHtml(event.displayName || event.name || "Veranstaltung");
+        options.push(`<option value="${event.id}">${label}</option>`);
+    });
+    select.innerHTML = options.join("");
+    const match = events.some(event => event?.id === previous);
+    if (match) {
+        select.value = previous;
+        lastEventFilterId = previous;
+    } else {
+        select.value = "";
+        lastEventFilterId = "";
+    }
+}
 
 function ensureSearchModal() {
     let el = document.getElementById("bookingSearchModal");
@@ -25,14 +65,18 @@ function ensureSearchModal() {
         <button type="button" class="modal__close" id="bk-search-close" aria-label="Schließen">×</button>
       </header>
       <div class="modal__body">
-        <div class="bk-search-bar" style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
-          <input id="bk-search-input" type="search" placeholder="Suche nach Name oder Booking-ID (z. B. 'Müller' oder '007')" style="flex:1; padding:10px 12px; font-size:14px;">
+        <div class="bk-search-bar" style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+          <input id="bk-search-input" type="search" placeholder="Suche nach Name oder Booking-ID (z. B. 'Müller' oder '007')" style="flex:1 1 240px; padding:10px 12px; font-size:14px; min-width:220px;">
+          <select id="bk-search-event" style="flex:0 0 auto; min-width:220px; padding:10px 12px; font-size:14px;">
+            <option value="">Alle Veranstaltungen</option>
+          </select>
           <button id="bk-search-clear" class="btn btn--ghost" type="button" title="Suche leeren" aria-label="Suche leeren">Leeren</button>
         </div>
         <div class="table-wrap">
           <table class="table table--compact" id="bk-search-table" style="width:100%;">
             <thead>
               <tr>
+                <th style="min-width:180px; text-align:left;">Veranstaltung</th>
                 <th style="min-width:160px; text-align:left;">Name (+ Booking-ID)</th>
                 <th style="width:110px;">Tisch</th>
                 <th style="width:90px;">Plätze</th>
@@ -85,51 +129,71 @@ function iconBtn({ action, title, ghost=false }) {
 /* ---------------------------------------- */
 
 // Datensatz für die Tabelle vorbereiten (flatten)
-function collectRows() {
+function collectRows(eventFilterId = "") {
     const rows = [];
-    for (const key of Object.keys(reservationsByTable)) {
-        const tableNr = parseInt(key, 10);
-        const list = reservationsByTable[tableNr] || [];
-        for (const r of list) {
-            rows.push({
-                id: r.id,
-                bookingId: String(r.bookingId ?? ""),
-                name: String(r.name ?? ""),
-                cards: parseInt(r.cards) || 0,
-                notes: r.notes || "",
-                sold: !!r.sold,
-                inCart: !!r.inCart,
-                tableNr
+    const events = getEventsWithState();
+    events.forEach(event => {
+        if (!event?.id) return;
+        if (eventFilterId && event.id !== eventFilterId) return;
+        const reservationsMap = event?.state?.reservationsByTable || {};
+        const tableNumbers = Object.keys(reservationsMap)
+            .map(key => parseInt(key, 10))
+            .filter(Number.isInteger)
+            .sort((a, b) => a - b);
+        tableNumbers.forEach(tableNr => {
+            const list = reservationsMap[tableNr] || [];
+            list.forEach(reservation => {
+                if (!reservation) return;
+                rows.push({
+                    id: reservation.id,
+                    bookingId: String(reservation.bookingId ?? ""),
+                    name: String(reservation.name ?? ""),
+                    cards: parseInt(reservation.cards, 10) || 0,
+                    notes: reservation.notes || "",
+                    sold: !!reservation.sold,
+                    inCart: !!reservation.inCart,
+                    tableNr,
+                    eventId: event.id,
+                    eventName: event.name || "",
+                    eventDisplayName: event.displayName || event.name || "",
+                    sourceReservations: reservationsMap,
+                });
             });
-        }
-    }
-    // Alphabetisch nach Namen (de, Groß/Klein egal)
-    rows.sort((a, b) => a.name.localeCompare(b.name, "de", { sensitivity: "base" }));
+        });
+    });
+    rows.sort((a, b) => {
+        const nameA = a.eventDisplayName || a.eventName || "";
+        const nameB = b.eventDisplayName || b.eventName || "";
+        const eventCmp = nameA.localeCompare(nameB, "de", { sensitivity: "base" });
+        if (eventCmp !== 0) return eventCmp;
+        if (a.tableNr !== b.tableNr) return a.tableNr - b.tableNr;
+        return a.name.localeCompare(b.name, "de", { sensitivity: "base" });
+    });
     return rows;
 }
 
 // Rendering der Tabelle (mit optionalem Filter)
-function renderTable(filter = "") {
+function renderTable(filter = "", eventFilterId = "") {
     const modal = document.getElementById("bookingSearchModal");
     if (!modal) return;
     const tbody = modal.querySelector("#bk-search-table tbody");
     if (!tbody) return;
 
     const q = (filter || "").trim().toLowerCase();
-    const rows = collectRows().filter(r => {
+    const rows = collectRows(eventFilterId).filter(r => {
         if (!q) return true;
         return r.name.toLowerCase().includes(q) || String(r.bookingId).toLowerCase().includes(q);
     });
 
     if (rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; opacity:.7;">Keine passenden Buchungen gefunden.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; opacity:.7;">Keine passenden Buchungen gefunden.</td></tr>`;
         return;
     }
 
     tbody.innerHTML = rows.map(r => {
         const bid = r.bookingId || "—";
         const baseNotes = noteToHtml(r.notes);
-        const splitInfo = buildSplitInfoText(r.bookingId, r.tableNr);
+        const splitInfo = buildSplitInfoText(r.bookingId, r.tableNr, r.sourceReservations);
         const splitHtml = splitInfo ? `<div style="font-size:12px;opacity:.75;">${escapeHtml(splitInfo)}</div>` : "";
         const notesHtml = baseNotes + splitHtml;
 
@@ -137,6 +201,9 @@ function renderTable(filter = "") {
         if (r.sold) rowClasses.push("is-sold");
         if (r.inCart && !r.sold) rowClasses.push("is-in-cart");
         const classAttr = rowClasses.length ? ` class="${rowClasses.join(" ")}"` : "";
+
+        const eventName = r.eventDisplayName || r.eventName || "—";
+        const tableText = tableLabel(r.tableNr);
 
         const actions = r.sold
             ? iconBtn({ action:"unsold", title:"Verkauf rückgängig" })
@@ -148,12 +215,13 @@ function renderTable(filter = "") {
             ].join(" ");
 
         return `
-      <tr data-id="${r.id}" data-table="${r.tableNr}"${classAttr}>
+      <tr data-id="${r.id}" data-table="${r.tableNr}" data-event="${r.eventId ?? ""}"${classAttr}>
+        <td>${escapeHtml(eventName)}</td>
         <td>
           ${escapeHtml(r.name)}
           <div style="font-size:12px;opacity:.7;">Buchung-ID: ${escapeHtml(bid)}</div>
         </td>
-        <td>Tisch ${r.tableNr}</td>
+        <td>${escapeHtml(tableText)}</td>
         <td>${r.cards}</td>
         <td>${notesHtml}</td>
         <td class="actions" style="display:flex;gap:6px;flex-wrap:wrap;">${actions}</td>
@@ -174,14 +242,34 @@ function wire() {
     if (!el) return;
 
     const input = el.querySelector("#bk-search-input");
+    const select = el.querySelector("#bk-search-event");
     const btnClear = el.querySelector("#bk-search-clear");
     const btnClose = el.querySelector("#bk-search-close");
     const btnCancel = el.querySelector("#bk-search-cancel");
     const tbody = el.querySelector("#bk-search-table tbody");
 
-    // Suche
-    input?.addEventListener("input", () => renderTable(input.value));
-    btnClear?.addEventListener("click", () => { input.value = ""; renderTable(""); input.focus(); });
+    updateEventFilterOptions(select);
+
+    const rerender = () => renderTable(input?.value || "", select?.value || "");
+
+    if (!unsubscribeEvents) {
+        unsubscribeEvents = onEventsChange(() => {
+            updateEventFilterOptions(select);
+            rerender();
+        });
+    }
+
+    // Suche & Filter
+    input?.addEventListener("input", rerender);
+    btnClear?.addEventListener("click", () => {
+        if (input) input.value = "";
+        rerender();
+        input?.focus();
+    });
+    select?.addEventListener("change", () => {
+        lastEventFilterId = select.value || "";
+        rerender();
+    });
 
     // Schließen
     btnClose?.addEventListener("click", closeModal);
@@ -203,6 +291,15 @@ function wire() {
         const action = btn.getAttribute("data-action");
         const id = tr.getAttribute("data-id");
         const tableNr = parseInt(tr.getAttribute("data-table"), 10);
+        const eventId = tr.getAttribute("data-event") || null;
+
+        if (!Number.isInteger(tableNr)) {
+            return;
+        }
+
+        if (!ensureEventActive(eventId)) {
+            return;
+        }
 
         ensureBucket(tableNr);
         const list = reservationsByTable[tableNr] || [];
@@ -212,18 +309,18 @@ function wire() {
 
         if (action === "edit") {
             if (rec.sold) return alert("Diese Buchung ist als verkauft markiert und kann nicht bearbeitet werden.");
-            const newCount = parseInt(prompt(`Kartenanzahl für "${rec.name}" an Tisch ${tableNr} ändern:`, rec.cards));
+            const newCount = parseInt(prompt(`Kartenanzahl für "${rec.name}" an ${tableLabel(tableNr)} ändern:`, rec.cards));
             if (!Number.isInteger(newCount) || newCount <= 0) return alert("Ungültige Anzahl.");
             const delta = newCount - rec.cards;
             if (delta !== 0) {
                 const avail = getSeatsByTableNumber(tableNr) || 0;
-                if (delta > 0 && avail < delta) return alert(`Nicht genug freie Plätze an Tisch ${tableNr}. Verfügbar: ${avail}`);
+                if (delta > 0 && avail < delta) return alert(`Nicht genug freie Plätze an ${tableLabel(tableNr)}. Verfügbar: ${avail}`);
                 setSeatsByTableNumber(tableNr, avail - delta);
                 rec.cards = newCount;
             }
             printTischArray(); // aktualisiert auch Select/Infos
             renderReservationsForSelectedTable();
-            renderTable(input?.value || "");
+            rerender();
         }
 
         if (action === "move") {
@@ -235,33 +332,33 @@ function wire() {
 
         if (action === "cart") {
             if (rec.sold) return alert("Als verkauft markierte Reservierungen können nicht in den Warenkorb gelegt werden.");
-            addToCart(tableNr, id);
+            addToCart(tableNr, id, eventId);
             renderReservationsForSelectedTable();
-            renderTable(input?.value || "");
+            rerender();
         }
 
         if (action === "cart-remove") {
-            removeFromCart(tableNr, id);
+            removeFromCart(tableNr, id, eventId);
             renderReservationsForSelectedTable();
-            renderTable(input?.value || "");
+            rerender();
         }
 
         if (action === "unsold") {
             rec.sold = false;
             markCartDirty();
-            renderTable(input?.value || "");
+            rerender();
             renderReservationsForSelectedTable();
         }
 
         if (action === "delete") {
-            if (!confirm(`Reservierung von "${rec.name}" (${rec.cards} Karten, Tisch ${tableNr}) wirklich löschen?`)) return;
+            if (!confirm(`Reservierung von "${rec.name}" (${rec.cards} Karten, ${tableLabel(tableNr)}) wirklich löschen?`)) return;
             const avail = getSeatsByTableNumber(tableNr) || 0;
             setSeatsByTableNumber(tableNr, avail + rec.cards);
             list.splice(idx, 1);
             markCartDirty();
             printTischArray();
             renderReservationsForSelectedTable();
-            renderTable(input?.value || "");
+            rerender();
         }
     });
 
@@ -275,8 +372,14 @@ export function openBookingSearchModal(initialFilter = "") {
     wire();
     // initial render
     const input = el.querySelector("#bk-search-input");
+    const select = el.querySelector("#bk-search-event");
     if (input) input.value = initialFilter;
-    renderTable(initialFilter);
+    updateEventFilterOptions(select);
+    if (select && lastEventFilterId && Array.from(select.options).some(option => option.value === lastEventFilterId)) {
+        select.value = lastEventFilterId;
+    }
+    lastEventFilterId = select?.value || "";
+    renderTable(initialFilter, select?.value || "");
     // Fokus auf Suche
     setTimeout(() => {
         input?.focus();
