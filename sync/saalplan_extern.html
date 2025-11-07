@@ -1,1025 +1,1019 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Saalplan – Sandersdorfer Karnevalsverein e.V.</title>
-  <style>
-    :root {
-      --line: #111;
-      --muted: #666;
-      --royal-blue: #4169E1;
-      --bg: #fff;
-    }
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Saalplan – Sandersdorfer Karnevalsverein e.V.</title>
+    <style>
+        :root {
+            --line: #111;
+            --muted: #666;
+            --royal-blue: #4169E1;
+            --bg: #fff;
+        }
 
-    * {
-      box-sizing: border-box;
-    }
+        * {
+            box-sizing: border-box;
+        }
 
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: var(--bg);
-      color: #111;
-    }
+        body {
+            margin: 0;
+            font-family: system-ui, sans-serif;
+            background: var(--bg);
+            color: #111;
+        }
 
-    .app {
-      min-height: 100vh;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 32px;
-      align-items: stretch;
-      background: var(--bg);
-    }
+        .app {
+            min-height: 100vh;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+            align-items: stretch;
+            background: var(--bg);
+        }
 
-    .app-header {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-    }
+        .app-header {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
 
-    .total-banner {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      padding: 16px 36px;
-      border-radius: 18px;
-      background: var(--royal-blue);
-      color: #fff;
-      box-shadow: 0 10px 30px rgba(65, 105, 225, 0.35);
-      min-width: 260px;
-    }
+        .total-banner {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 16px 36px;
+            border-radius: 18px;
+            background: var(--royal-blue);
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(65, 105, 225, 0.35);
+            min-width: 260px;
+        }
 
-    .total-banner__label {
-      font-size: 14px;
-      letter-spacing: 1.6px;
-      font-weight: 600;
-      text-transform: uppercase;
-      opacity: 0.85;
-    }
+        .total-banner__label {
+            font-size: 14px;
+            letter-spacing: 1.6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.85;
+        }
 
-    .total-banner__amount {
-      font-size: 36px;
-      font-weight: 700;
-      letter-spacing: 0.8px;
-    }
+        .total-banner__amount {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+        }
 
-    .plans-grid {
-      width: 100%;
-      display: flex;
-      flex-wrap: nowrap;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 32px;
-    }
+        .plans-grid {
+            width: 100%;
+            display: flex;
+            flex-wrap: nowrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 32px;
+        }
 
-    .event-block {
-      display: flex;
-      justify-content: center;
-      flex: 0 0 auto;
-    }
+        .event-block {
+            display: flex;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
 
-    .event-block__scaler {
-      position: relative;
-      display: flex;
-      justify-content: center;
-      overflow: hidden;
-      width: 100%;
-      max-width: 100%;
-    }
+        .event-block__scaler {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+            width: 100%;
+            max-width: 100%;
+        }
 
-    .frame {
-      border: 2px solid var(--line);
-      padding: 8px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      background: #fff;
-      gap: 12px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-      transform-origin: top center;
-      transition: transform 0.2s ease;
-    }
+        .frame {
+            border: 2px solid var(--line);
+            padding: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            gap: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            transform-origin: top center;
+            transition: transform 0.2s ease;
+        }
 
-    h1 {
-      margin: 0;
-      text-align: center;
-      font-size: 22px;
-      letter-spacing: 0.5px;
-    }
+        h1 {
+            margin: 0;
+            text-align: center;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
 
-    .main-area {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      justify-content: center;
-      gap: 40px;
-    }
+        .main-area {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+        }
 
-    .col {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      align-items: center;
-      justify-content: center;
-    }
+        .col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
 
-    .col--right {
-      flex-direction: column-reverse;
-    }
+        .col--right {
+            flex-direction: column-reverse;
+        }
 
-    .parkett-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+        .parkett-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-    .parkett {
-      width: 260px;
-      min-height: 260px;
-      border: 2px solid var(--line);
-      display: flex;
-      align-items: stretch;
-      justify-content: center;
-      background: #f7f8fb;
-    }
+        .parkett {
+            width: 260px;
+            min-height: 260px;
+            border: 2px solid var(--line);
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            background: #f7f8fb;
+        }
 
-    .parkett-display {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 12px;
-      padding: 24px 20px;
-      font-size: 20px;
-      font-weight: 500;
-      font-family: "IBM Plex Mono", "Fira Mono", "Courier New", monospace;
-    }
+        .parkett-display {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 12px;
+            padding: 24px 20px;
+            font-size: 20px;
+            font-weight: 500;
+            font-family: "IBM Plex Mono", "Fira Mono", "Courier New", monospace;
+        }
 
-    .parkett-line {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: baseline;
-    }
+        .parkett-line {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: baseline;
+        }
 
-    .parkett-line__label {
-      display: inline-flex;
-      align-items: baseline;
-      gap: 6px;
-    }
+        .parkett-line__label {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 6px;
+        }
 
-    .parkett-quantity {
-      min-width: 40px;
-      text-align: right;
-    }
+        .parkett-quantity {
+            min-width: 40px;
+            text-align: right;
+        }
 
-    .parkett-amount {
-      min-width: 90px;
-      text-align: right;
-    }
+        .parkett-amount {
+            min-width: 90px;
+            text-align: right;
+        }
 
-    .parkett-divider {
-      border-bottom: 2px solid var(--line);
-      margin: 4px 0 0;
-    }
+        .parkett-divider {
+            border-bottom: 2px solid var(--line);
+            margin: 4px 0 0;
+        }
 
-    .parkett-total {
-      font-size: 24px;
-      font-weight: 700;
-    }
+        .parkett-total {
+            font-size: 24px;
+            font-weight: 700;
+        }
 
-    .parkett-placeholder {
-      margin: 0;
-      text-align: center;
-      font-size: 18px;
-      letter-spacing: 2px;
-      color: var(--muted);
-    }
+        .parkett-placeholder {
+            margin: 0;
+            text-align: center;
+            font-size: 18px;
+            letter-spacing: 2px;
+            color: var(--muted);
+        }
 
-    .standing-area {
-      margin: 0 40px 16px;
-      padding: 0 0 16px 0;
-      border: 2px solid var(--line);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
+        .standing-area {
+            margin: 0 40px 16px;
+            padding: 0 0 16px 0;
+            border: 2px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
 
-    .standing-label {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      font-size: 14px;
-      text-align: center;
-      letter-spacing: 0.5px;
-      margin: 12px 0 0;
-    }
+        .standing-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            text-align: center;
+            letter-spacing: 0.5px;
+            margin: 12px 0 0;
+        }
 
-    .standing-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 4px;
-      width: 100%;
-      max-width: 320px;
-      padding: 0 16px 12px;
-    }
+        .standing-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+            width: 100%;
+            max-width: 320px;
+            padding: 0 16px 12px;
+        }
 
-    .standing-seat {
-      position: static !important;
-      width: 12px;
-      height: 12px;
-      border: 1px solid var(--line);
-      border-radius: 2px;
-      flex: 0 0 12px;
-    }
+        .standing-seat {
+            position: static !important;
+            width: 12px;
+            height: 12px;
+            border: 1px solid var(--line);
+            border-radius: 2px;
+            flex: 0 0 12px;
+        }
 
-    .bottom-row {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 6px;
-      padding: 0 40px 12px;
-    }
+        .bottom-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 6px;
+            padding: 0 40px 12px;
+        }
 
-    .table {
-      position: relative;
-      background: #fff;
-      border: 2px solid var(--line);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+        .table {
+            position: relative;
+            background: #fff;
+            border: 2px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-    .label {
-      font-size: 12px;
-      color: var(--muted);
-      white-space: nowrap;
-    }
+        .label {
+            font-size: 12px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
 
-    .label.vertical {
-      transform: rotate(-90deg);
-      white-space: nowrap;
-    }
+        .label.vertical {
+            transform: rotate(-90deg);
+            white-space: nowrap;
+        }
 
-    .chair {
-      position: absolute;
-      width: 12px;
-      height: 12px;
-      border: 1px solid var(--line);
-      background: #fff;
-      border-radius: 2px;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-      cursor: default;
-    }
+        .chair {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border: 1px solid var(--line);
+            background: #fff;
+            border-radius: 2px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            cursor: default;
+        }
 
-    .chair:hover {
-      transform: scale(1.15);
-      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12);
-    }
+        .chair:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12);
+        }
 
-    .chair--reserved {
-      border-color: var(--royal-blue);
-      background: var(--royal-blue);
-    }
+        .chair--reserved {
+            border-color: var(--royal-blue);
+            background: var(--royal-blue);
+        }
 
-    .chair--sold {
-      background: #111;
-      border-color: #000;
-    }
+        .chair--sold {
+            background: #111;
+            border-color: #000;
+        }
 
-    .side-top {
-      top: -8px;
-    }
+        .side-top {
+            top: -8px;
+        }
 
-    .side-bottom {
-      bottom: -8px;
-    }
+        .side-bottom {
+            bottom: -8px;
+        }
 
-    .side-left {
-      left: -8px;
-    }
+        .side-left {
+            left: -8px;
+        }
 
-    .side-right {
-      right: -8px;
-    }
+        .side-right {
+            right: -8px;
+        }
 
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 24px;
-      padding: 80px 16px;
-      border: 2px dashed rgba(65, 105, 225, 0.4);
-      border-radius: 16px;
-      background: rgba(65, 105, 225, 0.04);
-      text-align: center;
-      max-width: 520px;
-      margin: 0 auto;
-    }
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            padding: 80px 16px;
+            border: 2px dashed rgba(65, 105, 225, 0.4);
+            border-radius: 16px;
+            text-align: center;
+            max-width: 520px;
+            margin: 0 auto;
+        }
 
-    .empty-state__logo {
-      width: 260px;
-      height: 260px;
-      border-radius: 50%;
-      border: 8px solid var(--royal-blue);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 48px;
-      letter-spacing: 4px;
-      font-weight: 700;
-      color: var(--royal-blue);
-      background: #fff;
-    }
+        .empty-state__logo {
+            max-width: 320px;
+            width: 100%;
+            height: auto;
+        }
 
-    .empty-state__text {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      color: #1f2555;
-    }
-  </style>
+        .empty-state__text {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #1f2555;
+        }
+    </style>
 </head>
 <body>
 <div class="app" id="app">
-  <div class="empty-state">
-    <div class="empty-state__logo">LOGO</div>
-    <p class="empty-state__text">Herzlich willkommen beim Sandersdorfer Karnevalsverein</p>
-  </div>
+    <div class="empty-state">
+        <img class="empty-state__logo" src="../img/SKV-Wappen.jpg"/>
+        <p class="empty-state__text">Herzlich willkommen beim Sandersdorfer Karnevalsverein</p>
+    </div>
 </div>
 
 <script>
-  const CHANNEL_NAME = "skv-external-plan";
-  const STORAGE_KEY = "skv-external-plan-message";
-  const MESSAGE_MARKER = "__skvExternalPlan";
-  const MAX_SEEN_MESSAGES = 200;
-  const ROYAL_BLUE = '#4169E1';
+    const CHANNEL_NAME = "skv-external-plan";
+    const STORAGE_KEY = "skv-external-plan-message";
+    const MESSAGE_MARKER = "__skvExternalPlan";
+    const MAX_SEEN_MESSAGES = 200;
+    const ROYAL_BLUE = '#4169E1';
 
-  const TABLE_THICKNESS = 32;
-  const PX_PER_SEAT = 7.5;
-  const PARKETT_WIDTH = 260;
-  const FRAME_EXTRA_WIDTH = 120;
-  const DEFAULT_STANDING_TOTAL = 76;
+    const TABLE_THICKNESS = 32;
+    const PX_PER_SEAT = 7.5;
+    const PARKETT_WIDTH = 260;
+    const FRAME_EXTRA_WIDTH = 120;
+    const DEFAULT_STANDING_TOTAL = 76;
 
-  const euroFormatter = new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-  });
-
-  const appRoot = document.getElementById('app');
-
-  let channel = null;
-  let storageListenerBound = false;
-  const seenMessageIds = new Set();
-  const seenMessageQueue = [];
-  let resizeHandlerBound = false;
-  let pendingScaleUpdate = null;
-
-  function rememberMessageId(id) {
-    if (!id || seenMessageIds.has(id)) return;
-    seenMessageIds.add(id);
-    seenMessageQueue.push(id);
-    if (seenMessageQueue.length > MAX_SEEN_MESSAGES) {
-      const oldest = seenMessageQueue.shift();
-      if (oldest !== undefined) {
-        seenMessageIds.delete(oldest);
-      }
-    }
-  }
-
-  function hasSeenMessage(id) {
-    if (!id) return false;
-    return seenMessageIds.has(id);
-  }
-
-  function createEnvelope(data) {
-    return {
-      marker: MESSAGE_MARKER,
-      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      data,
-    };
-  }
-
-  function transmitEnvelope(envelope) {
-    const bc = ensureChannel();
-    if (bc && envelope) {
-      try {
-        bc.postMessage(envelope);
-      } catch (err) {
-        console.warn('[SYNC-EXTERNAL] BroadcastChannel konnte Nachricht nicht senden:', err);
-      }
-    }
-
-    if (!envelope) return;
-
-    if (typeof localStorage === 'undefined' || localStorage === null) {
-      return;
-    }
-
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(envelope));
-    } catch (err) {
-      if (err?.name !== 'SecurityError') {
-        console.warn('[SYNC-EXTERNAL] localStorage-Fallback konnte Nachricht nicht senden:', err);
-      }
-    }
-  }
-
-  function sendMessage(data) {
-    transmitEnvelope(createEnvelope(data));
-  }
-
-  function setupStorageListener() {
-    if (storageListenerBound) return;
-    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
-    window.addEventListener('storage', onStorageMessage);
-    storageListenerBound = true;
-  }
-
-  function ensureChannel() {
-    setupStorageListener();
-    if (!('BroadcastChannel' in window)) {
-      return null;
-    }
-    if (!channel) {
-      try {
-        channel = new BroadcastChannel(CHANNEL_NAME);
-        channel.addEventListener('message', onChannelMessage);
-        window.addEventListener('beforeunload', () => {
-          try {
-            channel?.close();
-          } catch (err) {
-            console.warn('[SYNC-EXTERNAL] BroadcastChannel konnte nicht geschlossen werden:', err);
-          }
-        }, { once: true });
-      } catch (err) {
-        console.warn('[SYNC-EXTERNAL] BroadcastChannel konnte nicht initialisiert werden:', err);
-        channel = null;
-      }
-    }
-    return channel;
-  }
-
-  function handleIncomingPayload(payload) {
-    if (!payload || typeof payload !== 'object') return;
-    if (payload.type === 'state' && payload.payload) {
-      renderPlan(payload.payload);
-    }
-  }
-
-  function handleEnvelope(envelope) {
-    if (!envelope || envelope.marker !== MESSAGE_MARKER) return;
-    if (hasSeenMessage(envelope.id)) return;
-    rememberMessageId(envelope.id);
-    handleIncomingPayload(envelope.data);
-  }
-
-  function onChannelMessage(event) {
-    handleEnvelope(event?.data);
-  }
-
-  function onStorageMessage(event) {
-    if (!event || event.key !== STORAGE_KEY) return;
-    if (!event.newValue) return;
-    try {
-      const parsed = JSON.parse(event.newValue);
-      handleEnvelope(parsed);
-    } catch (err) {
-      console.warn('[SYNC-EXTERNAL] Konnte Nachricht aus localStorage nicht verarbeiten:', err);
-    }
-  }
-
-  function clearChildren(el) {
-    if (!el) return;
-    while (el.firstChild) el.removeChild(el.firstChild);
-  }
-
-  function requestFrame(callback) {
-    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
-      return window.requestAnimationFrame(callback);
-    }
-    return setTimeout(callback, 16);
-  }
-
-  function cancelFrame(handle) {
-    if (handle === null) return;
-    if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
-      window.cancelAnimationFrame(handle);
-    } else {
-      clearTimeout(handle);
-    }
-  }
-
-  function updateFrameScales() {
-    if (!appRoot) return;
-    const grid = appRoot.querySelector('.plans-grid');
-    if (!grid) return;
-
-    const sections = Array.from(grid.querySelectorAll('.event-block'));
-    if (!sections.length) return;
-
-    const frames = sections.map(section => {
-      const scaler = section.querySelector('.event-block__scaler');
-      const frame = scaler?.querySelector?.('.frame');
-      if (!scaler || !frame) {
-        return null;
-      }
-
-      const previousTransform = frame.style.transform;
-      frame.style.transform = 'scale(1)';
-
-      let baseWidth = Number.parseFloat(frame.dataset.baseWidth);
-      if (!Number.isFinite(baseWidth) || baseWidth <= 0) {
-        baseWidth = frame.offsetWidth || 0;
-        frame.dataset.baseWidth = baseWidth;
-      }
-
-      let baseHeight = Number.parseFloat(frame.dataset.baseHeight);
-      if (!Number.isFinite(baseHeight) || baseHeight <= 0) {
-        baseHeight = frame.offsetHeight || 0;
-        frame.dataset.baseHeight = baseHeight;
-      }
-
-      frame.style.transform = previousTransform;
-
-      return { section, scaler, frame, baseWidth, baseHeight };
-    }).filter(Boolean);
-
-    if (!frames.length) return;
-
-    let gap = 0;
-    if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
-      const style = window.getComputedStyle(grid);
-      if (style) {
-        const gapValue = parseFloat(style.columnGap || style.gap || '0');
-        if (Number.isFinite(gapValue) && gapValue >= 0) {
-          gap = gapValue;
-        }
-      }
-    }
-
-    const totalBaseWidth = frames.reduce((sum, item) => sum + item.baseWidth, 0);
-    const totalGap = gap * Math.max(0, frames.length - 1);
-    const containerWidth = grid.clientWidth || 0;
-
-    let scale = 1;
-    if (totalBaseWidth > 0) {
-      const availableWidth = containerWidth - totalGap;
-      if (availableWidth < totalBaseWidth) {
-        if (availableWidth > 0) {
-          scale = availableWidth / totalBaseWidth;
-        } else if (containerWidth > 0) {
-          scale = containerWidth / (totalBaseWidth + totalGap);
-        } else {
-          scale = 1;
-        }
-      }
-    }
-    if (!Number.isFinite(scale)) {
-      scale = 1;
-    }
-    scale = Math.min(Math.max(scale, 0), 1);
-
-    frames.forEach(item => {
-      const scaledWidth = item.baseWidth * scale;
-      const scaledHeight = item.baseHeight * scale;
-      const widthValue = Number.isFinite(scaledWidth) && scaledWidth > 0 ? scaledWidth : item.baseWidth;
-      const heightValue = Number.isFinite(scaledHeight) && scaledHeight > 0 ? scaledHeight : item.baseHeight;
-      item.frame.style.transform = `scale(${scale})`;
-      item.scaler.style.width = `${widthValue}px`;
-      item.scaler.style.minWidth = `${widthValue}px`;
-      item.scaler.style.height = heightValue ? `${heightValue}px` : 'auto';
-      item.scaler.style.maxWidth = `${item.baseWidth}px`;
-      item.section.style.flex = `0 0 ${widthValue}px`;
-      item.section.style.width = `${widthValue}px`;
-      item.section.style.minWidth = `${widthValue}px`;
-      item.section.style.maxWidth = `${item.baseWidth}px`;
+    const euroFormatter = new Intl.NumberFormat('de-DE', {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: 2,
     });
-  }
 
-  function scheduleScaleUpdate() {
-    cancelFrame(pendingScaleUpdate);
-    pendingScaleUpdate = requestFrame(() => {
-      pendingScaleUpdate = null;
-      updateFrameScales();
-    });
-  }
+    const appRoot = document.getElementById('app');
 
-  function bindResizeHandler() {
-    if (resizeHandlerBound) return;
-    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
-    window.addEventListener('resize', scheduleScaleUpdate);
-    resizeHandlerBound = true;
-  }
+    let channel = null;
+    let storageListenerBound = false;
+    const seenMessageIds = new Set();
+    const seenMessageQueue = [];
+    let resizeHandlerBound = false;
+    let pendingScaleUpdate = null;
 
-  function getHorizontalLength(table) {
-    const totalSeats = Math.max(parseInt(table?.total, 10) || 0, 0);
-    return totalSeats * PX_PER_SEAT;
-  }
-
-  function buildSeatTitle(segment, seatIndex) {
-    if (!segment || segment.type === 'free') return 'Frei';
-    const seatCount = Math.max(parseInt(segment.count, 10) || 0, 0);
-    const parts = [];
-
-    if (segment.name) {
-      parts.push(segment.name);
+    function rememberMessageId(id) {
+        if (!id || seenMessageIds.has(id)) return;
+        seenMessageIds.add(id);
+        seenMessageQueue.push(id);
+        if (seenMessageQueue.length > MAX_SEEN_MESSAGES) {
+            const oldest = seenMessageQueue.shift();
+            if (oldest !== undefined) {
+                seenMessageIds.delete(oldest);
+            }
+        }
     }
 
-    if (segment.bookingId) {
-      parts.push(`Buchung ${segment.bookingId}`);
+    function hasSeenMessage(id) {
+        if (!id) return false;
+        return seenMessageIds.has(id);
     }
 
-    if (seatCount > 0) {
-      const seatNumber = Math.min(seatIndex + 1, seatCount);
-      parts.push(`Platz ${seatNumber} von ${seatCount}`);
-    }
-
-    if (segment.splitInfo) {
-      parts.push(segment.splitInfo);
-    }
-
-    if (segment.notes) {
-      parts.push(segment.notes);
-    }
-
-    return parts.join(' · ');
-  }
-
-  function expandSegmentsToSeats(table, totalSeats) {
-    const seats = [];
-    const segments = Array.isArray(table?.segments) ? table.segments : [];
-    segments.forEach(segment => {
-      const count = Math.max(parseInt(segment?.count, 10) || 0, 0);
-      if (!count) return;
-      for (let i = 0; i < count; i++) {
-        const seat = {
-          type: segment.type === 'reserved' ? 'reserved' : (segment.type === 'sold' ? 'sold' : 'free'),
-          bookingId: segment.bookingId || null,
-          name: segment.name || '',
-          title: buildSeatTitle(segment, i),
-          notes: segment.notes || '',
+    function createEnvelope(data) {
+        return {
+            marker: MESSAGE_MARKER,
+            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            data,
         };
-        if (seat.type === 'reserved') {
-          const rawColor = typeof segment.colorPrimary === 'string' ? segment.colorPrimary.trim() : '';
-          const color = rawColor || ROYAL_BLUE;
-          seat.background = color;
-          seat.borderColor = color;
-        } else if (seat.type === 'sold') {
-          seat.background = '#111';
-          seat.borderColor = '#000';
-        } else {
-          seat.background = '#fff';
-          seat.borderColor = 'var(--line)';
+    }
+
+    function transmitEnvelope(envelope) {
+        const bc = ensureChannel();
+        if (bc && envelope) {
+            try {
+                bc.postMessage(envelope);
+            } catch (err) {
+                console.warn('[SYNC-EXTERNAL] BroadcastChannel konnte Nachricht nicht senden:', err);
+            }
         }
-        seats.push(seat);
-      }
-    });
 
-    while (seats.length < totalSeats) {
-      seats.push({
-        type: 'free',
-        title: 'Frei',
-        background: '#fff',
-        borderColor: 'var(--line)',
-      });
-    }
+        if (!envelope) return;
 
-    if (seats.length > totalSeats) seats.length = totalSeats;
-
-    return seats;
-  }
-
-  function applySeatVisual(chair, seat) {
-    const state = seat?.type || 'free';
-    chair.dataset.state = state;
-    chair.classList.add('chair--' + state);
-    if (seat?.bookingId) chair.dataset.bookingId = seat.bookingId;
-    chair.title = seat?.title || (state === 'reserved' ? 'Reserviert' : state === 'sold' ? 'Verkauft' : 'Frei');
-    if (seat?.background) chair.style.background = seat.background;
-    if (seat?.borderColor) chair.style.borderColor = seat.borderColor;
-  }
-
-  function makeTableEl(table, orientation) {
-    const length = getHorizontalLength(table);
-    const thickness = TABLE_THICKNESS;
-    const totalSeats = Math.max(parseInt(table?.total, 10) || 0, 0);
-    const seats = expandSegmentsToSeats(table, totalSeats);
-
-    const el = document.createElement('div');
-    if (orientation === 'horizontal') {
-      el.style.width = length + 'px';
-      el.style.height = thickness + 'px';
-    } else {
-      el.style.width = thickness + 'px';
-      el.style.height = length + 'px';
-    }
-    el.className = `table ${orientation}`;
-    el.dataset.table = table.nr;
-
-    const titleParts = [`Tisch ${table.nr}`];
-    titleParts.push(`Warenkorb: ${table.reserved}`);
-    el.title = titleParts.join(' · ');
-
-    const label = document.createElement('div');
-    label.className = 'label';
-    label.textContent = `Tisch ${table.nr}`;
-    if (orientation === 'vertical') {
-      label.classList.add('vertical');
-    }
-    el.appendChild(label);
-
-    if (totalSeats > 0) {
-      const isHorizontal = orientation === 'horizontal';
-      const longSide = length;
-      const makeOffsets = count => {
-        if (count <= 0) return [];
-        if (count === 1) return [Math.max((longSide - 12) / 2, 0)];
-        const usable = Math.max(longSide - 12, 0);
-        const span = usable / (count - 1);
-        return Array.from({ length: count }, (_, i) => i * span);
-      };
-
-      const sideA = Math.ceil(totalSeats / 2);
-      const sideB = totalSeats - sideA;
-      const offsetsA = makeOffsets(sideA);
-      const offsetsB = makeOffsets(sideB);
-
-      const createChair = (className, offset, seat) => {
-        const chair = document.createElement('div');
-        chair.className = 'chair ' + className;
-        if (isHorizontal) {
-          chair.style.left = offset + 'px';
-        } else {
-          chair.style.top = offset + 'px';
+        if (typeof localStorage === 'undefined' || localStorage === null) {
+            return;
         }
-        chair.dataset.tableNr = table.nr;
-        applySeatVisual(chair, seat);
-        return chair;
-      };
 
-      offsetsA.forEach((offset, idx) => {
-        const cls = isHorizontal ? 'side-top' : 'side-left';
-        el.appendChild(createChair(cls, offset, seats[idx]));
-      });
-
-      offsetsB.forEach((offset, idx) => {
-        const cls = isHorizontal ? 'side-bottom' : 'side-right';
-        const seat = seats[sideA + idx];
-        el.appendChild(createChair(cls, offset, seat));
-      });
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(envelope));
+        } catch (err) {
+            if (err?.name !== 'SecurityError') {
+                console.warn('[SYNC-EXTERNAL] localStorage-Fallback konnte Nachricht nicht senden:', err);
+            }
+        }
     }
 
-    return el;
-  }
-
-  function applyGangDaneben(el, where) {
-    const EXTRA = 40;
-    if (!el || !where) return;
-    switch (where) {
-      case 'oben':
-        el.style.marginTop = EXTRA + 'px';
-        break;
-      case 'unten':
-        el.style.marginBottom = EXTRA + 'px';
-        break;
-      case 'links':
-        el.style.marginLeft = EXTRA + 'px';
-        break;
-      case 'rechts':
-        el.style.marginRight = EXTRA + 'px';
-        break;
-    }
-  }
-
-  function createParkettDisplay(cart) {
-    const display = document.createElement('div');
-    display.className = 'parkett-display';
-
-    const lines = Array.isArray(cart?.lines) ? cart.lines : [];
-    const totalAmount = Number.isFinite(cart?.totalAmount) ? cart.totalAmount : 0;
-
-    if (!lines.length) {
-      const placeholder = document.createElement('p');
-      placeholder.className = 'parkett-placeholder';
-      placeholder.textContent = 'HERZLICH WILLKOMMEN';
-      display.appendChild(placeholder);
-      return display;
+    function sendMessage(data) {
+        transmitEnvelope(createEnvelope(data));
     }
 
-    lines.forEach(line => {
-      const row = document.createElement('div');
-      row.className = 'parkett-line';
-
-      const label = document.createElement('span');
-      label.className = 'parkett-line__label';
-
-      const qty = document.createElement('span');
-      qty.className = 'parkett-quantity';
-      qty.textContent = `${line.quantity}x`;
-      label.appendChild(qty);
-
-      const text = document.createElement('span');
-      text.textContent = line.label;
-      label.appendChild(text);
-
-      const amount = document.createElement('span');
-      amount.className = 'parkett-amount';
-      amount.textContent = euroFormatter.format(line.amount || 0);
-
-      row.appendChild(label);
-      row.appendChild(amount);
-      display.appendChild(row);
-    });
-
-    const divider = document.createElement('div');
-    divider.className = 'parkett-divider';
-    display.appendChild(divider);
-
-    const totalRow = document.createElement('div');
-    totalRow.className = 'parkett-line parkett-total';
-
-    const totalLabel = document.createElement('span');
-    totalLabel.textContent = 'Summe';
-    totalRow.appendChild(totalLabel);
-
-    const totalAmountEl = document.createElement('span');
-    totalAmountEl.className = 'parkett-amount';
-    totalAmountEl.textContent = euroFormatter.format(totalAmount);
-    totalRow.appendChild(totalAmountEl);
-
-    display.appendChild(totalRow);
-    return display;
-  }
-
-  function createStandingArea(table) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'standing-area';
-
-    const label = document.createElement('p');
-    label.className = 'standing-label';
-    label.textContent = 'STEHPLÄTZE';
-    wrapper.appendChild(label);
-
-    const grid = document.createElement('div');
-    grid.className = 'standing-grid';
-    wrapper.appendChild(grid);
-
-    const total = Math.max(parseInt(table?.total, 10) || DEFAULT_STANDING_TOTAL, 0);
-    const seatSource = table || { nr: 0, segments: [] };
-    const seats = expandSegmentsToSeats(seatSource, total);
-    seats.forEach(seat => {
-      const seatEl = document.createElement('div');
-      seatEl.className = 'standing-seat chair';
-      seatEl.dataset.tableNr = 0;
-      applySeatVisual(seatEl, seat);
-      grid.appendChild(seatEl);
-    });
-
-    return wrapper;
-  }
-
-  function createEventFrame(event) {
-    const tables = Array.isArray(event?.tables) ? event.tables : [];
-    const leftTables = tables.filter(t => t.position === 'left').sort((a, b) => a.nr - b.nr);
-    const rightTables = tables.filter(t => t.position === 'right').sort((a, b) => a.nr - b.nr);
-    const bottomTables = tables.filter(t => !['left', 'right', 'standing'].includes(t.position)).sort((a, b) => a.nr - b.nr);
-    const standingTable = tables.find(t => t.position === 'standing');
-
-    const frame = document.createElement('div');
-    frame.className = 'frame';
-
-    const name = event?.displayName || event?.name || '';
-    const title = document.createElement('h1');
-    title.textContent = name ? `Saalplan – ${name}` : 'Saalplan';
-    frame.appendChild(title);
-
-    const mainArea = document.createElement('div');
-    mainArea.className = 'main-area';
-
-    const leftCol = document.createElement('div');
-    leftCol.className = 'col';
-    leftTables.forEach(cfg => {
-      const el = makeTableEl(cfg, 'horizontal');
-      if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
-      leftCol.appendChild(el);
-    });
-    mainArea.appendChild(leftCol);
-
-    const parkettWrapper = document.createElement('div');
-    parkettWrapper.className = 'parkett-wrapper';
-    const parkett = document.createElement('div');
-    parkett.className = 'parkett';
-    parkett.appendChild(createParkettDisplay(event?.cart));
-    parkettWrapper.appendChild(parkett);
-    mainArea.appendChild(parkettWrapper);
-
-    const rightCol = document.createElement('div');
-    rightCol.className = 'col col--right';
-    rightTables.forEach(cfg => {
-      const el = makeTableEl(cfg, 'horizontal');
-      if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
-      rightCol.appendChild(el);
-    });
-    mainArea.appendChild(rightCol);
-
-    frame.appendChild(mainArea);
-
-    const bottomRow = document.createElement('div');
-    bottomRow.className = 'bottom-row';
-    bottomTables.forEach(cfg => {
-      const el = makeTableEl(cfg, 'vertical');
-      if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
-      bottomRow.appendChild(el);
-    });
-    frame.appendChild(bottomRow);
-
-    frame.appendChild(createStandingArea(standingTable));
-
-    const longestLeft = leftTables.length ? Math.max(...leftTables.map(getHorizontalLength)) : 0;
-    const longestRight = rightTables.length ? Math.max(...rightTables.map(getHorizontalLength)) : 0;
-    const computedWidth = longestLeft + longestRight + PARKETT_WIDTH + FRAME_EXTRA_WIDTH;
-    frame.style.width = computedWidth + 'px';
-    frame.dataset.baseWidth = computedWidth;
-
-    return frame;
-  }
-
-  function createEmptyState() {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'empty-state';
-    const logo = document.createElement('div');
-    logo.className = 'empty-state__logo';
-    logo.textContent = 'LOGO';
-    wrapper.appendChild(logo);
-    const text = document.createElement('p');
-    text.className = 'empty-state__text';
-    text.textContent = 'Herzlich willkommen beim Sandersdorfer Karnevalsverein';
-    wrapper.appendChild(text);
-    return wrapper;
-  }
-
-  function renderPlan(payload) {
-    if (!appRoot) return;
-    clearChildren(appRoot);
-    const events = Array.isArray(payload?.events) ? payload.events.filter(evt => Array.isArray(evt?.tables)) : [];
-
-    if (!events.length) {
-      appRoot.appendChild(createEmptyState());
-      return;
+    function setupStorageListener() {
+        if (storageListenerBound) return;
+        if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+        window.addEventListener('storage', onStorageMessage);
+        storageListenerBound = true;
     }
 
-    const totalAmount = events.reduce((sum, event) => {
-      const amount = Number(event?.cart?.totalAmount);
-      return sum + (Number.isFinite(amount) ? amount : 0);
-    }, 0);
+    function ensureChannel() {
+        setupStorageListener();
+        if (!('BroadcastChannel' in window)) {
+            return null;
+        }
+        if (!channel) {
+            try {
+                channel = new BroadcastChannel(CHANNEL_NAME);
+                channel.addEventListener('message', onChannelMessage);
+                window.addEventListener('beforeunload', () => {
+                    try {
+                        channel?.close();
+                    } catch (err) {
+                        console.warn('[SYNC-EXTERNAL] BroadcastChannel konnte nicht geschlossen werden:', err);
+                    }
+                }, {once: true});
+            } catch (err) {
+                console.warn('[SYNC-EXTERNAL] BroadcastChannel konnte nicht initialisiert werden:', err);
+                channel = null;
+            }
+        }
+        return channel;
+    }
 
-    const header = document.createElement('div');
-    header.className = 'app-header';
-    const banner = document.createElement('div');
-    banner.className = 'total-banner';
-    const bannerLabel = document.createElement('span');
-    bannerLabel.className = 'total-banner__label';
-    bannerLabel.textContent = 'Gesamtpreis';
-    banner.appendChild(bannerLabel);
-    const bannerAmount = document.createElement('span');
-    bannerAmount.className = 'total-banner__amount';
-    bannerAmount.textContent = euroFormatter.format(totalAmount);
-    banner.appendChild(bannerAmount);
-    header.appendChild(banner);
-    appRoot.appendChild(header);
+    function handleIncomingPayload(payload) {
+        if (!payload || typeof payload !== 'object') return;
+        if (payload.type === 'state' && payload.payload) {
+            renderPlan(payload.payload);
+        }
+    }
 
-    const plansGrid = document.createElement('div');
-    plansGrid.className = 'plans-grid';
+    function handleEnvelope(envelope) {
+        if (!envelope || envelope.marker !== MESSAGE_MARKER) return;
+        if (hasSeenMessage(envelope.id)) return;
+        rememberMessageId(envelope.id);
+        handleIncomingPayload(envelope.data);
+    }
 
-    events.forEach(event => {
-      const section = document.createElement('section');
-      section.className = 'event-block';
-      const scaler = document.createElement('div');
-      scaler.className = 'event-block__scaler';
-      const frame = createEventFrame(event);
-      scaler.appendChild(frame);
-      section.appendChild(scaler);
-      plansGrid.appendChild(section);
-    });
+    function onChannelMessage(event) {
+        handleEnvelope(event?.data);
+    }
 
-    appRoot.appendChild(plansGrid);
-    bindResizeHandler();
-    scheduleScaleUpdate();
-  }
+    function onStorageMessage(event) {
+        if (!event || event.key !== STORAGE_KEY) return;
+        if (!event.newValue) return;
+        try {
+            const parsed = JSON.parse(event.newValue);
+            handleEnvelope(parsed);
+        } catch (err) {
+            console.warn('[SYNC-EXTERNAL] Konnte Nachricht aus localStorage nicht verarbeiten:', err);
+        }
+    }
 
-  ensureChannel();
-  sendMessage({ type: 'request_state' });
+    function clearChildren(el) {
+        if (!el) return;
+        while (el.firstChild) el.removeChild(el.firstChild);
+    }
+
+    function requestFrame(callback) {
+        if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+            return window.requestAnimationFrame(callback);
+        }
+        return setTimeout(callback, 16);
+    }
+
+    function cancelFrame(handle) {
+        if (handle === null) return;
+        if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+            window.cancelAnimationFrame(handle);
+        } else {
+            clearTimeout(handle);
+        }
+    }
+
+    function updateFrameScales() {
+        if (!appRoot) return;
+        const grid = appRoot.querySelector('.plans-grid');
+        if (!grid) return;
+
+        const sections = Array.from(grid.querySelectorAll('.event-block'));
+        if (!sections.length) return;
+
+        const frames = sections.map(section => {
+            const scaler = section.querySelector('.event-block__scaler');
+            const frame = scaler?.querySelector?.('.frame');
+            if (!scaler || !frame) {
+                return null;
+            }
+
+            const previousTransform = frame.style.transform;
+            frame.style.transform = 'scale(1)';
+
+            let baseWidth = Number.parseFloat(frame.dataset.baseWidth);
+            if (!Number.isFinite(baseWidth) || baseWidth <= 0) {
+                baseWidth = frame.offsetWidth || 0;
+                frame.dataset.baseWidth = baseWidth;
+            }
+
+            let baseHeight = Number.parseFloat(frame.dataset.baseHeight);
+            if (!Number.isFinite(baseHeight) || baseHeight <= 0) {
+                baseHeight = frame.offsetHeight || 0;
+                frame.dataset.baseHeight = baseHeight;
+            }
+
+            frame.style.transform = previousTransform;
+
+            return {section, scaler, frame, baseWidth, baseHeight};
+        }).filter(Boolean);
+
+        if (!frames.length) return;
+
+        let gap = 0;
+        if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+            const style = window.getComputedStyle(grid);
+            if (style) {
+                const gapValue = parseFloat(style.columnGap || style.gap || '0');
+                if (Number.isFinite(gapValue) && gapValue >= 0) {
+                    gap = gapValue;
+                }
+            }
+        }
+
+        const totalBaseWidth = frames.reduce((sum, item) => sum + item.baseWidth, 0);
+        const totalGap = gap * Math.max(0, frames.length - 1);
+        const containerWidth = grid.clientWidth || 0;
+
+        let scale = 1;
+        if (totalBaseWidth > 0) {
+            const availableWidth = containerWidth - totalGap;
+            if (availableWidth < totalBaseWidth) {
+                if (availableWidth > 0) {
+                    scale = availableWidth / totalBaseWidth;
+                } else if (containerWidth > 0) {
+                    scale = containerWidth / (totalBaseWidth + totalGap);
+                } else {
+                    scale = 1;
+                }
+            }
+        }
+        if (!Number.isFinite(scale)) {
+            scale = 1;
+        }
+        scale = Math.min(Math.max(scale, 0), 1);
+
+        frames.forEach(item => {
+            const scaledWidth = item.baseWidth * scale;
+            const scaledHeight = item.baseHeight * scale;
+            const widthValue = Number.isFinite(scaledWidth) && scaledWidth > 0 ? scaledWidth : item.baseWidth;
+            const heightValue = Number.isFinite(scaledHeight) && scaledHeight > 0 ? scaledHeight : item.baseHeight;
+            item.frame.style.transform = `scale(${scale})`;
+            item.scaler.style.width = `${widthValue}px`;
+            item.scaler.style.minWidth = `${widthValue}px`;
+            item.scaler.style.height = heightValue ? `${heightValue}px` : 'auto';
+            item.scaler.style.maxWidth = `${item.baseWidth}px`;
+            item.section.style.flex = `0 0 ${widthValue}px`;
+            item.section.style.width = `${widthValue}px`;
+            item.section.style.minWidth = `${widthValue}px`;
+            item.section.style.maxWidth = `${item.baseWidth}px`;
+        });
+    }
+
+    function scheduleScaleUpdate() {
+        cancelFrame(pendingScaleUpdate);
+        pendingScaleUpdate = requestFrame(() => {
+            pendingScaleUpdate = null;
+            updateFrameScales();
+        });
+    }
+
+    function bindResizeHandler() {
+        if (resizeHandlerBound) return;
+        if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+        window.addEventListener('resize', scheduleScaleUpdate);
+        resizeHandlerBound = true;
+    }
+
+    function getHorizontalLength(table) {
+        const totalSeats = Math.max(parseInt(table?.total, 10) || 0, 0);
+        return totalSeats * PX_PER_SEAT;
+    }
+
+    function buildSeatTitle(segment, seatIndex) {
+        if (!segment || segment.type === 'free') return 'Frei';
+        const seatCount = Math.max(parseInt(segment.count, 10) || 0, 0);
+        const parts = [];
+
+        if (segment.name) {
+            parts.push(segment.name);
+        }
+
+        if (segment.bookingId) {
+            parts.push(`Buchung ${segment.bookingId}`);
+        }
+
+        if (seatCount > 0) {
+            const seatNumber = Math.min(seatIndex + 1, seatCount);
+            parts.push(`Platz ${seatNumber} von ${seatCount}`);
+        }
+
+        if (segment.splitInfo) {
+            parts.push(segment.splitInfo);
+        }
+
+        if (segment.notes) {
+            parts.push(segment.notes);
+        }
+
+        return parts.join(' · ');
+    }
+
+    function expandSegmentsToSeats(table, totalSeats) {
+        const seats = [];
+        const segments = Array.isArray(table?.segments) ? table.segments : [];
+        segments.forEach(segment => {
+            const count = Math.max(parseInt(segment?.count, 10) || 0, 0);
+            if (!count) return;
+            for (let i = 0; i < count; i++) {
+                const seat = {
+                    type: segment.type === 'reserved' ? 'reserved' : (segment.type === 'sold' ? 'sold' : 'free'),
+                    bookingId: segment.bookingId || null,
+                    name: segment.name || '',
+                    title: buildSeatTitle(segment, i),
+                    notes: segment.notes || '',
+                };
+                if (seat.type === 'reserved') {
+                    const rawColor = typeof segment.colorPrimary === 'string' ? segment.colorPrimary.trim() : '';
+                    const color = rawColor || ROYAL_BLUE;
+                    seat.background = color;
+                    seat.borderColor = color;
+                } else if (seat.type === 'sold') {
+                    seat.background = '#111';
+                    seat.borderColor = '#000';
+                } else {
+                    seat.background = '#fff';
+                    seat.borderColor = 'var(--line)';
+                }
+                seats.push(seat);
+            }
+        });
+
+        while (seats.length < totalSeats) {
+            seats.push({
+                type: 'free',
+                title: 'Frei',
+                background: '#fff',
+                borderColor: 'var(--line)',
+            });
+        }
+
+        if (seats.length > totalSeats) seats.length = totalSeats;
+
+        return seats;
+    }
+
+    function applySeatVisual(chair, seat) {
+        const state = seat?.type || 'free';
+        chair.dataset.state = state;
+        chair.classList.add('chair--' + state);
+        if (seat?.bookingId) chair.dataset.bookingId = seat.bookingId;
+        chair.title = seat?.title || (state === 'reserved' ? 'Reserviert' : state === 'sold' ? 'Verkauft' : 'Frei');
+        if (seat?.background) chair.style.background = seat.background;
+        if (seat?.borderColor) chair.style.borderColor = seat.borderColor;
+    }
+
+    function makeTableEl(table, orientation) {
+        const length = getHorizontalLength(table);
+        const thickness = TABLE_THICKNESS;
+        const totalSeats = Math.max(parseInt(table?.total, 10) || 0, 0);
+        const seats = expandSegmentsToSeats(table, totalSeats);
+
+        const el = document.createElement('div');
+        if (orientation === 'horizontal') {
+            el.style.width = length + 'px';
+            el.style.height = thickness + 'px';
+        } else {
+            el.style.width = thickness + 'px';
+            el.style.height = length + 'px';
+        }
+        el.className = `table ${orientation}`;
+        el.dataset.table = table.nr;
+
+        const titleParts = [`Tisch ${table.nr}`];
+        titleParts.push(`Warenkorb: ${table.reserved}`);
+        el.title = titleParts.join(' · ');
+
+        const label = document.createElement('div');
+        label.className = 'label';
+        label.textContent = `Tisch ${table.nr}`;
+        if (orientation === 'vertical') {
+            label.classList.add('vertical');
+        }
+        el.appendChild(label);
+
+        if (totalSeats > 0) {
+            const isHorizontal = orientation === 'horizontal';
+            const longSide = length;
+            const makeOffsets = count => {
+                if (count <= 0) return [];
+                if (count === 1) return [Math.max((longSide - 12) / 2, 0)];
+                const usable = Math.max(longSide - 12, 0);
+                const span = usable / (count - 1);
+                return Array.from({length: count}, (_, i) => i * span);
+            };
+
+            const sideA = Math.ceil(totalSeats / 2);
+            const sideB = totalSeats - sideA;
+            const offsetsA = makeOffsets(sideA);
+            const offsetsB = makeOffsets(sideB);
+
+            const createChair = (className, offset, seat) => {
+                const chair = document.createElement('div');
+                chair.className = 'chair ' + className;
+                if (isHorizontal) {
+                    chair.style.left = offset + 'px';
+                } else {
+                    chair.style.top = offset + 'px';
+                }
+                chair.dataset.tableNr = table.nr;
+                applySeatVisual(chair, seat);
+                return chair;
+            };
+
+            offsetsA.forEach((offset, idx) => {
+                const cls = isHorizontal ? 'side-top' : 'side-left';
+                el.appendChild(createChair(cls, offset, seats[idx]));
+            });
+
+            offsetsB.forEach((offset, idx) => {
+                const cls = isHorizontal ? 'side-bottom' : 'side-right';
+                const seat = seats[sideA + idx];
+                el.appendChild(createChair(cls, offset, seat));
+            });
+        }
+
+        return el;
+    }
+
+    function applyGangDaneben(el, where) {
+        const EXTRA = 40;
+        if (!el || !where) return;
+        switch (where) {
+            case 'oben':
+                el.style.marginTop = EXTRA + 'px';
+                break;
+            case 'unten':
+                el.style.marginBottom = EXTRA + 'px';
+                break;
+            case 'links':
+                el.style.marginLeft = EXTRA + 'px';
+                break;
+            case 'rechts':
+                el.style.marginRight = EXTRA + 'px';
+                break;
+        }
+    }
+
+    function createParkettDisplay(cart) {
+        const display = document.createElement('div');
+        display.className = 'parkett-display';
+
+        const lines = Array.isArray(cart?.lines) ? cart.lines : [];
+        const totalAmount = Number.isFinite(cart?.totalAmount) ? cart.totalAmount : 0;
+
+        if (!lines.length) {
+            const placeholder = document.createElement('p');
+            placeholder.className = 'parkett-placeholder';
+            placeholder.textContent = 'HERZLICH WILLKOMMEN';
+            display.appendChild(placeholder);
+            return display;
+        }
+
+        lines.forEach(line => {
+            const row = document.createElement('div');
+            row.className = 'parkett-line';
+
+            const label = document.createElement('span');
+            label.className = 'parkett-line__label';
+
+            const qty = document.createElement('span');
+            qty.className = 'parkett-quantity';
+            qty.textContent = `${line.quantity}x`;
+            label.appendChild(qty);
+
+            const text = document.createElement('span');
+            text.textContent = line.label;
+            label.appendChild(text);
+
+            const amount = document.createElement('span');
+            amount.className = 'parkett-amount';
+            amount.textContent = euroFormatter.format(line.amount || 0);
+
+            row.appendChild(label);
+            row.appendChild(amount);
+            display.appendChild(row);
+        });
+
+        const divider = document.createElement('div');
+        divider.className = 'parkett-divider';
+        display.appendChild(divider);
+
+        const totalRow = document.createElement('div');
+        totalRow.className = 'parkett-line parkett-total';
+
+        const totalLabel = document.createElement('span');
+        totalLabel.textContent = 'Summe';
+        totalRow.appendChild(totalLabel);
+
+        const totalAmountEl = document.createElement('span');
+        totalAmountEl.className = 'parkett-amount';
+        totalAmountEl.textContent = euroFormatter.format(totalAmount);
+        totalRow.appendChild(totalAmountEl);
+
+        display.appendChild(totalRow);
+        return display;
+    }
+
+    function createStandingArea(table) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'standing-area';
+
+        const label = document.createElement('p');
+        label.className = 'standing-label';
+        label.textContent = 'STEHPLÄTZE';
+        wrapper.appendChild(label);
+
+        const grid = document.createElement('div');
+        grid.className = 'standing-grid';
+        wrapper.appendChild(grid);
+
+        const total = Math.max(parseInt(table?.total, 10) || DEFAULT_STANDING_TOTAL, 0);
+        const seatSource = table || {nr: 0, segments: []};
+        const seats = expandSegmentsToSeats(seatSource, total);
+        seats.forEach(seat => {
+            const seatEl = document.createElement('div');
+            seatEl.className = 'standing-seat chair';
+            seatEl.dataset.tableNr = 0;
+            applySeatVisual(seatEl, seat);
+            grid.appendChild(seatEl);
+        });
+
+        return wrapper;
+    }
+
+    function createEventFrame(event) {
+        const tables = Array.isArray(event?.tables) ? event.tables : [];
+        const leftTables = tables.filter(t => t.position === 'left').sort((a, b) => a.nr - b.nr);
+        const rightTables = tables.filter(t => t.position === 'right').sort((a, b) => a.nr - b.nr);
+        const bottomTables = tables.filter(t => !['left', 'right', 'standing'].includes(t.position)).sort((a, b) => a.nr - b.nr);
+        const standingTable = tables.find(t => t.position === 'standing');
+
+        const frame = document.createElement('div');
+        frame.className = 'frame';
+
+        const name = event?.displayName || event?.name || '';
+        const title = document.createElement('h1');
+        title.textContent = name ? `Saalplan – ${name}` : 'Saalplan';
+        frame.appendChild(title);
+
+        const mainArea = document.createElement('div');
+        mainArea.className = 'main-area';
+
+        const leftCol = document.createElement('div');
+        leftCol.className = 'col';
+        leftTables.forEach(cfg => {
+            const el = makeTableEl(cfg, 'horizontal');
+            if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+            leftCol.appendChild(el);
+        });
+        mainArea.appendChild(leftCol);
+
+        const parkettWrapper = document.createElement('div');
+        parkettWrapper.className = 'parkett-wrapper';
+        const parkett = document.createElement('div');
+        parkett.className = 'parkett';
+        parkett.appendChild(createParkettDisplay(event?.cart));
+        parkettWrapper.appendChild(parkett);
+        mainArea.appendChild(parkettWrapper);
+
+        const rightCol = document.createElement('div');
+        rightCol.className = 'col col--right';
+        rightTables.forEach(cfg => {
+            const el = makeTableEl(cfg, 'horizontal');
+            if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+            rightCol.appendChild(el);
+        });
+        mainArea.appendChild(rightCol);
+
+        frame.appendChild(mainArea);
+
+        const bottomRow = document.createElement('div');
+        bottomRow.className = 'bottom-row';
+        bottomTables.forEach(cfg => {
+            const el = makeTableEl(cfg, 'vertical');
+            if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+            bottomRow.appendChild(el);
+        });
+        frame.appendChild(bottomRow);
+
+        frame.appendChild(createStandingArea(standingTable));
+
+        const longestLeft = leftTables.length ? Math.max(...leftTables.map(getHorizontalLength)) : 0;
+        const longestRight = rightTables.length ? Math.max(...rightTables.map(getHorizontalLength)) : 0;
+        const computedWidth = longestLeft + longestRight + PARKETT_WIDTH + FRAME_EXTRA_WIDTH;
+        frame.style.width = computedWidth + 'px';
+        frame.dataset.baseWidth = computedWidth;
+
+        return frame;
+    }
+
+    function createEmptyState() {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'empty-state';
+        const logo = document.createElement('div');
+        logo.className = 'empty-state__logo';
+        const logoImg = document.createElement('img');
+        logoImg.className = 'empty-state__logo';
+        logoImg.src = '../img/SKV-Wappen.jpg';
+        logoImg.alt = 'Logo des Sandersdorfer Karnevalsvereins';
+        logo.appendChild(logoImg);
+        wrapper.appendChild(logo);
+        const text = document.createElement('p');
+        text.className = 'empty-state__text';
+        text.textContent = 'Herzlich willkommen beim Sandersdorfer Karnevalsverein';
+        wrapper.appendChild(text);
+        return wrapper;
+    }
+
+    function renderPlan(payload) {
+        if (!appRoot) return;
+        clearChildren(appRoot);
+        const events = Array.isArray(payload?.events) ? payload.events.filter(evt => Array.isArray(evt?.tables)) : [];
+
+        if (!events.length) {
+            appRoot.appendChild(createEmptyState());
+            return;
+        }
+
+        const totalAmount = events.reduce((sum, event) => {
+            const amount = Number(event?.cart?.totalAmount);
+            return sum + (Number.isFinite(amount) ? amount : 0);
+        }, 0);
+
+        const header = document.createElement('div');
+        header.className = 'app-header';
+        const banner = document.createElement('div');
+        banner.className = 'total-banner';
+        const bannerLabel = document.createElement('span');
+        bannerLabel.className = 'total-banner__label';
+        bannerLabel.textContent = 'Gesamtpreis';
+        banner.appendChild(bannerLabel);
+        const bannerAmount = document.createElement('span');
+        bannerAmount.className = 'total-banner__amount';
+        bannerAmount.textContent = euroFormatter.format(totalAmount);
+        banner.appendChild(bannerAmount);
+        header.appendChild(banner);
+        appRoot.appendChild(header);
+
+        const plansGrid = document.createElement('div');
+        plansGrid.className = 'plans-grid';
+
+        events.forEach(event => {
+            const section = document.createElement('section');
+            section.className = 'event-block';
+            const scaler = document.createElement('div');
+            scaler.className = 'event-block__scaler';
+            const frame = createEventFrame(event);
+            scaler.appendChild(frame);
+            section.appendChild(scaler);
+            plansGrid.appendChild(section);
+        });
+
+        appRoot.appendChild(plansGrid);
+        bindResizeHandler();
+        scheduleScaleUpdate();
+    }
+
+    ensureChannel();
+    sendMessage({type: 'request_state'});
 </script>
 </body>
 </html>
