@@ -28,15 +28,68 @@
       padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 48px;
-      align-items: center;
+      gap: 32px;
+      align-items: stretch;
       background: var(--bg);
     }
 
-    .event-block {
+    .app-header {
       width: 100%;
       display: flex;
       justify-content: center;
+    }
+
+    .total-banner {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 16px 36px;
+      border-radius: 18px;
+      background: var(--royal-blue);
+      color: #fff;
+      box-shadow: 0 10px 30px rgba(65, 105, 225, 0.35);
+      min-width: 260px;
+    }
+
+    .total-banner__label {
+      font-size: 14px;
+      letter-spacing: 1.6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+
+    .total-banner__amount {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+    }
+
+    .plans-grid {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 32px;
+    }
+
+    .event-block {
+      flex: 1 1 760px;
+      min-width: min(100%, 360px);
+      max-width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .event-block__scaler {
+      position: relative;
+      width: 100%;
+      max-width: 100%;
+      display: flex;
+      justify-content: center;
+      overflow: hidden;
     }
 
     .frame {
@@ -48,6 +101,8 @@
       background: #fff;
       gap: 12px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      transform-origin: top center;
+      transition: transform 0.2s ease;
     }
 
     h1 {
@@ -269,6 +324,7 @@
       background: rgba(65, 105, 225, 0.04);
       text-align: center;
       max-width: 520px;
+      margin: 0 auto;
     }
 
     .empty-state__logo {
@@ -328,6 +384,8 @@
   let storageListenerBound = false;
   const seenMessageIds = new Set();
   const seenMessageQueue = [];
+  let resizeHandlerBound = false;
+  let pendingScaleUpdate = null;
 
   function rememberMessageId(id) {
     if (!id || seenMessageIds.has(id)) return;
@@ -446,6 +504,59 @@
   function clearChildren(el) {
     if (!el) return;
     while (el.firstChild) el.removeChild(el.firstChild);
+  }
+
+  function requestFrame(callback) {
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+      return window.requestAnimationFrame(callback);
+    }
+    return setTimeout(callback, 16);
+  }
+
+  function cancelFrame(handle) {
+    if (handle === null) return;
+    if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+      window.cancelAnimationFrame(handle);
+    } else {
+      clearTimeout(handle);
+    }
+  }
+
+  function updateFrameScales() {
+    if (!appRoot) return;
+    const scalers = appRoot.querySelectorAll('.event-block__scaler');
+    scalers.forEach(scaler => {
+      const frame = scaler?.querySelector?.('.frame');
+      if (!frame) return;
+
+      frame.style.transform = 'scale(1)';
+
+      const baseWidth = Number.parseFloat(frame.dataset.baseWidth) || frame.offsetWidth || 0;
+      if (!frame.dataset.baseHeight) {
+        frame.dataset.baseHeight = frame.offsetHeight || 0;
+      }
+      const baseHeight = Number.parseFloat(frame.dataset.baseHeight) || frame.offsetHeight || 0;
+      const available = scaler.clientWidth || 0;
+      const scale = baseWidth && available ? Math.min(1, available / baseWidth) : 1;
+
+      frame.style.transform = `scale(${scale})`;
+      scaler.style.height = baseHeight ? `${baseHeight * scale}px` : 'auto';
+    });
+  }
+
+  function scheduleScaleUpdate() {
+    cancelFrame(pendingScaleUpdate);
+    pendingScaleUpdate = requestFrame(() => {
+      pendingScaleUpdate = null;
+      updateFrameScales();
+    });
+  }
+
+  function bindResizeHandler() {
+    if (resizeHandlerBound) return;
+    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+    window.addEventListener('resize', scheduleScaleUpdate);
+    resizeHandlerBound = true;
   }
 
   function getHorizontalLength(table) {
@@ -776,6 +887,7 @@
     const longestRight = rightTables.length ? Math.max(...rightTables.map(getHorizontalLength)) : 0;
     const computedWidth = longestLeft + longestRight + PARKETT_WIDTH + FRAME_EXTRA_WIDTH;
     frame.style.width = computedWidth + 'px';
+    frame.dataset.baseWidth = computedWidth;
 
     return frame;
   }
@@ -804,12 +916,43 @@
       return;
     }
 
+    const totalAmount = events.reduce((sum, event) => {
+      const amount = Number(event?.cart?.totalAmount);
+      return sum + (Number.isFinite(amount) ? amount : 0);
+    }, 0);
+
+    const header = document.createElement('div');
+    header.className = 'app-header';
+    const banner = document.createElement('div');
+    banner.className = 'total-banner';
+    const bannerLabel = document.createElement('span');
+    bannerLabel.className = 'total-banner__label';
+    bannerLabel.textContent = 'Gesamtpreis';
+    banner.appendChild(bannerLabel);
+    const bannerAmount = document.createElement('span');
+    bannerAmount.className = 'total-banner__amount';
+    bannerAmount.textContent = euroFormatter.format(totalAmount);
+    banner.appendChild(bannerAmount);
+    header.appendChild(banner);
+    appRoot.appendChild(header);
+
+    const plansGrid = document.createElement('div');
+    plansGrid.className = 'plans-grid';
+
     events.forEach(event => {
       const section = document.createElement('section');
       section.className = 'event-block';
-      section.appendChild(createEventFrame(event));
-      appRoot.appendChild(section);
+      const scaler = document.createElement('div');
+      scaler.className = 'event-block__scaler';
+      const frame = createEventFrame(event);
+      scaler.appendChild(frame);
+      section.appendChild(scaler);
+      plansGrid.appendChild(section);
     });
+
+    appRoot.appendChild(plansGrid);
+    bindResizeHandler();
+    scheduleScaleUpdate();
   }
 
   ensureChannel();
