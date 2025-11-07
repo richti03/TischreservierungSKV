@@ -9,6 +9,7 @@
       --line: #111;
       --muted: #666;
       --royal-blue: #4169E1;
+      --bg: #fff;
     }
 
     * {
@@ -18,36 +19,103 @@
     body {
       margin: 0;
       font-family: system-ui, sans-serif;
-      background: #fff;
+      background: var(--bg);
       color: #111;
     }
 
+    .app {
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      align-items: stretch;
+      background: var(--bg);
+    }
+
+    .app-header {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .total-banner {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 16px 36px;
+      border-radius: 18px;
+      background: var(--royal-blue);
+      color: #fff;
+      box-shadow: 0 10px 30px rgba(65, 105, 225, 0.35);
+      min-width: 260px;
+    }
+
+    .total-banner__label {
+      font-size: 14px;
+      letter-spacing: 1.6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+
+    .total-banner__amount {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+    }
+
+    .plans-grid {
+      width: 100%;
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 32px;
+    }
+
+    .event-block {
+      display: flex;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+
+    .event-block__scaler {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      overflow: hidden;
+      width: 100%;
+      max-width: 100%;
+    }
+
     .frame {
-      height: 100%;
       border: 2px solid var(--line);
-      margin: 24px auto;
       padding: 8px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       background: #fff;
+      gap: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      transform-origin: top center;
+      transition: transform 0.2s ease;
     }
 
     h1 {
-      margin: 0 0 8px 0;
+      margin: 0;
       text-align: center;
       font-size: 22px;
       letter-spacing: 0.5px;
     }
 
     .main-area {
-      flex: 1;
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       align-items: center;
       justify-content: center;
       gap: 40px;
-      margin-bottom: 10px;
     }
 
     .col {
@@ -56,6 +124,10 @@
       gap: 20px;
       align-items: center;
       justify-content: center;
+    }
+
+    .col--right {
+      flex-direction: column-reverse;
     }
 
     .parkett-wrapper {
@@ -128,7 +200,7 @@
     }
 
     .standing-area {
-      margin: 20px 40px 0;
+      margin: 0 40px 16px;
       padding: 0 0 16px 0;
       border: 2px solid var(--line);
       display: flex;
@@ -145,6 +217,7 @@
       font-size: 14px;
       text-align: center;
       letter-spacing: 0.5px;
+      margin: 12px 0 0;
     }
 
     .standing-grid {
@@ -172,7 +245,7 @@
       justify-content: space-between;
       align-items: flex-end;
       gap: 6px;
-      padding: 0 40px;
+      padding: 0 40px 12px;
     }
 
     .table {
@@ -236,26 +309,52 @@
     .side-right {
       right: -8px;
     }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 80px 16px;
+      border: 2px dashed rgba(65, 105, 225, 0.4);
+      border-radius: 16px;
+      background: rgba(65, 105, 225, 0.04);
+      text-align: center;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .empty-state__logo {
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      border: 8px solid var(--royal-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      letter-spacing: 4px;
+      font-weight: 700;
+      color: var(--royal-blue);
+      background: #fff;
+    }
+
+    .empty-state__text {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: #1f2555;
+    }
   </style>
 </head>
 <body>
-<div class="frame">
-  <h1>Saalplan –  Sandersdorfer Karnevalsverein e.V.</h1>
-
-  <div class="main-area">
-    <div class="col" id="leftCol"></div>
-    <div class="parkett-wrapper">
-      <div class="parkett" id="parkett">
-        <div class="parkett-display" id="parkett-display">
-          <p class="parkett-placeholder">HERZLICH WILLKOMMEN</p>
-        </div>
-      </div>
-    </div>
-    <div class="col" id="rightCol"></div>
+<div class="app" id="app">
+  <div class="empty-state">
+    <div class="empty-state__logo">LOGO</div>
+    <p class="empty-state__text">Herzlich willkommen beim Sandersdorfer Karnevalsverein</p>
   </div>
-
-  <div class="bottom-row" id="bottomRow"></div>
-  <div class="standing-area" id="standing-area"></div>
 </div>
 
 <script>
@@ -265,22 +364,11 @@
   const MAX_SEEN_MESSAGES = 200;
   const ROYAL_BLUE = '#4169E1';
 
-  const leftCol = document.getElementById('leftCol');
-  const rightCol = document.getElementById('rightCol');
-  const bottomRow = document.getElementById('bottomRow');
-  const standingArea = document.getElementById('standing-area');
-  const frame = document.querySelector('.frame');
-  const parkettDisplay = document.getElementById('parkett-display');
-
-  const DEFAULT_STANDING_TOTAL = 76;
-
-  let standingLabelEl = null;
-  let standingGridEl = null;
-
   const TABLE_THICKNESS = 32;
   const PX_PER_SEAT = 7.5;
   const PARKETT_WIDTH = 260;
   const FRAME_EXTRA_WIDTH = 120;
+  const DEFAULT_STANDING_TOTAL = 76;
 
   const euroFormatter = new Intl.NumberFormat('de-DE', {
     style: 'currency',
@@ -288,10 +376,14 @@
     minimumFractionDigits: 2,
   });
 
+  const appRoot = document.getElementById('app');
+
   let channel = null;
   let storageListenerBound = false;
   const seenMessageIds = new Set();
   const seenMessageQueue = [];
+  let resizeHandlerBound = false;
+  let pendingScaleUpdate = null;
 
   function rememberMessageId(id) {
     if (!id || seenMessageIds.has(id)) return;
@@ -410,6 +502,124 @@
   function clearChildren(el) {
     if (!el) return;
     while (el.firstChild) el.removeChild(el.firstChild);
+  }
+
+  function requestFrame(callback) {
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+      return window.requestAnimationFrame(callback);
+    }
+    return setTimeout(callback, 16);
+  }
+
+  function cancelFrame(handle) {
+    if (handle === null) return;
+    if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+      window.cancelAnimationFrame(handle);
+    } else {
+      clearTimeout(handle);
+    }
+  }
+
+  function updateFrameScales() {
+    if (!appRoot) return;
+    const grid = appRoot.querySelector('.plans-grid');
+    if (!grid) return;
+
+    const sections = Array.from(grid.querySelectorAll('.event-block'));
+    if (!sections.length) return;
+
+    const frames = sections.map(section => {
+      const scaler = section.querySelector('.event-block__scaler');
+      const frame = scaler?.querySelector?.('.frame');
+      if (!scaler || !frame) {
+        return null;
+      }
+
+      const previousTransform = frame.style.transform;
+      frame.style.transform = 'scale(1)';
+
+      let baseWidth = Number.parseFloat(frame.dataset.baseWidth);
+      if (!Number.isFinite(baseWidth) || baseWidth <= 0) {
+        baseWidth = frame.offsetWidth || 0;
+        frame.dataset.baseWidth = baseWidth;
+      }
+
+      let baseHeight = Number.parseFloat(frame.dataset.baseHeight);
+      if (!Number.isFinite(baseHeight) || baseHeight <= 0) {
+        baseHeight = frame.offsetHeight || 0;
+        frame.dataset.baseHeight = baseHeight;
+      }
+
+      frame.style.transform = previousTransform;
+
+      return { section, scaler, frame, baseWidth, baseHeight };
+    }).filter(Boolean);
+
+    if (!frames.length) return;
+
+    let gap = 0;
+    if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+      const style = window.getComputedStyle(grid);
+      if (style) {
+        const gapValue = parseFloat(style.columnGap || style.gap || '0');
+        if (Number.isFinite(gapValue) && gapValue >= 0) {
+          gap = gapValue;
+        }
+      }
+    }
+
+    const totalBaseWidth = frames.reduce((sum, item) => sum + item.baseWidth, 0);
+    const totalGap = gap * Math.max(0, frames.length - 1);
+    const containerWidth = grid.clientWidth || 0;
+
+    let scale = 1;
+    if (totalBaseWidth > 0) {
+      const availableWidth = containerWidth - totalGap;
+      if (availableWidth < totalBaseWidth) {
+        if (availableWidth > 0) {
+          scale = availableWidth / totalBaseWidth;
+        } else if (containerWidth > 0) {
+          scale = containerWidth / (totalBaseWidth + totalGap);
+        } else {
+          scale = 1;
+        }
+      }
+    }
+    if (!Number.isFinite(scale)) {
+      scale = 1;
+    }
+    scale = Math.min(Math.max(scale, 0), 1);
+
+    frames.forEach(item => {
+      const scaledWidth = item.baseWidth * scale;
+      const scaledHeight = item.baseHeight * scale;
+      const widthValue = Number.isFinite(scaledWidth) && scaledWidth > 0 ? scaledWidth : item.baseWidth;
+      const heightValue = Number.isFinite(scaledHeight) && scaledHeight > 0 ? scaledHeight : item.baseHeight;
+      item.frame.style.transform = `scale(${scale})`;
+      item.scaler.style.width = `${widthValue}px`;
+      item.scaler.style.minWidth = `${widthValue}px`;
+      item.scaler.style.height = heightValue ? `${heightValue}px` : 'auto';
+      item.scaler.style.maxWidth = `${item.baseWidth}px`;
+      item.section.style.flex = `0 0 ${widthValue}px`;
+      item.section.style.width = `${widthValue}px`;
+      item.section.style.minWidth = `${widthValue}px`;
+      item.section.style.maxWidth = `${item.baseWidth}px`;
+    });
+  }
+
+  function scheduleScaleUpdate() {
+    cancelFrame(pendingScaleUpdate);
+    pendingScaleUpdate = requestFrame(() => {
+      pendingScaleUpdate = null;
+      updateFrameScales();
+    });
+  }
+
+  function bindResizeHandler() {
+    if (resizeHandlerBound) return;
+    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+    window.addEventListener('resize', scheduleScaleUpdate);
+    resizeHandlerBound = true;
   }
 
   function getHorizontalLength(table) {
@@ -592,53 +802,9 @@
     }
   }
 
-  function setupStandingArea() {
-    if (!standingArea) return;
-
-    standingArea.innerHTML = '';
-
-    const label = document.createElement('p');
-    label.className = 'standing-label';
-    standingArea.appendChild(label);
-
-    const grid = document.createElement('div');
-    grid.className = 'standing-grid';
-    standingArea.appendChild(grid);
-
-    standingLabelEl = label;
-    standingGridEl = grid;
-
-    updateStandingInfo(null);
-  }
-
-  function updateStandingInfo(table) {
-    if (!standingArea) return;
-
-    const total = Math.max(parseInt(table?.total, 10) || DEFAULT_STANDING_TOTAL, 0);
-    const reserved = Math.max(parseInt(table?.reserved, 10) || 0, 0);
-    const labelText = `STEHPLÄTZE`;
-
-    if (standingLabelEl) {
-      standingLabelEl.textContent = labelText;
-    }
-
-    if (!standingGridEl) return;
-
-    const seatSource = table || { nr: 0, segments: [] };
-    const seats = expandSegmentsToSeats(seatSource, total);
-    clearChildren(standingGridEl);
-    seats.forEach(seat => {
-      const seatEl = document.createElement('div');
-      seatEl.className = 'standing-seat chair';
-      seatEl.dataset.tableNr = 0;
-      applySeatVisual(seatEl, seat);
-      standingGridEl.appendChild(seatEl);
-    });
-  }
-
-  function renderParkettDisplay(cart) {
-    if (!parkettDisplay) return;
-    clearChildren(parkettDisplay);
+  function createParkettDisplay(cart) {
+    const display = document.createElement('div');
+    display.className = 'parkett-display';
 
     const lines = Array.isArray(cart?.lines) ? cart.lines : [];
     const totalAmount = Number.isFinite(cart?.totalAmount) ? cart.totalAmount : 0;
@@ -647,8 +813,8 @@
       const placeholder = document.createElement('p');
       placeholder.className = 'parkett-placeholder';
       placeholder.textContent = 'HERZLICH WILLKOMMEN';
-      parkettDisplay.appendChild(placeholder);
-      return;
+      display.appendChild(placeholder);
+      return display;
     }
 
     lines.forEach(line => {
@@ -673,12 +839,12 @@
 
       row.appendChild(label);
       row.appendChild(amount);
-      parkettDisplay.appendChild(row);
+      display.appendChild(row);
     });
 
     const divider = document.createElement('div');
     divider.className = 'parkett-divider';
-    parkettDisplay.appendChild(divider);
+    display.appendChild(divider);
 
     const totalRow = document.createElement('div');
     totalRow.className = 'parkett-line parkett-total';
@@ -692,53 +858,166 @@
     totalAmountEl.textContent = euroFormatter.format(totalAmount);
     totalRow.appendChild(totalAmountEl);
 
-    parkettDisplay.appendChild(totalRow);
+    display.appendChild(totalRow);
+    return display;
   }
 
-  function renderPlan(payload) {
-    const tables = Array.isArray(payload?.tables) ? payload.tables : [];
+  function createStandingArea(table) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'standing-area';
+
+    const label = document.createElement('p');
+    label.className = 'standing-label';
+    label.textContent = 'STEHPLÄTZE';
+    wrapper.appendChild(label);
+
+    const grid = document.createElement('div');
+    grid.className = 'standing-grid';
+    wrapper.appendChild(grid);
+
+    const total = Math.max(parseInt(table?.total, 10) || DEFAULT_STANDING_TOTAL, 0);
+    const seatSource = table || { nr: 0, segments: [] };
+    const seats = expandSegmentsToSeats(seatSource, total);
+    seats.forEach(seat => {
+      const seatEl = document.createElement('div');
+      seatEl.className = 'standing-seat chair';
+      seatEl.dataset.tableNr = 0;
+      applySeatVisual(seatEl, seat);
+      grid.appendChild(seatEl);
+    });
+
+    return wrapper;
+  }
+
+  function createEventFrame(event) {
+    const tables = Array.isArray(event?.tables) ? event.tables : [];
     const leftTables = tables.filter(t => t.position === 'left').sort((a, b) => a.nr - b.nr);
     const rightTables = tables.filter(t => t.position === 'right').sort((a, b) => a.nr - b.nr);
     const bottomTables = tables.filter(t => !['left', 'right', 'standing'].includes(t.position)).sort((a, b) => a.nr - b.nr);
     const standingTable = tables.find(t => t.position === 'standing');
 
-    if (frame) {
-      const longestLeft = leftTables.length ? Math.max(...leftTables.map(getHorizontalLength)) : 0;
-      const longestRight = rightTables.length ? Math.max(...rightTables.map(getHorizontalLength)) : 0;
-      const computedWidth = longestLeft + longestRight + PARKETT_WIDTH + FRAME_EXTRA_WIDTH;
-      frame.style.width = computedWidth + 'px';
-    }
+    const frame = document.createElement('div');
+    frame.className = 'frame';
 
-    clearChildren(leftCol);
+    const name = event?.displayName || event?.name || '';
+    const title = document.createElement('h1');
+    title.textContent = name ? `Saalplan – ${name}` : 'Saalplan';
+    frame.appendChild(title);
+
+    const mainArea = document.createElement('div');
+    mainArea.className = 'main-area';
+
+    const leftCol = document.createElement('div');
+    leftCol.className = 'col';
     leftTables.forEach(cfg => {
       const el = makeTableEl(cfg, 'horizontal');
       if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
-      leftCol?.appendChild(el);
+      leftCol.appendChild(el);
     });
+    mainArea.appendChild(leftCol);
 
-    clearChildren(bottomRow);
+    const parkettWrapper = document.createElement('div');
+    parkettWrapper.className = 'parkett-wrapper';
+    const parkett = document.createElement('div');
+    parkett.className = 'parkett';
+    parkett.appendChild(createParkettDisplay(event?.cart));
+    parkettWrapper.appendChild(parkett);
+    mainArea.appendChild(parkettWrapper);
+
+    const rightCol = document.createElement('div');
+    rightCol.className = 'col col--right';
+    rightTables.forEach(cfg => {
+      const el = makeTableEl(cfg, 'horizontal');
+      if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
+      rightCol.appendChild(el);
+    });
+    mainArea.appendChild(rightCol);
+
+    frame.appendChild(mainArea);
+
+    const bottomRow = document.createElement('div');
+    bottomRow.className = 'bottom-row';
     bottomTables.forEach(cfg => {
       const el = makeTableEl(cfg, 'vertical');
       if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
-      bottomRow?.appendChild(el);
+      bottomRow.appendChild(el);
     });
+    frame.appendChild(bottomRow);
 
-    clearChildren(rightCol);
-    if (rightCol) {
-      rightCol.style.display = 'flex';
-      rightCol.style.flexDirection = 'column-reverse';
-      rightTables.forEach(cfg => {
-        const el = makeTableEl(cfg, 'horizontal');
-        if (cfg.gangDaneben) applyGangDaneben(el, cfg.gangDaneben);
-        rightCol.appendChild(el);
-      });
-    }
+    frame.appendChild(createStandingArea(standingTable));
 
-    updateStandingInfo(standingTable);
-    renderParkettDisplay(payload?.cart);
+    const longestLeft = leftTables.length ? Math.max(...leftTables.map(getHorizontalLength)) : 0;
+    const longestRight = rightTables.length ? Math.max(...rightTables.map(getHorizontalLength)) : 0;
+    const computedWidth = longestLeft + longestRight + PARKETT_WIDTH + FRAME_EXTRA_WIDTH;
+    frame.style.width = computedWidth + 'px';
+    frame.dataset.baseWidth = computedWidth;
+
+    return frame;
   }
 
-  setupStandingArea();
+  function createEmptyState() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'empty-state';
+    const logo = document.createElement('div');
+    logo.className = 'empty-state__logo';
+    logo.textContent = 'LOGO';
+    wrapper.appendChild(logo);
+    const text = document.createElement('p');
+    text.className = 'empty-state__text';
+    text.textContent = 'Herzlich willkommen beim Sandersdorfer Karnevalsverein';
+    wrapper.appendChild(text);
+    return wrapper;
+  }
+
+  function renderPlan(payload) {
+    if (!appRoot) return;
+    clearChildren(appRoot);
+    const events = Array.isArray(payload?.events) ? payload.events.filter(evt => Array.isArray(evt?.tables)) : [];
+
+    if (!events.length) {
+      appRoot.appendChild(createEmptyState());
+      return;
+    }
+
+    const totalAmount = events.reduce((sum, event) => {
+      const amount = Number(event?.cart?.totalAmount);
+      return sum + (Number.isFinite(amount) ? amount : 0);
+    }, 0);
+
+    const header = document.createElement('div');
+    header.className = 'app-header';
+    const banner = document.createElement('div');
+    banner.className = 'total-banner';
+    const bannerLabel = document.createElement('span');
+    bannerLabel.className = 'total-banner__label';
+    bannerLabel.textContent = 'Gesamtpreis';
+    banner.appendChild(bannerLabel);
+    const bannerAmount = document.createElement('span');
+    bannerAmount.className = 'total-banner__amount';
+    bannerAmount.textContent = euroFormatter.format(totalAmount);
+    banner.appendChild(bannerAmount);
+    header.appendChild(banner);
+    appRoot.appendChild(header);
+
+    const plansGrid = document.createElement('div');
+    plansGrid.className = 'plans-grid';
+
+    events.forEach(event => {
+      const section = document.createElement('section');
+      section.className = 'event-block';
+      const scaler = document.createElement('div');
+      scaler.className = 'event-block__scaler';
+      const frame = createEventFrame(event);
+      scaler.appendChild(frame);
+      section.appendChild(scaler);
+      plansGrid.appendChild(section);
+    });
+
+    appRoot.appendChild(plansGrid);
+    bindResizeHandler();
+    scheduleScaleUpdate();
+  }
+
   ensureChannel();
   sendMessage({ type: 'request_state' });
 </script>

@@ -229,6 +229,32 @@ export function getEventsSnapshot() {
     return buildSnapshot();
 }
 
+export function getEventsWithState() {
+    return events.map(event => {
+        ensureEventObjectState(event);
+        return {
+            id: event.id,
+            name: event.name,
+            displayName: getEffectiveDisplayName(event),
+            state: event.state,
+        };
+    });
+}
+
+export function getEventMetaById(id) {
+    const event = events.find(entry => entry.id === id);
+    if (!event) {
+        return null;
+    }
+    ensureEventObjectState(event);
+    return {
+        id: event.id,
+        name: event.name,
+        displayName: getEffectiveDisplayName(event),
+        state: event.state,
+    };
+}
+
 export function getActiveEvent() {
     return events.find(event => event.id === activeEventId) || null;
 }

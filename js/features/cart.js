@@ -1,8 +1,4 @@
-import {
-    reservationsByTable,
-    ensureBucket,
-    getCardPriceValue,
-} from "../core/state.js";
+import { getEventsWithState, getEventMetaById, getActiveEvent, onEventsChange } from "../core/events.js";
 
 const cartListeners = new Set();
 
@@ -17,43 +13,93 @@ function notifyCartChange() {
     }
 }
 
+onEventsChange(() => {
+    notifyCartChange();
+});
+
 export function onCartChange(cb) {
     if (typeof cb !== "function") return () => {};
     cartListeners.add(cb);
     return () => cartListeners.delete(cb);
 }
 
+function resolveEventMeta(eventId = null) {
+    if (eventId) {
+        return getEventMetaById(eventId);
+    }
+    const active = getActiveEvent();
+    if (active && active.id) {
+        return getEventMetaById(active.id);
+    }
+    const [first] = getEventsWithState();
+    return first || null;
+}
+
 export function getCartEntries() {
     const items = [];
-    for (const key of Object.keys(reservationsByTable)) {
-        const tableNr = parseInt(key, 10);
-        if (!Number.isInteger(tableNr)) continue;
-        ensureBucket(tableNr);
-        const list = reservationsByTable[tableNr] || [];
-        list.forEach((reservation, index) => {
-            if (!reservation) return;
-            if (reservation.sold && reservation.inCart) {
-                reservation.inCart = false;
-                return;
-            }
-            if (reservation.inCart) {
-                items.push({ tableNr, reservation, index });
-            }
-        });
+    const events = getEventsWithState();
+
+    for (const event of events) {
+        const reservationsMap = event?.state?.reservationsByTable || {};
+        const cardPrice = Number.isFinite(event?.state?.cardPriceValue)
+            ? event.state.cardPriceValue
+            : 0;
+
+        const tableNumbers = Object.keys(reservationsMap)
+            .map(key => parseInt(key, 10))
+            .filter(Number.isInteger)
+            .sort((a, b) => a - b);
+
+        for (const tableNr of tableNumbers) {
+            const list = reservationsMap[tableNr] || [];
+            list.forEach((reservation, index) => {
+                if (!reservation) return;
+                if (reservation.sold && reservation.inCart) {
+                    reservation.inCart = false;
+                    return;
+                }
+                if (reservation.inCart) {
+                    items.push({
+                        eventId: event.id,
+                        eventName: event.name,
+                        eventDisplayName: event.displayName,
+                        tableNr,
+                        reservation,
+                        index,
+                        cardPrice,
+                        eventState: event.state,
+                    });
+                }
+            });
+        }
     }
+
     return items;
 }
 
-function findReservation(tableNr, reservationId) {
-    ensureBucket(tableNr);
-    const list = reservationsByTable[tableNr] || [];
-    const idx = list.findIndex(r => r.id === reservationId);
-    if (idx < 0) return null;
-    return { reservation: list[idx], list, index: idx };
+function findReservation(tableNr, reservationId, eventId = null) {
+    const event = resolveEventMeta(eventId);
+    if (!event || !event.state) {
+        return null;
+    }
+
+    const numericTableNr = Number.parseInt(tableNr, 10);
+    if (!Number.isInteger(numericTableNr)) {
+        return null;
+    }
+
+    const reservationsMap = event.state.reservationsByTable || {};
+    const list = reservationsMap[numericTableNr] || [];
+    const index = list.findIndex(r => r?.id === reservationId);
+    if (index < 0) {
+        return null;
+    }
+
+    return { reservation: list[index], list, index, event, tableNr: numericTableNr };
 }
 
-export function addToCart(tableNr, reservationId) {
-    const found = findReservation(tableNr, reservationId);
+export function addToCart(tableNr, reservationId, eventId = null) {
+    const found = findReservation(tableNr, reservationId, eventId);
     if (!found) return false;
     const { reservation } = found;
     if (reservation.sold) {
@@ -65,8 +111,8 @@ export function addToCart(tableNr, reservationId) {
     return true;
 }
 
-export function removeFromCart(tableNr, reservationId) {
-    const found = findReservation(tableNr, reservationId);
+export function removeFromCart(tableNr, reservationId, eventId = null) {
+    const found = findReservation(tableNr, reservationId, eventId);
     if (!found) return false;
     found.reservation.inCart = false;
     notifyCartChange();
@@ -86,9 +132,9 @@ export function markCartAsSold() {
     for (const { reservation } of entries) {
         reservation.sold = true;
         reservation.inCart = false;
-        const cards = Number.isFinite(reservation.cards)
+        const cards = Number.isFinite(reservation?.cards)
             ? reservation.cards
-            : parseInt(reservation.cards, 10) || 0;
+            : parseInt(reservation?.cards, 10) || 0;
         totalCards += cards;
     }
     notifyCartChange();
@@ -96,11 +142,11 @@ export function markCartAsSold() {
 }
 
 export function calculateCartTotal() {
-    const price = getCardPriceValue();
-    return getCartEntries().reduce((sum, { reservation }) => {
-        const cards = typeof reservation.cards === "number"
+    return getCartEntries().reduce((sum, { reservation, cardPrice }) => {
+        const cards = typeof reservation?.cards === "number"
             ? reservation.cards
-            : parseInt(reservation.cards, 10) || 0;
+            : parseInt(reservation?.cards, 10) || 0;
+        const price = Number.isFinite(cardPrice) ? cardPrice : 0;
         return sum + cards * price;
     }, 0);
 }
