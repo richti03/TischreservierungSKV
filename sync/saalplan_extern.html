@@ -69,27 +69,25 @@
     .plans-grid {
       width: 100%;
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       justify-content: center;
       align-items: flex-start;
       gap: 32px;
     }
 
     .event-block {
-      flex: 1 1 760px;
-      min-width: min(100%, 360px);
-      max-width: 100%;
       display: flex;
       justify-content: center;
+      flex: 0 0 auto;
     }
 
     .event-block__scaler {
       position: relative;
-      width: 100%;
-      max-width: 100%;
       display: flex;
       justify-content: center;
       overflow: hidden;
+      width: 100%;
+      max-width: 100%;
     }
 
     .frame {
@@ -524,23 +522,88 @@
 
   function updateFrameScales() {
     if (!appRoot) return;
-    const scalers = appRoot.querySelectorAll('.event-block__scaler');
-    scalers.forEach(scaler => {
-      const frame = scaler?.querySelector?.('.frame');
-      if (!frame) return;
+    const grid = appRoot.querySelector('.plans-grid');
+    if (!grid) return;
 
+    const sections = Array.from(grid.querySelectorAll('.event-block'));
+    if (!sections.length) return;
+
+    const frames = sections.map(section => {
+      const scaler = section.querySelector('.event-block__scaler');
+      const frame = scaler?.querySelector?.('.frame');
+      if (!scaler || !frame) {
+        return null;
+      }
+
+      const previousTransform = frame.style.transform;
       frame.style.transform = 'scale(1)';
 
-      const baseWidth = Number.parseFloat(frame.dataset.baseWidth) || frame.offsetWidth || 0;
-      if (!frame.dataset.baseHeight) {
-        frame.dataset.baseHeight = frame.offsetHeight || 0;
+      let baseWidth = Number.parseFloat(frame.dataset.baseWidth);
+      if (!Number.isFinite(baseWidth) || baseWidth <= 0) {
+        baseWidth = frame.offsetWidth || 0;
+        frame.dataset.baseWidth = baseWidth;
       }
-      const baseHeight = Number.parseFloat(frame.dataset.baseHeight) || frame.offsetHeight || 0;
-      const available = scaler.clientWidth || 0;
-      const scale = baseWidth && available ? Math.min(1, available / baseWidth) : 1;
 
-      frame.style.transform = `scale(${scale})`;
-      scaler.style.height = baseHeight ? `${baseHeight * scale}px` : 'auto';
+      let baseHeight = Number.parseFloat(frame.dataset.baseHeight);
+      if (!Number.isFinite(baseHeight) || baseHeight <= 0) {
+        baseHeight = frame.offsetHeight || 0;
+        frame.dataset.baseHeight = baseHeight;
+      }
+
+      frame.style.transform = previousTransform;
+
+      return { section, scaler, frame, baseWidth, baseHeight };
+    }).filter(Boolean);
+
+    if (!frames.length) return;
+
+    let gap = 0;
+    if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+      const style = window.getComputedStyle(grid);
+      if (style) {
+        const gapValue = parseFloat(style.columnGap || style.gap || '0');
+        if (Number.isFinite(gapValue) && gapValue >= 0) {
+          gap = gapValue;
+        }
+      }
+    }
+
+    const totalBaseWidth = frames.reduce((sum, item) => sum + item.baseWidth, 0);
+    const totalGap = gap * Math.max(0, frames.length - 1);
+    const containerWidth = grid.clientWidth || 0;
+
+    let scale = 1;
+    if (totalBaseWidth > 0) {
+      const availableWidth = containerWidth - totalGap;
+      if (availableWidth < totalBaseWidth) {
+        if (availableWidth > 0) {
+          scale = availableWidth / totalBaseWidth;
+        } else if (containerWidth > 0) {
+          scale = containerWidth / (totalBaseWidth + totalGap);
+        } else {
+          scale = 1;
+        }
+      }
+    }
+    if (!Number.isFinite(scale)) {
+      scale = 1;
+    }
+    scale = Math.min(Math.max(scale, 0), 1);
+
+    frames.forEach(item => {
+      const scaledWidth = item.baseWidth * scale;
+      const scaledHeight = item.baseHeight * scale;
+      const widthValue = Number.isFinite(scaledWidth) && scaledWidth > 0 ? scaledWidth : item.baseWidth;
+      const heightValue = Number.isFinite(scaledHeight) && scaledHeight > 0 ? scaledHeight : item.baseHeight;
+      item.frame.style.transform = `scale(${scale})`;
+      item.scaler.style.width = `${widthValue}px`;
+      item.scaler.style.minWidth = `${widthValue}px`;
+      item.scaler.style.height = heightValue ? `${heightValue}px` : 'auto';
+      item.scaler.style.maxWidth = `${item.baseWidth}px`;
+      item.section.style.flex = `0 0 ${widthValue}px`;
+      item.section.style.width = `${widthValue}px`;
+      item.section.style.minWidth = `${widthValue}px`;
+      item.section.style.maxWidth = `${item.baseWidth}px`;
     });
   }
 
