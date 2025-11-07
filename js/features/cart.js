@@ -1,4 +1,5 @@
 import { getEventsWithState, getEventMetaById, getActiveEvent, onEventsChange } from "../core/events.js";
+import { markEventStateDirty } from "../core/state.js";
 
 const cartListeners = new Set();
 
@@ -108,6 +109,7 @@ export function addToCart(tableNr, reservationId, eventId = null) {
     }
     reservation.inCart = true;
     notifyCartChange();
+    markEventStateDirty("cart-add");
     return true;
 }
 
@@ -116,6 +118,7 @@ export function removeFromCart(tableNr, reservationId, eventId = null) {
     if (!found) return false;
     found.reservation.inCart = false;
     notifyCartChange();
+    markEventStateDirty("cart-remove");
     return true;
 }
 
@@ -138,6 +141,7 @@ export function markCartAsSold() {
         totalCards += cards;
     }
     notifyCartChange();
+    markEventStateDirty("cart-sold");
     return { sold: entries.length, totalCards };
 }
 
