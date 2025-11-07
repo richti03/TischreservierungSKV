@@ -154,19 +154,20 @@
             <ul>
                 <li><a href="#grundlagen">Grundlagen &amp; Aufbau</a></li>
                 <li><a href="#start">Erststart &amp; Veranstaltungen</a></li>
-                <li><a href="#sitzplan">Sitzplan &amp; Tischauswahl</a></li>
+                <li><a href="#einstellungen">Einstellungen &amp; Aktionen</a></li>
+                <li><a href="#sitzplan">Sitzplan &amp; Tischverwaltung</a></li>
                 <li><a href="#reservierungen">Reservierungen erfassen</a></li>
-                <li><a href="#verwaltung">Bestandsverwaltung &amp; Aktionen</a></li>
-                <li><a href="#suche">Suche &amp; Auswertungen</a></li>
+                <li><a href="#daten">Datenexport &amp; Import</a></li>
+                <li><a href="#suche">Suche, Warenkorb &amp; Bearbeitung</a></li>
                 <li><a href="#sync">Synchronisation &amp; Zusatzansichten</a></li>
-                <li><a href="#rechnungen">Rechnungen &amp; Kundendisplay</a></li>
+                <li><a href="#verkauf">Verkauf &amp; Rechnungen</a></li>
                 <li><a href="#tipps">Tipps &amp; Troubleshooting</a></li>
             </ul>
         </nav>
 
         <section id="grundlagen">
             <h2>Grundlagen &amp; Aufbau</h2>
-            <p>Das Tool besteht aus einem Kopfbereich mit den wichtigsten Schaltern, einem flexiblen Einstellungsmenü (öffnet sich über das Zahnrad-Symbol) und dem Arbeitsbereich mit Tischliste und Reservierungstabelle. Links im Overlay können neue Veranstaltungen angelegt oder bestehende Daten geladen werden.</p>
+            <p>Das Tool besteht aus einem Kopfbereich mit den wichtigsten Schaltern, einem flexiblen Einstellungsmenü (öffnet sich über das Zahnrad-Symbol) und dem Arbeitsbereich mit Tischliste und Reservierungstabelle. Über das Fragezeichen im Einstellungsmenü gelangst du jederzeit wieder auf diese Anleitung. Solange keine Veranstaltung aktiv ist, bleibt das Start-Overlay sichtbar.</p>
             <div class="tip">
                 <strong>Barrierefreiheit:</strong> Sämtliche klickbaren Elemente im Tischbereich lassen sich auch per Tastatur steuern. Mit <kbd>Tab</kbd> navigierst du durch die Schaltflächen, <kbd>Enter</kbd> oder <kbd>Leertaste</kbd> wählen Tabellenzeilen und Tischkacheln aus.
             </div>
@@ -199,15 +200,36 @@
             <h3>Erste Schritte</h3>
             <ol class="steps">
                 <li>Öffne <code>index.html</code> im Browser oder starte einen lokalen Webserver (z. B. <code>npx serve</code> im Projektverzeichnis).</li>
-                <li>Wähle im Startdialog eine Option: neue Veranstaltung anlegen, Daten importieren oder eine gecachte Veranstaltung fortsetzen.</li>
-                <li>Vergib bei der Neuanlage Datum &amp; Veranstaltungstyp. Der Dateiname wird automatisch vorgeschlagen.</li>
+                <li>Nutze das Start-Overlay, um<br>• <strong>Neue Veranstaltung anlegen</strong> – öffnet den Dialog zur Datums- &amp; Typwahl.<br>• <strong>Veranstaltung importieren</strong> – wählt direkt eine JSON-Datei und erzeugt daraus einen neuen Tab.<br>• <strong>Aus Cache laden</strong> – zeigt gespeicherte Browser-Snapshots und stellt sie mit einem Klick wieder her.</li>
+                <li>Beim Anlegen fragt der Dialog nach Datum und Veranstaltungsart. Der vorgeschlagene Dateiname folgt dem Muster <code>YYYY-MM-DD_TYP.json</code>. Bestätige mit <em>Anlegen</em>.</li>
             </ol>
-            <h3>Tab-Verwaltung</h3>
+            <h3>Veranstaltungen verwalten</h3>
             <ul>
-                <li>Mit dem Plus-Symbol im Einstellungsmenü öffnest du das Aktionsmenü für neue Tabs.</li>
-                <li>Bestehende Veranstaltungen lassen sich per Doppelklick auf den Tab oder über den Button <em>Namen ändern</em> umbenennen.</li>
-                <li>Über <em>Veranstaltung entfernen</em> löschst du die aktive Veranstaltung nach Bestätigung.</li>
-                <li>Die Buttons <em>Aus Cache laden</em> und <em>Veranstaltung aus Cache entfernen</em> arbeiten mit dem lokalen Browser-Speicher. Ideal für Unterbrechungen.</li>
+                <li>Die Tabs erscheinen doppelt: im Kopfbereich und im Einstellungsmenü. Ein Klick wechselt die Veranstaltung.</li>
+                <li>Doppelklick auf einen Tab oder der Button <em>Namen ändern</em> öffnet den Umbenennungsdialog mit Datum &amp; Typ.</li>
+                <li><em>Anzeigenamen ändern</em> steuert den externen Titel (z. B. für Sync-Ansichten).</li>
+                <li><em>Veranstaltung entfernen</em> löscht den aktiven Tab samt Reservierungen nach Bestätigung.</li>
+                <li>Das Plus-Symbol blendet ein Menü ein:<br>• <em>Neue Veranstaltung anlegen</em><br>• <em>Veranstaltung importieren</em> (Import direkt nach dem Anlegen)<br>• <em>Aus Cache laden</em> (übernimmt gespeicherte Stände)</li>
+                <li>Der Cache kann aus dem Start-Overlay oder über den Button <em>Veranstaltung aus Cache entfernen</em> bereinigt werden.</li>
+            </ul>
+        </section>
+
+        <section id="einstellungen">
+            <h2>Einstellungen &amp; Aktionen</h2>
+            <p>Das Zahnrad-Symbol öffnet das Einstellungsmenü. Es bleibt fokussierbar und lässt sich mit <kbd>Esc</kbd> wieder schließen.</p>
+            <ul>
+                <li><strong>Hilfebutton (? Symbol):</strong> Öffnet diese How-To-Seite in einem neuen Tab.</li>
+                <li><strong>Sitzplätze exportieren (JSON):</strong> Speichert den aktuellen Saalplan inklusive Positionen und Gang-Informationen.</li>
+                <li><strong>Sitzplätze importieren:</strong> Lädt eine zuvor exportierte Tischkonfiguration. Bestehende Tische werden ersetzt.</li>
+                <li><strong>Reservierungen exportieren (JSON):</strong> Erstellt eine Datei mit allen Reservierungen, Preisen und Rechnungsdaten.</li>
+                <li><strong>Reservierungen importieren:</strong> Importiert komplette Veranstaltungssnapshots. Nach erfolgreichem Import wird automatisch neu gerendert.</li>
+                <li><strong>Veranstaltung aus Cache entfernen:</strong> Löscht den Browser-Zwischenspeicher für den aktiven Tab.</li>
+            </ul>
+            <h3>Werte bearbeiten</h3>
+            <ul>
+                <li><strong>Kartenpreis bearbeiten:</strong> Stiftsymbol anklicken, neuen Preis (z. B. <code>22</code> oder <code>22,00</code>) eingeben. Der Betrag wird automatisch formatiert.</li>
+                <li><strong>Veranstaltungsname:</strong> Zeigt den Dateinamen. Über <em>Namen ändern</em> lässt er sich anpassen.</li>
+                <li><strong>Anzeigename (extern):</strong> Frei wählbarer Titel für Sync-Tabs und Rechnungen.</li>
             </ul>
         </section>
 
@@ -218,9 +240,10 @@
                 <strong>Schneller Wechsel:</strong> Das Dropdown <em>Bitte Tisch auswählen</em> synchronisiert sich mit den Tischkacheln. Änderungen lösen automatisch ein UI-Update aus.</div>
             <h3>Tische anpassen</h3>
             <ul>
-                <li><strong>Sitzplatzanzahl ändern:</strong> Öffnet einen Dialog, um die Kapazität eines Tisches anzupassen.</li>
-                <li><strong>Tisch hinzufügen / entfernen:</strong> Buttons befinden sich in der Tischliste und respektieren die Reihenfolge des Saalplans.</li>
-                <li><strong>Kartenpreis bearbeiten:</strong> Über das Stiftsymbol im Einstellungsmenü definierst du den aktuellen Verkaufspreis.</li>
+                <li><strong>Sitzplatzanzahl ändern:</strong> Öffnet das Modal „Tische &amp; Sitzplätze bearbeiten“. Hier kannst du pro Tisch Kapazität, Position (links/mittig/rechts/stehend) und angrenzenden Gang festlegen.</li>
+                <li><strong>Tisch hinzufügen:</strong> Innerhalb des Modals fügt der Button automatisch die nächste freie Tischnummer mit Standardplätzen hinzu.</li>
+                <li><strong>Tisch entfernen:</strong> Entfernt den höchsten Tisch. Bei vorhandenen Reservierungen erscheint eine Sicherheitsabfrage.</li>
+                <li><strong>Speichern:</strong> Übernimmt alle Änderungen sofort, aktualisiert die Tischauswahl und synchronisiert Zusatzansichten.</li>
             </ul>
         </section>
 
@@ -235,34 +258,42 @@
             </ol>
             <h3>Nachträgliche Bearbeitung</h3>
             <ul>
-                <li><strong>Bearbeiten:</strong> Über das Stiftsymbol in der Tabelle änderst du Name, Kartenanzahl oder Notiz.</li>
-                <li><strong>Notiz hinzufügen:</strong> Das Notizsymbol speichert zusätzliche Hinweise (z. B. Allergien, Zahlungsstatus).</li>
-                <li><strong>Verschieben / Tauschen:</strong> Der Pfeil-Button öffnet ein Modal, um Reservierungen auf andere Tische zu verschieben oder zu tauschen. Für den Tausch werden beide Seiten miteinander abgeglichen.</li>
-                <li><strong>Löschen:</strong> Das Papierkorb-Symbol entfernt einzelne Einträge nach Bestätigung.</li>
+                <li><strong>Bearbeiten:</strong> Stiftsymbol anklicken, neue Kartenanzahl eingeben. Das System prüft automatisch, ob noch Plätze frei sind.</li>
+                <li><strong>Notiz hinzufügen:</strong> Sprechblasen-Symbol verwenden, um Hinweise wie Allergien oder Zahlungsstatus zu hinterlegen.</li>
+                <li><strong>Verschieben / Tauschen:</strong> Pfeil-Symbol öffnet das Modal zum Verschieben oder Tauschen. Es zeigt Quellen- und Zieltabellen mit frei wählbarer Kartenanzahl.</li>
+                <li><strong>In den Warenkorb:</strong> Einkaufswagen-Symbol legt die Reservierung für den Verkauf bereit.</li>
+                <li><strong>Als verkauft markieren:</strong> Häkchen-Symbol kennzeichnet die Reservierung als abgeschlossen (ohne Warenkorb).</li>
+                <li><strong>Verkauf zurücksetzen:</strong> Rückgängig-Symbol hebt den Verkauf wieder auf.</li>
+                <li><strong>Aus dem Warenkorb entfernen:</strong> Durchgestrichenes Einkaufswagen-Symbol entfernt die Reservierung aus dem aktuellen Verkauf.</li>
+                <li><strong>Löschen:</strong> Das Papierkorb-Symbol entfernt Einträge und gibt Plätze wieder frei.</li>
             </ul>
             <p>Alle Aktionen aktualisieren sofort den lokalen Datenbestand und markieren die Veranstaltung als „dirty“, wodurch Exporte und Synchronisationen erkennen, dass neue Daten vorliegen.</p>
         </section>
 
-        <section id="verwaltung">
-            <h2>Bestandsverwaltung &amp; Aktionen</h2>
-            <p>Im Einstellungsmenü findest du weitere Werkzeuge:</p>
+        <section id="daten">
+            <h2>Datenexport &amp; Import</h2>
             <ul>
-                <li><strong>Sitzplätze exportieren (JSON):</strong> Speichert den aktuellen Saalplan.</li>
-                <li><strong>Sitzplätze importieren:</strong> Lädt zuvor exportierte Tischkonfigurationen.</li>
-                <li><strong>Reservierungen exportieren (JSON):</strong> Erstellt eine detaillierte Reservierungsliste inklusive Metadaten.</li>
-                <li><strong>Reservierungen importieren:</strong> Fügt Buchungen aus einer JSON-Datei hinzu – ideal für Datensicherungen.</li>
-                <li><strong>Cache entfernen:</strong> Löscht Browser-Zwischenspeicher für die aktive Veranstaltung.</li>
+                <li><strong>Sitzplätze exportieren (JSON):</strong> Sichere vor Umbauten den Saalplan, um ihn später wiederherzustellen.</li>
+                <li><strong>Sitzplätze importieren:</strong> Ideal, wenn unterschiedliche Saalpläne (z. B. Fasching vs. Narrengipfel) genutzt werden.</li>
+                <li><strong>Reservierungen exportieren (JSON):</strong> Vollständiges Backup inklusive Kartenpreis, Rechnungen, Notizen und Split-Informationen.</li>
+                <li><strong>Reservierungen importieren:</strong> Stellt komplette Veranstaltungen wieder her. Nach dem Import erscheinen alle Daten inklusive Warenkorb- &amp; Verkaufsstatus.</li>
+                <li><strong>Cache-Tipps:</strong> Nutze den Browser-Cache für schnelle Zwischenstände, exportiere aber zusätzlich regelmäßig JSON-Dateien.</li>
             </ul>
-            <div class="tip">
-                <strong>Dateinamenskonvention:</strong> Der vorgeschlagene Name folgt dem Muster <code>YYYY-MM-DD_<em>Veranstaltungstyp</em>.json</code>. Das erleichtert spätere Zuordnungen.</div>
         </section>
 
         <section id="suche">
-            <h2>Suche &amp; Auswertungen</h2>
+            <h2>Suche, Warenkorb &amp; Bearbeitung</h2>
+            <p>Der Button <strong>Buchungen suchen</strong> öffnet eine filterbare Liste über alle Veranstaltungen.</p>
             <ul>
-                <li><strong>Buchungen suchen:</strong> Öffnet eine Suchmaske, in der du nach Namen, Tischnummern, Zeitstempeln oder Notizen filtern kannst.</li>
-                <li><strong>Reservierungen exportieren:</strong> Die JSON-Datei enthält neben jeder Buchung auch die eindeutige Buchungs-ID – wichtig für spätere Auswertungen.</li>
-                <li><strong>Split-Informationen:</strong> Reservierungen, die auf mehrere Tische verteilt werden, enthalten automatisch eine Notiz „Tischwunsch“ und die Aufteilung wird in der internen Kommunikation gespeichert.</li>
+                <li>Suche nach Namen oder Booking-ID. Optional lässt sich die Veranstaltung eingrenzen.</li>
+                <li>Jede Zeile bietet dieselben Aktionen wie die Reservierungstabelle (Bearbeiten, Verschieben, Warenkorb, Verkauf zurücknehmen, Löschen).</li>
+                <li>Über die Warenkorbsymbole können Reservierungen auch veranstaltungsübergreifend in den Verkauf übernommen werden.</li>
+            </ul>
+            <p>Der Warenkorb-Button im Kopfbereich zeigt die Anzahl der ausgewählten Reservierungen. Ein Klick öffnet das Verkaufsmodal.</p>
+            <ul>
+                <li>Innerhalb des Warenkorbs können Reservierungen erneut bearbeitet, verschoben, gelöscht oder aus dem Warenkorb entfernt werden.</li>
+                <li>Die Gesamtsumme berechnet sich automatisch aus Kartenanzahl &times; Kartenpreis.</li>
+                <li>Mit <strong>Verkauf abschließen</strong> startest du den Zahlungsablauf.</li>
             </ul>
         </section>
 
@@ -270,20 +301,26 @@
             <h2>Synchronisation &amp; Zusatzansichten</h2>
             <p>Das System nutzt <code>BroadcastChannel</code> und einen lokalen Speicher-Fallback, um Daten mit weiteren Browser-Tabs zu teilen. Die folgenden Buttons öffnen Spezialansichten in neuen Tabs. Halte diese Seiten parallel offen, um Live-Updates zu erhalten.</p>
             <ul>
-                <li><strong>Internen Saalplan öffnen:</strong> Detailansicht für das Team mit Farbmarkierungen, verbleibenden Plätzen und Status-Updates.</li>
-                <li><strong>Externen Saalplan öffnen:</strong> Öffentlich nutzbare Übersicht, ideal für den Ticketverkauf am Einlass.</li>
-                <li><strong>Kundendisplay öffnen:</strong> Kundenansicht mit Bestellfortschritt. Der Button <em>Nächster Kunde</em> im Hauptfenster sendet einen Reset an dieses Display.</li>
+                <li><strong>Internen Saalplan öffnen:</strong> Detailansicht für das Team mit Farbmarkierungen, verbleibenden Plätzen, Notizen und Split-Hinweisen.</li>
+                <li><strong>Externen Saalplan öffnen:</strong> Öffentlich nutzbare Übersicht mit Fokus auf freie Plätze und Anzeigenamen.</li>
+                <li><strong>Kundendisplay öffnen:</strong> Kundenansicht mit Fortschrittsleiste, QR-Code zum Rechnungsdownload und Statusmeldungen. Der Button <em>Nächster Kunde</em> im Abschlussmodal setzt die Anzeige zurück.</li>
             </ul>
             <div class="tip">
                 <strong>Synchronität:</strong> Solange alle Tabs im selben Browser laufen, werden Änderungen nahezu in Echtzeit gespiegelt. Der LocalStorage-Fallback greift automatisch, wenn <code>BroadcastChannel</code> nicht verfügbar ist.</div>
         </section>
 
-        <section id="rechnungen">
-            <h2>Rechnungen &amp; Kundendisplay</h2>
+        <section id="verkauf">
+            <h2>Verkauf &amp; Rechnungen</h2>
+            <ol class="steps">
+                <li>Öffne den Warenkorb und kontrolliere die ausgewählten Reservierungen.</li>
+                <li>Klicke auf <strong>Verkauf abschließen</strong>. Wähle anschließend im Zahlungsdialog <em>Barzahlung</em> oder <em>Kartenzahlung</em>.</li>
+                <li>Nach Bestätigung erstellt das System automatisch Rechnungs-PDFs, markiert die Reservierungen als verkauft und zeigt das Abschlussmodal.</li>
+            </ol>
             <ul>
-                <li><strong>Rechnungen als ZIP herunterladen:</strong> Erstellt eine Zip-Datei aller offenen Rechnungen. Die Dateinamen enthalten die Buchungs-ID.</li>
-                <li><strong>Payment-Flow:</strong> Nach Abschluss einer Reservierung erscheint der Dialog „Verkauf abgeschlossen“ mit direktem Link zur Rechnung und dem Button <em>Nächster Kunde</em>.</li>
-                <li><strong>Kundendisplay:</strong> Aktualisiert sich automatisch, wenn neue Reservierungen oder Zahlungen verbucht werden.</li>
+                <li><strong>Rechnung herunterladen:</strong> Der Button im Abschlussmodal lädt das PDF der zuletzt abgeschlossenen Bestellung.</li>
+                <li><strong>Nächster Kunde:</strong> Schließt alle Modale, setzt das Kundendisplay zurück und startet den nächsten Verkaufsvorgang.</li>
+                <li><strong>Rechnungen als ZIP herunterladen:</strong> Der separate Button auf der Startseite sammelt alle vorhandenen Rechnungen in einer ZIP-Datei.</li>
+                <li><strong>Verkauf rückgängig:</strong> Über die Aktionen „Verkauf zurücksetzen“ in Tabelle, Suche oder Warenkorb lassen sich Verkäufe wieder öffnen.</li>
             </ul>
         </section>
 
@@ -293,12 +330,14 @@
                 <li><strong>Browser-Cache leeren:</strong> Bei Anzeigeproblemen die Funktion „Veranstaltung aus Cache entfernen“ nutzen oder den Browser-Cache komplett leeren.</li>
                 <li><strong>Backup-Strategie:</strong> Nach jedem Verkaufstag sowohl Sitzplätze als auch Reservierungen exportieren. So kannst du den Stand jederzeit rekonstruieren.</li>
                 <li><strong>Fehlende BroadcastChannel-Unterstützung:</strong> Ältere Browser synchronisieren ausschließlich über LocalStorage. In diesem Fall Tabs kurz neu laden.</li>
-                <li><strong>Importfehler:</strong> Prüfe, ob die JSON-Datei zum richtigen Veranstaltungstyp passt und keine manuellen Änderungen enthält.</li>
+                <li><strong>Importfehler:</strong> Prüfe, ob die JSON-Datei die Felder <code>tisch</code> und <code>reservationsByTable</code> enthält und nicht manuell verändert wurde.</li>
+                <li><strong>Rechnung fehlt:</strong> Stelle sicher, dass der Verkauf über den Warenkorb abgeschlossen und eine Zahlungsart gewählt wurde.</li>
+                <li><strong>Kundendisplay reagiert nicht:</strong> Betätige <em>Nächster Kunde</em> und lade die Anzeige bei Bedarf neu.</li>
             </ul>
         </section>
     </main>
     <footer>
-        Stand: <time datetime="2024-06-01">Juni 2024</time> · Für Rückfragen bitte an das Entwicklerteam oder den Technikverantwortlichen wenden.
+        Stand: <time datetime="2024-06-15">Juni 2024</time> · Für Rückfragen bitte an das Entwicklerteam oder den Technikverantwortlichen wenden.
     </footer>
 </body>
 </html>

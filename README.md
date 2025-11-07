@@ -17,11 +17,18 @@ Eine vollständig clientseitige Applikation zur Verwaltung von Tischreservierung
 - [Troubleshooting & Tipps](#troubleshooting--tipps)
 
 ## Funktionaler Überblick
-- **Mehrere Veranstaltungen parallel** dank Tab-System und Start-Overlay (`js/ui/eventManagement.js`).
-- **Intelligente Sitzplatzverteilung** mit Tischwunsch-Präferenz (`js/features/booking.js`).
-- **Vollständige Datenhaltung im Browser**: alle Reservierungen, Preise und Anzeigenamen werden im zentralen State (`js/core/state.js`) verwaltet.
-- **Live-Synchronisation** zwischen unterschiedlichen Tabs für internen/externe Saalpläne und Kundendisplay (`js/features/*Sync.js`).
-- **Komfortfunktionen** wie JSON-Import/-Export, Cache-Handling und Rechnungsgenerierung.
+- **Mehrere Veranstaltungen parallel** dank Tab-System, Start-Overlay und Cache-Anbindung (`js/ui/eventManagement.js`).
+- **Intelligente Sitzplatzverteilung** mit Tischwunsch-Präferenz sowie Restplatzlogik (`js/features/booking.js`).
+- **Vollständige Datenhaltung im Browser**: alle Reservierungen, Preise, Rechnungen und Anzeigenamen liegen im zentralen State (`js/core/state.js`).
+- **Live-Synchronisation** zwischen Tabs für interne/externe Saalpläne und Kundendisplay (`js/features/*Sync.js`).
+- **Komfortfunktionen** wie JSON-Import/-Export, Cache-Handling, Warenkorb-gestützter Verkauf und Rechnungsgenerierung (`js/features/cart*.js`, `js/features/invoices.js`).
+
+## Technische Eckdaten
+- **Technologien:** Vanilla JavaScript (ES Modules), HTML5, CSS3 ohne Build-Tooling.
+- **Persistenz:** `localStorage` für Caches, `BroadcastChannel` für Live-Sync, `Blob`-Downloads für Exporte.
+- **Browser-Support:** Aktuelle Chromium-/Firefox-Versionen; Safari ≥ 15 empfohlen (Fallback auf `localStorage`).
+- **Barrierefreiheit:** Fokus-Management im Einstellungs-Panel, Tastatursteuerung für Tische/Modale, WAI-ARIA-Rollen für Dialoge.
+- **Deployment:** Statisches Hosting ausreichend (z. B. GitHub Pages, Netlify). Keine Server-seitigen Komponenten nötig.
 
 ## Schnellstart
 1. Repository klonen oder herunterladen.
@@ -72,6 +79,47 @@ graph TD
 - **UI-Layer (`js/ui/…`)**: Verantwortlich für Rendering, DOM-Updates und Interaktion (z. B. Tab-Rendering, Settings-Panel, Tabellensteuerung).
 - **Features (`js/features/…`)**: Umsetzen fachliche Aufgaben wie Buchungserfassung, Import/Export, Modale, Synchronisations-Logik und Rechnungen.
 
+### Datenfluss zwischen Kernmodulen
+
+```mermaid
+flowchart LR
+    subgraph Benutzeroberfläche
+        UI_Tables[tableView.js]
+        UI_Settings[settingsPanel.js]
+        UI_Events[eventManagement.js]
+        UI_Cart[cartModal.js]
+    end
+
+    subgraph State
+        StateCore[state.js]
+        EventsCore[events.js]
+    end
+
+    subgraph Features
+        Booking[booking.js]
+        ImportExport[importExport.js]
+        SyncModules[internal/external/customer Sync]
+        Cart[cart.js]
+        Invoices[invoices.js]
+    end
+
+    UI_Tables --> Booking
+    Booking --> StateCore
+    UI_Settings --> StateCore
+    UI_Events --> EventsCore
+    EventsCore --> StateCore
+    StateCore --> UI_Tables
+    StateCore --> UI_Settings
+    StateCore --> Cart
+    Cart --> UI_Cart
+    Cart --> Invoices
+    Invoices --> UI_Cart
+    StateCore --> SyncModules
+    SyncModules -->|BroadcastChannel/localStorage| Zusatzansichten[Sync-HTML]
+    ImportExport <--> StateCore
+    ImportExport <--> EventsCore
+```
+
 ## State- und Event-Management
 Der zentrale State ist in `js/core/state.js` definiert. Wichtige Bestandteile:
 
@@ -85,6 +133,33 @@ Die Verwaltung mehrerer Veranstaltungen erfolgt über `js/core/events.js`:
 - `setActiveEvent()` lädt den ausgewählten Event-State via `loadEventState()`.
 - `buildEventName()` und `parseEventName()` garantieren konsistente Dateinamen nach dem Muster `YYYY-MM-DD-Typ`.
 - `setupEventCacheAutoSave()` und verwandte Funktionen (aus `js/features/cacheStorage.js`) spiegeln Änderungen zyklisch in den Browser-Cache.
+
+### State-Struktur im Detail
+
+```jsonc
+{
+  "tisch": [[1, 18, "middle", null], …],            // Tischnummer, freie Plätze, Position, Gang
+  "reservationsByTable": {
+    "1": [{
+      "id": "uuid",
+      "bookingId": 17,
+      "name": "Max Mustermann",
+      "cards": 4,
+      "notes": "Tischwunsch: Tisch 1",
+      "sold": false,
+      "inCart": false,
+      "ts": "2024-02-11T18:23:41.232Z"
+    }]
+  },
+  "cardPriceValue": 19.5,
+  "externalEventName": "Fasching",
+  "invoices": [{ "invoiceNumber": "SKV-2024-001", … }],
+  "dirty": { "booking-created": true, … }
+}
+```
+
+- **Dirty-Flags** informieren Sync-Module und Auto-Speicher, welche Bereiche aktualisiert wurden (`markEventStateDirty(reason)`).
+- **Helper** wie `tableLabel()` und `buildSplitInfoText()` liefern UI-kompatible Texte für Modale und Zusatzansichten.
 
 ## Reservierungs- und Sitzplatzlogik
 Die Buchungslogik (`js/features/booking.js`) priorisiert Tischwünsche und verteilt Restplätze intelligent:
@@ -110,30 +185,74 @@ sequenceDiagram
 - Split-Informationen (`buildSplitInfoText`) helfen Zusatzansichten dabei, Mischplätze nachvollziehbar darzustellen.
 - Die Tabelle im Hauptbereich wird komplett aus dem State gerendert (`js/ui/tableView.js`). Event-Delegation (`js/events/actions.js`) kümmert sich um Buttons für Bearbeiten, Notizen, Verschieben und Löschen.
 
-## Synchronisation & Zusatzansichten
-Drei spezialisierte Module sorgen für Live-Daten in Zusatz-Tabs:
-- `internalPlanSync.js` (internes Team-Display) – färbt Tische nach Auslastung, nutzt `BroadcastChannel` plus `localStorage` als Fallback.
-- `externalPlanSync.js` (öffentliche Ansicht) – stellt freie Plätze reduziert dar.
-- `customerDisplaySync.js` (Kundendisplay) – zeigt Fortschritte im Verkaufsprozess, reagiert auf `customerFlow:*`-Events.
+### Sitzplatzmanagement über das Modal
+- Der Button **„Sitzplatzanzahl ändern“** öffnet das Modal aus `js/features/tablesCrud.js`.
+- Jede Zeile erlaubt die Pflege von Kapazität, Position („Links/Mitte/Rechts/Stehend“) und angrenzendem Gang (für Saalpläne).
+- Innerhalb des Modals stehen **„Tisch hinzufügen“** und **„Tisch entfernen“** zur Verfügung. Diese gleichen Reservierungen ab, warnen bei belegten Tischen und sortieren Nummern automatisch (`sortTischArrayNr`).
+- Beim Speichern werden neue Tischnummern angelegt, gelöschte Tische inkl. Reservierungen entfernt und alle Views neu gerendert (`printTischArray`, `renderReservationsForSelectedTable`).
 
-Alle Module folgen einem ähnlichen Muster:
-1. Initialzustand über `setup*Sync()` herstellen (z. B. `setupInternalPlanSync()` in `main.js`).
-2. Änderungen im State erkennen und Nachrichtenpakete mit Marker (`__skvInternalPlan`, `__skvExternalPlan`, …) senden.
-3. Tabs über `open*Tab()` öffnen – die Buttons befinden sich im Hauptfenster.
-4. Nachrichten deduplizieren (`seenMessageIds`) und als JSON an Zielansichten durchreichen.
+## Synchronisation & Zusatzansichten
+Vier spezialisierte Module sorgen für Live-Daten in Zusatz-Tabs:
+- `internalPlanSync.js` (internes Team-Display) – farbkodierte Auslastung, Reservierungsdetails und Split-Hinweise.
+- `externalPlanSync.js` (öffentliche Ansicht) – reduzierte Darstellung freier Plätze für Besucher:innen.
+- `customerDisplaySync.js` (Kundendisplay) – Fortschrittsanzeige inkl. QR-Code für Rechnungsdownload, reagiert auf `customerFlow:*`-Events.
+- `sync/baseSync.js` (Hilfsfunktionen) – kapselt Broadcast-/Storage-Transport, Deduplizierung (`seenMessageIds`) und Heartbeats.
+
+Ablauf (schematisch):
+
+```mermaid
+sequenceDiagram
+    participant State
+    participant Sync as Sync-Module
+    participant Channel as BroadcastChannel/localStorage
+    participant View as Zusatz-Tab
+
+    State->>Sync: markEventStateDirty(reason)
+    Sync->>Sync: preparePayload(reason)
+    Sync->>Channel: postMessage({type, payload})
+    Channel-->>View: Nachricht
+    View->>View: render(payload)
+```
+
+- Buttons wie **„Internen/Externen Saalplan öffnen“** und **„Kundendisplay öffnen“** initialisieren die Ziel-HTML (`sync/*.html`) und registrieren Listener.
+- Sollte `BroadcastChannel` fehlen, greifen Polling und `localStorage`-Mirroring automatisch (`startStorageFallback()`).
+- `signalNextCustomer()` setzt das Kundendisplay nach Abschluss eines Verkaufs zurück.
 
 ## Datenexport & -import
 `js/features/importExport.js` enthält die JSON-Schnittstellen:
-- **Sitzplätze**: `exportSeatsJSON()` und `importSeatsJSON()` sichern die Tischkonfiguration (`tisch`-Array).
-- **Reservierungen**: `exportReservationsJSON()`/`importReservationsJSON()` verwenden den vollständigen Reservierungsstate inklusive Meta-Infos (`cardPriceValue`, `externalEventName`, `reservationsByTable`).
-- Dateinamensvorschläge stammen aus `core/events.js` (`lastReservationsFilename`).
-- Beim Import werden Eingabedaten validiert und in den aktiven Event-State geschrieben; anschließend sorgt `markEventStateDirty()` für UI-Refresh.
+- **Sitzplätze**: `exportSeatsJSON()` und `importSeatsJSON()` sichern die Tischkonfiguration (`tisch`-Array inkl. Position/Gang).
+- **Reservierungen**: `exportReservationsJSON()`/`importReservationsJSON()` verarbeiten den kompletten Reservierungsstate inklusive Meta-Infos (`cardPriceValue`, `externalEventName`, Rechnungsstände).
+- **Validierung:** Eingehende JSON werden strukturell geprüft (`validateReservationsPayload`). Ungültige Daten lösen einen Hinweisdialog aus und werden verworfen.
+- **Dateinamensvorschläge:** `core/events.js` (`buildEventName`, `parseReservationsFilename`) stellt konsistente Dateinamen sicher (`YYYY-MM-DD_<Typ>.json`).
+- **Speichersicherheit:** Nach jedem Import/Export setzt `markEventStateDirty()` Sync-Trigger und aktualisiert Cache-Snapshots.
+
+### Rechnungs-Downloads
+- `downloadInvoicesZip()` bündelt erzeugte PDFs in einer ZIP-Datei (mittels `JSZip`-Fallback). Enthält Dateinamen `SKV-<Event>-<InvoiceNo>.pdf`.
+- Einzelrechnungen stehen nach jedem Verkauf im Abschlussdialog (`post-sale-modal`) zur Verfügung. Ein QR-Code-Link wird parallel über das Kundendisplay verteilt.
 
 ## UI-Komponenten
-- **Settings-Panel (`js/ui/settingsPanel.js`)**: Steuert Öffnen/Schließen, Escape-Key-Unterstützung, Fokusmanagement sowie die Kartenpreis-Logik. Seit diesem Update enthält der Header einen Hilfebutton, der direkt zur How-To-Seite führt.
-- **Event-Tabs (`js/ui/eventManagement.js`)**: Rendern Tabs doppelt (Header + Panel), verwalten Start-Overlay, Event-Namen-Dialog und Cache-Aktionen.
-- **TableView & TableSelect (`js/ui/tableView.js`, `js/ui/tableSelect.js`)**: Generieren Tischliste, Dropdown und Reservierungstabelle. TableView sorgt außerdem für Tastaturzugänglichkeit.
-- **Cart-Header (`js/ui/cartHeader.js`)** und **Feature-spezifische Modale** (`js/features/modalMoveSwap.js`, `js/features/cartModal.js`) ergänzen Workflows rund um den Verkauf.
+- **Settings-Panel (`js/ui/settingsPanel.js`)**: Steuert Öffnen/Schließen, Escape-Key-Unterstützung, Fokusmanagement sowie die Kartenpreis-Logik. Der Header enthält einen Hilfebutton zur How-To-Seite.
+- **Event-Tabs (`js/ui/eventManagement.js`)**: Rendern Tabs doppelt (Header + Panel), verwalten Start-Overlay, Event-Namen-Dialog, Cache-Aktionen und Anzeigenamen.
+- **TableView & TableSelect (`js/ui/tableView.js`, `js/ui/tableSelect.js`)**: Generieren Tischliste, Dropdown und Reservierungstabelle. TableView sorgt außerdem für Tastaturzugänglichkeit und aktualisiert den Fußbereich (`updateFooter`).
+- **Cart-Header & Modal (`js/ui/cartHeader.js`, `js/features/cartModal.js`)**: Warenkorb-Badge, Zahlungsdialog, Abschlussmodal mit Rechnungsdownload und „Nächster Kunde“ Workflow.
+- **Suchmodal (`js/features/searchModal.js`)**: Globale Suche über alle Veranstaltungen mit Aktionen (Bearbeiten, Verschieben, Warenkorb, Verkauf rückgängig, Löschen).
+- **Bewegungs-/Tauschmodal (`js/features/modalMoveSwap.js`)**: Verschiebt Reservierungen zwischen Tischen, inklusive Split-Unterstützung.
+- **Invoice-Generator (`js/features/invoices.js`)**: Erstellt PDF-Inhalte, verschickt Share-Token an das Kundendisplay und aktualisiert ZIP-Downloads.
+
+### Buttons & Aktionen (Kurzreferenz)
+
+| UI-Element | Funktion | Modul |
+| --- | --- | --- |
+| **Reservierung berechnen** | Startet Buchungsdialog per Prompt, verteilt Karten automatisch | `features/booking.js`
+| **Sitzplatzanzahl ändern** | Öffnet das Tische-&-Sitzplätze-Modal zur Kapazitätsplanung | `features/tablesCrud.js`
+| **Buchungen suchen** | Globales Suchmodal über alle Events inkl. Aktionen | `features/searchModal.js`
+| **Internen/Externen Saalplan öffnen** | Startet Zusatz-HTML mit Live-Sync | `features/internalPlanSync.js` / `externalPlanSync.js`
+| **Kundendisplay öffnen** | Kundenansicht + QR-Code-Share | `features/customerDisplaySync.js`
+| **Rechnungen als ZIP herunterladen** | Bündelt vorhandene Rechnungen in ZIP | `features/invoices.js`
+| **Nächster Kunde** | Schließt Modale, setzt Kundendisplay zurück | `features/customerDisplaySync.js`
+| **Warenkorb öffnen** | Zeigt aktuelle Reservierungen im Verkauf | `features/cartModal.js`
+
+Alle Buttons existieren exakt einmal im DOM; Legacy-`onclick`-Brücken werden über `window.*`-Zuweisungen in `js/main.js` abgedeckt.
 
 ## How-To & Anwenderdokumentation
 - Die Datei [`how-to.html`](how-to.html) wurde neu hinzugefügt und ist über das Fragezeichen im Einstellungsmenü erreichbar (`target="_blank"`).
@@ -144,12 +263,17 @@ Alle Module folgen einem ähnlichen Muster:
 - Für lokale Entwicklung empfiehlt sich ein Live-Reload-Server (z. B. VS Code Live Server), um `BroadcastChannel`-Funktionalität in mehreren Tabs zu testen.
 - Statische Analyse lässt sich mit Tools wie `eslint` ergänzen. Beispiel-Konfigurationen sind nicht enthalten, können aber problemlos nachgerüstet werden.
 - Browserkompatibilität: getestet in aktuellen Chromium- und Firefox-Versionen. Safari unterstützt `BroadcastChannel` ab Version 15; bei älteren Versionen greift der LocalStorage-Fallback.
+- Für End-to-End-Tests können einfache Cypress-/Playwright-Skripte eingesetzt werden, die `localStorage`-Snapshots prüfen und `BroadcastChannel` simulieren (z. B. via `postMessage`).
+- Die Sync-Ansichten lassen sich manuell testen, indem mehrere Tabs geöffnet und Reservierungen verändert werden; Log-Ausgaben in der Konsole (`[SYNC]`, `[BOOKING]`, `[TABLES]`) helfen bei der Fehlersuche.
 
 ## Troubleshooting & Tipps
 - **Sync-Probleme**: Tabs neu laden, damit der BroadcastChannel erneut verbindet; bei Bedarf LocalStorage löschen (`Veranstaltung aus Cache entfernen`).
 - **Fehlerhafte Importe**: JSON-Dateien auf korrekte Struktur prüfen (`reservationsByTable`, `tisch`).
 - **Sicherungen**: Nach jedem Einsatz Sitzplätze und Reservierungen exportieren; Dateien in Versionierung oder Cloud-Ordner ablegen.
 - **Barrierefreiheit**: Prüfe regelmäßig die Tastaturnavigation und Screenreader-Ausgaben, insbesondere nach UI-Anpassungen.
+- **Rechnungen fehlen**: Prüfen, ob Verkäufe über das Warenkorb-Modal abgeschlossen wurden. Nur beim Abschluss mit Zahlungsart entstehen PDF-Dateien.
+- **Kundendisplay aktualisiert nicht**: „Nächster Kunde“ drücken, damit `customerFlow:next-customer` gesendet wird; ggf. Browser-Konsole auf Fehler prüfen.
+- **Cache-Konflikte**: Wenn Daten inkonsistent erscheinen, zunächst Veranstaltungen aus dem Cache entfernen und neu laden; `cacheStorage.js` protokolliert Aktionen in der Konsole.
 
 ---
 Für Rückfragen oder Erweiterungen bitte das Entwicklerteam kontaktieren. Änderungen am How-To sollten sowohl in `how-to.html` als auch in dieser README vermerkt werden, damit technische und fachliche Dokumentation synchron bleiben.
