@@ -1,4 +1,9 @@
-import { createEmptyEventState, loadEventState, setLastReservationsFilename } from "./state.js";
+import {
+    createEmptyEventState,
+    loadEventState,
+    setExternalEventName,
+    setLastReservationsFilename,
+} from "./state.js";
 
 export const EVENT_TYPES = ["Lumpenball", "Fasching", "Narrengipfel", "Sonstiges"];
 export const DEFAULT_EVENT_TYPE = EVENT_TYPES[0];
@@ -116,6 +121,34 @@ function defaultReservationsFilenameForName(name) {
     return parsed ? `${parsed.date}-${parsed.type}.json` : null;
 }
 
+function ensureEventObjectState(event) {
+    if (!event) {
+        return null;
+    }
+    if (!event.state || typeof event.state !== "object") {
+        event.state = createEmptyEventState();
+    }
+    if (typeof event.state.externalEventName !== "string") {
+        event.state.externalEventName = "";
+    }
+    if (!event.state.externalEventName.trim()) {
+        event.state.externalEventName = event.name || "";
+    }
+    return event.state;
+}
+
+function getStoredDisplayName(event) {
+    if (!event || !event.state || typeof event.state.externalEventName !== "string") {
+        return "";
+    }
+    return event.state.externalEventName.trim();
+}
+
+function getEffectiveDisplayName(event) {
+    const stored = getStoredDisplayName(event);
+    return stored || event?.name || "";
+}
+
 function syncDefaultReservationsFilename(event) {
     if (!event || !event.state || typeof event.state !== "object") {
         return;
@@ -156,7 +189,14 @@ export function getNextDefaultEventName() {
 
 function buildSnapshot() {
     return {
-        events: events.map(event => ({ id: event.id, name: event.name })),
+        events: events.map(event => {
+            ensureEventObjectState(event);
+            return {
+                id: event.id,
+                name: event.name,
+                displayName: getEffectiveDisplayName(event),
+            };
+        }),
         activeEventId,
     };
 }
@@ -202,6 +242,7 @@ export function setActiveEvent(id) {
     if (!event) {
         return false;
     }
+    ensureEventObjectState(event);
     activeEventId = event.id;
     loadEventState(event.state);
     notifyListeners();
@@ -225,6 +266,8 @@ export function createEvent(options = {}) {
         event.state = createEmptyEventState();
     }
 
+    ensureEventObjectState(event);
+
     if (!event.state.lastReservationsFilename) {
         const defaultFilename = defaultReservationsFilenameForName(event.name);
         if (defaultFilename) {
@@ -245,12 +288,43 @@ export function renameEvent(id, name) {
     if (!event) {
         return false;
     }
+    ensureEventObjectState(event);
+    const previousName = event.name;
+    const previousDisplayName = getStoredDisplayName(event);
     const trimmed = typeof name === "string" ? name.trim() : "";
     if (!trimmed || trimmed === event.name || !isValidEventName(trimmed)) {
         return false;
     }
     event.name = trimmed;
+    if (!previousDisplayName || previousDisplayName === previousName) {
+        event.state.externalEventName = trimmed;
+        if (event.id === activeEventId) {
+            setExternalEventName(trimmed);
+        }
+    }
     syncDefaultReservationsFilename(event);
+    notifyListeners();
+    return true;
+}
+
+export function setEventDisplayName(id, value) {
+    const event = events.find(entry => entry.id === id);
+    if (!event) {
+        return false;
+    }
+    ensureEventObjectState(event);
+    const trimmed = typeof value === "string" ? value.trim() : "";
+    const finalName = trimmed || event.name;
+    if (event.state.externalEventName === finalName) {
+        if (event.id === activeEventId) {
+            setExternalEventName(finalName);
+        }
+        return true;
+    }
+    event.state.externalEventName = finalName;
+    if (event.id === activeEventId) {
+        setExternalEventName(finalName);
+    }
     notifyListeners();
     return true;
 }

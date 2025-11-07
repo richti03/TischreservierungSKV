@@ -1,13 +1,23 @@
 import {
-    tisch, reservationsByTable, sortTischArrayNr, downloadJSON, pickJSONFile, fileTimestamp,
+    tisch,
+    reservationsByTable,
+    sortTischArrayNr,
+    downloadJSON,
+    pickJSONFile,
+    fileTimestamp,
     setLastReservationsFilename,
-    nextBookingId, bumpBookingSeqFromExisting
+    nextBookingId,
+    bumpBookingSeqFromExisting,
+    getCardPriceValue,
+    setCardPriceValue,
+    getExternalEventName,
 } from "../core/state.js";
 import {
     getActiveEventFileSafeName,
     getActiveEvent,
     renameEvent,
-    parseReservationsFilename
+    parseReservationsFilename,
+    setEventDisplayName,
 } from "../core/events.js";
 import { printTischArray, updateFooter, renderReservationsForSelectedTable } from "../ui/tableView.js";
 
@@ -107,10 +117,15 @@ export function exportReservationsJSON() {
         return;
     }
 
+    const displayName = getExternalEventName() || activeEvent?.state?.externalEventName || activeEvent?.name || "";
+    const price = getCardPriceValue();
     const data = {
         version: 1,
         type: "reservations",
         exportedAt: new Date().toISOString(),
+        eventName: activeEvent?.name ?? null,
+        eventDisplayName: displayName || null,
+        cardPriceValue: Number.isFinite(price) ? price : null,
         // reservationsByTable enthält nun auch das Feld `sold` in den Einträgen
         reservationsByTable
     };
@@ -135,6 +150,21 @@ function processReservationsImport(obj, filename) {
     const activeEvent = getActiveEvent();
     if (activeEvent && activeEvent.id) {
         renameEvent(activeEvent.id, meta.eventName);
+        const importedDisplayName = typeof obj?.eventDisplayName === "string"
+            ? obj.eventDisplayName.trim()
+            : "";
+        const finalDisplayName = importedDisplayName || meta.eventName;
+        setEventDisplayName(activeEvent.id, finalDisplayName);
+    }
+
+    const rawPrice = obj?.cardPriceValue ?? obj?.cardPrice;
+    let parsedPrice = Number.isFinite(rawPrice) ? Number(rawPrice) : NaN;
+    if (!Number.isFinite(parsedPrice) && typeof rawPrice === "string") {
+        const normalized = rawPrice.replace(/€/g, "").replace(/,/g, ".").trim();
+        parsedPrice = Number.parseFloat(normalized);
+    }
+    if (Number.isFinite(parsedPrice) && parsedPrice >= 0) {
+        setCardPriceValue(parsedPrice);
     }
 
     // 1) Bestehende Kapazität je Tisch ermitteln:

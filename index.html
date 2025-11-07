@@ -58,9 +58,12 @@
                 <path d="M19.14 12.94a7.14 7.14 0 0 0 .06-.94 7.14 7.14 0 0 0-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a6.83 6.83 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 14.42 2h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.14.56-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.18 8.02a.5.5 0 0 0 .12.64l2.03 1.58a7.14 7.14 0 0 0-.06.94c0 .32.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.49.38 1.04.7 1.63.94l.36 2.54a.5.5 0 0 0 .5.42h3.84a.5.5 0 0 0 .5-.42l.36-2.54c.59-.24 1.14-.56 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.25A3.25 3.25 0 1 1 12 8.75a3.25 3.25 0 0 1 0 6.5Z"></path>
             </svg>
         </button>
-        <div class="app-header__titles">
-            <h1>Sandersdorfer Karnevalsverein e.V.</h1>
-            <h2>Tischreservierung</h2>
+        <div class="app-header__center">
+            <div class="app-header__titles">
+                <h1>Sandersdorfer Karnevalsverein e.V.</h1>
+                <h2>Tischreservierung</h2>
+            </div>
+            <div class="event-tabs app-header__event-tabs" id="header-event-tabs" role="tablist" aria-label="Veranstaltungen"></div>
         </div>
         <button class="app-header__cart-btn" id="cart-toggle" type="button" aria-label="Warenkorb öffnen" title="Warenkorb öffnen">
             <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -116,6 +119,13 @@
                 <div class="event-name-control__body">
                     <span class="event-name-control__value" id="event-name-display">—</span>
                     <button type="button" class="event-name-control__edit" id="event-rename-btn" disabled>Namen ändern</button>
+                </div>
+            </div>
+            <div class="event-name-control" id="event-display-name-control">
+                <div class="event-name-control__label">Anzeigename (extern)</div>
+                <div class="event-name-control__body">
+                    <span class="event-name-control__value" id="event-display-name">—</span>
+                    <button type="button" class="event-name-control__edit" id="event-display-name-btn" disabled>Anzeigenamen ändern</button>
                 </div>
             </div>
         </div>
