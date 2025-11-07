@@ -1,7 +1,7 @@
 // Zeilenaktionen in der Reservierungstabelle
 
 import {
-    reservationsByTable, getSeatsByTableNumber, setSeatsByTableNumber
+    reservationsByTable, getSeatsByTableNumber, setSeatsByTableNumber, markEventStateDirty
 } from "../core/state.js";
 import {getSelectedTableNr, printTischArray, renderReservationsForSelectedTable} from "../ui/tableView.js";
 import { addToCart, removeFromCart, markCartDirty } from "../features/cart.js";
@@ -33,13 +33,14 @@ export function onReservationTableClick(e) {
         printTischArray();
         renderReservationsForSelectedTable();
         console.log("[DELETE] Entfernt:", rec);
+        markEventStateDirty("reservation-delete");
         return;
     }
 
     if (action === "note") {
         if (rec.sold) return alert("Diese Buchung ist als verkauft markiert und kann nicht bearbeitet werden.");
         const txt = prompt(`Notiz für "${rec.name}" (Tisch ${fromNr}):`, rec.notes || "");
-        if (txt !== null) { rec.notes = txt; renderReservationsForSelectedTable(); console.log("[NOTE] Aktualisiert:", rec); }
+        if (txt !== null) { rec.notes = txt; renderReservationsForSelectedTable(); markEventStateDirty("reservation-note"); console.log("[NOTE] Aktualisiert:", rec); }
         return;
     }
 
@@ -55,6 +56,7 @@ export function onReservationTableClick(e) {
         rec.cards = newCount;
         renderReservationsForSelectedTable();
         console.log("[EDIT] Neu:", rec.cards, "Delta:", delta);
+        markEventStateDirty("reservation-edit");
         return;
     }
 
@@ -86,6 +88,7 @@ export function onReservationTableClick(e) {
         markCartDirty();
         renderReservationsForSelectedTable();
         console.log("[SOLD] Markiert als verkauft:", rec);
+        markEventStateDirty("reservation-sold");
         return;
     }
 
@@ -94,6 +97,7 @@ export function onReservationTableClick(e) {
         markCartDirty();
         renderReservationsForSelectedTable();
         console.log("[SOLD] Verkauf rückgängig:", rec);
+        markEventStateDirty("reservation-unsold");
         return;
     }
 }

@@ -2,7 +2,7 @@
 
 import {
     tisch, alleExportCodes, sortTischArrayPlace, ensureBucket, nextBookingId, uid,
-    setSeatsByTableNumber, findIndexByTableNumber, reservationsByTable
+    setSeatsByTableNumber, findIndexByTableNumber, reservationsByTable, markEventStateDirty
 } from "../core/state.js";
 import { printTischArray, setSelectedTableNr, renderReservationsForSelectedTable } from "../ui/tableView.js";
 
@@ -26,6 +26,8 @@ export function berechneReservierung() {
 
     if (Array.isArray(usedTables) && usedTables.length > 0) setSelectedTableNr(usedTables[0]);
     else renderReservationsForSelectedTable();
+
+    markEventStateDirty("booking-created");
 }
 
 export function berechneExportohneAusgabe() {

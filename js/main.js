@@ -31,6 +31,12 @@ import {
 } from "./core/events.js";
 import { onCartChange, getCartEntries } from "./features/cart.js";
 import { openCartModal } from "./features/cartModal.js";
+import {
+    setupEventCacheAutoSave,
+    promptLoadFromCache,
+    onCacheEntriesChange,
+    promptRemoveCacheEntry,
+} from "./features/cacheStorage.js";
 
 // Select-Change
 const selectEl = document.getElementById("table-select");
@@ -115,9 +121,13 @@ const eventAddButton = document.getElementById("event-tab-add");
 const eventAddMenu = document.getElementById("event-add-menu");
 const eventAddNewButton = document.getElementById("event-add-new");
 const eventAddImportButton = document.getElementById("event-add-import");
+const eventAddCacheButton = document.getElementById("event-add-cache");
 const eventStartOverlay = document.getElementById("event-start-overlay");
 const eventStartNewButton = document.getElementById("event-start-new");
 const eventStartImportButton = document.getElementById("event-start-import");
+const eventStartCacheButton = document.getElementById("event-start-cache");
+const eventStartCacheDeleteButton = document.getElementById("event-start-cache-delete");
+const cacheRemoveActionButton = document.getElementById("btn-cache-remove");
 const eventRenameButton = document.getElementById("event-rename-btn");
 const eventNameDisplay = document.getElementById("event-name-display");
 const eventDisplayNameDisplay = document.getElementById("event-display-name");
@@ -137,6 +147,8 @@ let latestEventsSnapshot = { events: [], activeEventId: null };
 let lastRenderedEventId = null;
 let isEventNameDialogVisible = false;
 let resolveEventNameDialog = null;
+
+setupEventCacheAutoSave();
 
 const rerenderActiveEvent = () => {
     printTischArray();
@@ -357,6 +369,45 @@ async function startEventCreation({ importAfterCreate = false } = {}) {
     createEvent({ name: result.name });
 }
 
+function createEventFromCacheEntry(entry) {
+    if (!entry) {
+        return false;
+    }
+    const created = createEvent({ name: entry.name, state: entry.state });
+    if (!created) {
+        return false;
+    }
+    if (entry.displayName && entry.displayName !== entry.name) {
+        setEventDisplayName(created.id, entry.displayName);
+    }
+    return true;
+}
+
+function startEventLoadFromCache({ closeMenu = false } = {}) {
+    const entry = promptLoadFromCache();
+    if (!entry) {
+        return;
+    }
+    const loaded = createEventFromCacheEntry(entry);
+    if (!loaded) {
+        window.alert("Die Veranstaltung konnte nicht aus dem Cache geladen werden.");
+        return;
+    }
+    if (closeMenu) {
+        closeEventMenu();
+    }
+}
+
+function startCacheRemoval({ closeMenu = false } = {}) {
+    const removed = promptRemoveCacheEntry();
+    if (!removed) {
+        return;
+    }
+    if (closeMenu) {
+        closeEventMenu();
+    }
+}
+
 eventAddButton?.addEventListener("click", event => {
     event.stopPropagation();
     if (isEventMenuOpen()) {
@@ -398,12 +449,28 @@ eventAddImportButton?.addEventListener("click", () => {
     startEventCreation({ importAfterCreate: true });
 });
 
+eventAddCacheButton?.addEventListener("click", () => {
+    startEventLoadFromCache({ closeMenu: true });
+});
+
 eventStartNewButton?.addEventListener("click", () => {
     startEventCreation();
 });
 
 eventStartImportButton?.addEventListener("click", () => {
     startEventCreation({ importAfterCreate: true });
+});
+
+eventStartCacheButton?.addEventListener("click", () => {
+    startEventLoadFromCache();
+});
+
+eventStartCacheDeleteButton?.addEventListener("click", () => {
+    startCacheRemoval();
+});
+
+cacheRemoveActionButton?.addEventListener("click", () => {
+    startCacheRemoval();
 });
 
 eventRemoveButton?.addEventListener("click", () => {
@@ -522,6 +589,62 @@ onEventsChange(snapshot => {
     }
     rerenderActiveEvent();
 });
+
+const updateCacheButtons = summary => {
+    const available = !!summary?.available;
+    const entries = Array.isArray(summary?.entries) ? summary.entries : [];
+    const hasEntries = entries.length > 0;
+
+    if (eventStartCacheButton) {
+        eventStartCacheButton.hidden = !available;
+        eventStartCacheButton.disabled = !available;
+        if (!available) {
+            eventStartCacheButton.title = "Browser-Cache nicht verfügbar";
+        } else if (!hasEntries) {
+            eventStartCacheButton.title = "Keine Veranstaltungen im Cache vorhanden.";
+        } else {
+            eventStartCacheButton.removeAttribute("title");
+        }
+    }
+
+    if (eventStartCacheDeleteButton) {
+        eventStartCacheDeleteButton.hidden = !available;
+        eventStartCacheDeleteButton.disabled = !available;
+        if (!available) {
+            eventStartCacheDeleteButton.title = "Browser-Cache nicht verfügbar";
+        } else if (!hasEntries) {
+            eventStartCacheDeleteButton.title = "Keine Veranstaltungen im Cache vorhanden.";
+        } else {
+            eventStartCacheDeleteButton.removeAttribute("title");
+        }
+    }
+
+    if (eventAddCacheButton) {
+        eventAddCacheButton.hidden = !available;
+        eventAddCacheButton.disabled = !available;
+        if (!available) {
+            eventAddCacheButton.title = "Browser-Cache nicht verfügbar";
+        } else if (!hasEntries) {
+            eventAddCacheButton.title = "Keine Veranstaltungen im Cache vorhanden.";
+        } else {
+            eventAddCacheButton.removeAttribute("title");
+        }
+    }
+
+    if (cacheRemoveActionButton) {
+        cacheRemoveActionButton.hidden = !available;
+        cacheRemoveActionButton.disabled = !available;
+        if (!available) {
+            cacheRemoveActionButton.title = "Browser-Cache nicht verfügbar";
+        } else if (!hasEntries) {
+            cacheRemoveActionButton.title = "Keine Veranstaltungen im Cache vorhanden.";
+        } else {
+            cacheRemoveActionButton.removeAttribute("title");
+        }
+    }
+};
+
+onCacheEntriesChange(updateCacheButtons);
 
 const closeSettingsPanel = () => {
     if (!settingsPanel) {

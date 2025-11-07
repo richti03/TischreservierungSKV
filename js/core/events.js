@@ -3,6 +3,7 @@ import {
     loadEventState,
     setExternalEventName,
     setLastReservationsFilename,
+    markEventStateDirty,
 } from "./state.js";
 
 export const EVENT_TYPES = ["Lumpenball", "Fasching", "Narrengipfel", "Sonstiges"];
@@ -306,6 +307,7 @@ export function createEvent(options = {}) {
     if (event.state.lastReservationsFilename) {
         setLastReservationsFilename(event.state.lastReservationsFilename);
     }
+    markEventStateDirty("event-created");
     return event;
 }
 
@@ -330,6 +332,7 @@ export function renameEvent(id, name) {
     }
     syncDefaultReservationsFilename(event);
     notifyListeners();
+    markEventStateDirty("event-renamed");
     return true;
 }
 
@@ -352,6 +355,7 @@ export function setEventDisplayName(id, value) {
         setExternalEventName(finalName);
     }
     notifyListeners();
+    markEventStateDirty("event-display-name");
     return true;
 }
 

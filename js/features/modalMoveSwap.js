@@ -3,7 +3,7 @@
 import {
     tisch, reservationsByTable,
     ensureBucket, getSeatsByTableNumber, setSeatsByTableNumber,
-    sortTischArrayNr, uid, escapeHtml, noteToHtml, buildSplitInfoText, tableLabel
+    sortTischArrayNr, uid, escapeHtml, noteToHtml, buildSplitInfoText, tableLabel, markEventStateDirty
 } from "../core/state.js";
 import { printTischArray, setSelectedTableNr } from "../ui/tableView.js";
 
@@ -521,6 +521,7 @@ function applyMoveOrSwap() {
 
     printTischArray(tisch);
     setSelectedTableNr(targetNr);
+    markEventStateDirty(moveState.mode === "swap" ? "reservation-swap" : "reservation-move");
     closeModal();
 }
 
