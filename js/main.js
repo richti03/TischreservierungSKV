@@ -22,6 +22,7 @@ import {
     setActiveEvent,
     renameEvent,
     setEventDisplayName,
+    removeEvent,
     EVENT_TYPES,
     DEFAULT_EVENT_TYPE,
     buildEventName,
@@ -121,6 +122,7 @@ const eventRenameButton = document.getElementById("event-rename-btn");
 const eventNameDisplay = document.getElementById("event-name-display");
 const eventDisplayNameDisplay = document.getElementById("event-display-name");
 const eventDisplayNameButton = document.getElementById("event-display-name-btn");
+const eventRemoveButton = document.getElementById("event-remove-btn");
 const eventNameDialog = document.getElementById("event-name-dialog");
 const eventNameForm = document.getElementById("event-name-form");
 const eventNameDateInput = document.getElementById("event-name-date");
@@ -404,6 +406,20 @@ eventStartImportButton?.addEventListener("click", () => {
     startEventCreation({ importAfterCreate: true });
 });
 
+eventRemoveButton?.addEventListener("click", () => {
+    const activeId = latestEventsSnapshot?.activeEventId;
+    if (!activeId) {
+        return;
+    }
+    const activeEvent = latestEventsSnapshot?.events?.find?.(entry => entry.id === activeId) || null;
+    const label = activeEvent?.displayName || activeEvent?.name || "diese Veranstaltung";
+    const confirmed = window.confirm(`Veranstaltung "${label}" wirklich entfernen? Alle Tische, Reservierungen und Einstellungen werden gelöscht.`);
+    if (!confirmed) {
+        return;
+    }
+    removeEvent(activeId);
+});
+
 const onEventTabClick = event => {
     const target = event.target instanceof Element ? event.target.closest(".event-tab") : null;
     if (!target) {
@@ -485,6 +501,9 @@ onEventsChange(snapshot => {
     }
     if (eventRenameButton) {
         eventRenameButton.disabled = !activeEvent;
+    }
+    if (eventRemoveButton) {
+        eventRemoveButton.disabled = !activeEvent;
     }
     if (eventDisplayNameDisplay) {
         const displayName = activeEvent?.displayName ?? getExternalEventName();

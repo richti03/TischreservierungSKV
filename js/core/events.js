@@ -336,3 +336,33 @@ export function hasEvents() {
 export function getEventById(id) {
     return events.find(entry => entry.id === id) || null;
 }
+
+export function removeEvent(id) {
+    const index = events.findIndex(entry => entry.id === id);
+    if (index < 0) {
+        return false;
+    }
+
+    const [removed] = events.splice(index, 1);
+    const wasActive = removed?.id === activeEventId;
+
+    if (events.length === 0) {
+        activeEventId = null;
+        loadEventState(createEmptyEventState());
+        setExternalEventName("");
+        setLastReservationsFilename(null);
+        notifyListeners();
+        return true;
+    }
+
+    if (wasActive) {
+        const fallback = events[index] || events[index - 1] || events[0] || null;
+        if (fallback) {
+            setActiveEvent(fallback.id);
+            return true;
+        }
+    }
+
+    notifyListeners();
+    return true;
+}

@@ -275,6 +275,7 @@ button:hover {
     position: relative;
     display: flex;
     align-items: center;
+    gap: 8px;
 }
 
 .event-tabs__add-btn {
@@ -299,6 +300,38 @@ button:hover {
     border-color: #94a3b8;
     color: #1e3a8a;
     outline: none;
+}
+
+.event-tabs__remove-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #fecaca;
+    background: #fff1f2;
+    color: #b91c1c;
+    font-size: 1.2rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.event-tabs__remove-btn:hover,
+.event-tabs__remove-btn:focus {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #7f1d1d;
+    outline: none;
+}
+
+.event-tabs__remove-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #94a3b8;
 }
 
 .event-tabs__menu {
