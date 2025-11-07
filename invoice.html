@@ -101,7 +101,7 @@
         actions.hidden = true;
     }
 
-    function init() {
+    async function init() {
         const token = window.location.hash ? window.location.hash.slice(1) : '';
         if (!token) {
             showError('Ungültiger QR-Code.');
@@ -112,8 +112,15 @@
             showError('Rechnungsdaten konnten nicht geladen werden.');
             return;
         }
-        const pdfBytes = buildPdfFromPayload(payload);
-        if (!pdfBytes) {
+        let pdfBytes;
+        try {
+            pdfBytes = await buildPdfFromPayload(payload);
+        } catch (err) {
+            console.error('[INVOICE] PDF konnte nicht erzeugt werden:', err);
+            showError('Rechnung konnte nicht generiert werden.');
+            return;
+        }
+        if (!pdfBytes || !pdfBytes.length) {
             showError('Rechnung konnte nicht generiert werden.');
             return;
         }
@@ -142,7 +149,10 @@
         }, { once: true });
     }
 
-    init();
+    init().catch(err => {
+        console.error('[INVOICE] Unbehandelter Fehler beim Laden der Rechnung:', err);
+        showError('Rechnung konnte nicht generiert werden.');
+    });
 </script>
 </body>
 </html>

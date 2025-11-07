@@ -41,6 +41,131 @@ function iconBtn({ action, title, ghost = false }) {
 
 let wired = false;
 let paymentDialogOpen = false;
+let postSaleModalWired = false;
+let postSaleModal = null;
+let postSaleMessageEl = null;
+let postSaleDetailsEl = null;
+let postSaleDownloadBtn = null;
+
+function ensurePostSaleModal() {
+    if (postSaleModal) {
+        return postSaleModal;
+    }
+    const modal = document.getElementById("post-sale-modal");
+    if (!modal) {
+        return null;
+    }
+    postSaleModal = modal;
+    postSaleMessageEl = modal.querySelector("#post-sale-message");
+    postSaleDetailsEl = modal.querySelector("#post-sale-details");
+    postSaleDownloadBtn = document.getElementById("btn-download-latest-invoice");
+
+    if (!postSaleModalWired) {
+        const closeTargets = modal.querySelectorAll('[data-close-modal]');
+        closeTargets.forEach(target => {
+            target.addEventListener("click", evt => {
+                evt.preventDefault();
+                closePostSaleModal();
+            });
+        });
+
+        if (postSaleDownloadBtn) {
+            postSaleDownloadBtn.addEventListener("click", evt => {
+                if (postSaleDownloadBtn.getAttribute("aria-disabled") === "true") {
+                    evt.preventDefault();
+                }
+            });
+        }
+
+        document.addEventListener("customerFlow:close-modals", closePostSaleModal);
+        document.addEventListener("customerFlow:next-customer", () => {
+            clearPostSaleModal();
+        });
+
+        document.addEventListener("keydown", evt => {
+            if (evt.key === "Escape" && postSaleModal && !postSaleModal.classList.contains("hidden")) {
+                closePostSaleModal();
+            }
+        });
+
+        postSaleModalWired = true;
+    }
+
+    return postSaleModal;
+}
+
+function clearPostSaleModal() {
+    if (postSaleMessageEl) {
+        postSaleMessageEl.textContent = "";
+    }
+    if (postSaleDetailsEl) {
+        postSaleDetailsEl.textContent = "";
+    }
+    if (postSaleDownloadBtn) {
+        postSaleDownloadBtn.removeAttribute("href");
+        postSaleDownloadBtn.removeAttribute("download");
+        postSaleDownloadBtn.setAttribute("aria-disabled", "true");
+    }
+}
+
+function closePostSaleModal() {
+    const modal = ensurePostSaleModal();
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+    clearPostSaleModal();
+}
+
+function openPostSaleModal(invoice, { sold = 0, totalCards = 0, paymentMethod = "cash" } = {}) {
+    const modal = ensurePostSaleModal();
+    if (!modal || !postSaleDownloadBtn) {
+        return false;
+    }
+
+    clearPostSaleModal();
+
+    const paymentLabel = getPaymentLabel(paymentMethod);
+    const reservationLabel = sold === 1 ? "1 Reservierung" : `${sold} Reservierungen`;
+    const cardLabel = totalCards === 1 ? "1 Karte" : `${totalCards} Karten`;
+
+    if (postSaleMessageEl) {
+        postSaleMessageEl.textContent = `Rechnung ${invoice.invoiceNumber} wurde erstellt.`;
+    }
+
+    const parts = [];
+    if (sold > 0) {
+        parts.push(reservationLabel);
+    }
+    if (totalCards > 0) {
+        parts.push(cardLabel);
+    }
+    if (Number.isFinite(invoice?.totalAmount)) {
+        parts.push(`Gesamtbetrag ${euroFormatter.format(invoice.totalAmount)}`);
+    }
+    if (paymentLabel) {
+        parts.push(`Zahlart ${paymentLabel}`);
+    }
+    parts.push("QR-Code am Kundendisplay verfügbar");
+
+    if (postSaleDetailsEl) {
+        postSaleDetailsEl.textContent = parts.join(" · ");
+    }
+
+    if (invoice?.dataUrl) {
+        postSaleDownloadBtn.href = invoice.dataUrl;
+        postSaleDownloadBtn.download = invoice.fileName || "Rechnung.pdf";
+        postSaleDownloadBtn.removeAttribute("aria-disabled");
+    } else {
+        postSaleDownloadBtn.removeAttribute("href");
+        postSaleDownloadBtn.removeAttribute("download");
+        postSaleDownloadBtn.setAttribute("aria-disabled", "true");
+    }
+
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+    postSaleDownloadBtn?.focus({ preventScroll: true });
+    return true;
+}
 
 function ensurePaymentDialog() {
     let el = document.getElementById("paymentMethodDialog");
@@ -367,8 +492,10 @@ function wire() {
             renderReservationsForSelectedTable();
             renderCartTable();
             closeModal();
-            const paymentLabel = getPaymentLabel(paymentMethod);
-            if (sold > 0) {
+
+            const opened = openPostSaleModal(invoice, { sold, totalCards, paymentMethod });
+            if (!opened) {
+                const paymentLabel = getPaymentLabel(paymentMethod);
                 const baseMsg = sold === 1
                     ? `1 Reservierung mit insgesamt ${totalCards} Karten wurde als verkauft markiert.`
                     : `${sold} Reservierungen mit insgesamt ${totalCards} Karten wurden als verkauft markiert.`;

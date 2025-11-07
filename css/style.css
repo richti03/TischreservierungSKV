@@ -988,26 +988,47 @@ a.btn {
     text-decoration: none;
 }
 
-.customer-flow-actions {
-    margin-top: 16px;
+.modal--compact .modal__dialog {
+    max-width: min(480px, 92vw);
+}
+
+.post-sale-modal__body {
     display: flex;
+    flex-direction: column;
     gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
+    padding-block: 8px 4px;
 }
 
-.customer-flow-actions[hidden] {
-    display: none;
+.post-sale-modal__message {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
 }
 
-.customer-flow-actions__btn {
-    min-width: 220px;
-    text-align: center;
+.post-sale-modal__details {
+    margin: 0;
+    font-size: 14px;
+    color: #475569;
 }
 
-.customer-flow-actions__btn[aria-disabled="true"] {
+.post-sale-modal__actions {
+    margin-left: auto;
+    gap: 10px;
+}
+
+.post-sale-modal__btn {
+    min-width: 180px;
+}
+
+.post-sale-modal__btn[aria-disabled="true"] {
     pointer-events: none;
-    opacity: 0.6;
+    opacity: 0.55;
+}
+
+.post-sale-modal__btn.btn--ghost {
+    background: rgba(15, 23, 42, 0.08);
+    color: #0f172a;
 }
 
 .payment-dialog {

@@ -138,51 +138,123 @@ function decodeSharePayload(token) {
     }
 }
 
-function createPdfObjects(contentStream) {
+let cachedLogoAsset = null;
+let logoPromise = null;
+
+async function loadLogoImage() {
+    if (cachedLogoAsset) {
+        return cachedLogoAsset;
+    }
+    if (logoPromise) {
+        return logoPromise;
+    }
+    if (typeof fetch !== "function") {
+        cachedLogoAsset = { bytes: null, width: 0, height: 0 };
+        return cachedLogoAsset;
+    }
+
+    let logoUrl = "img/SKV-Wappen.jpg";
+    try {
+        if (typeof window !== "undefined" && window.location) {
+            logoUrl = new URL("img/SKV-Wappen.jpg", window.location.href).toString();
+        }
+    } catch (err) {
+        console.warn("[INVOICES] Logo-URL konnte nicht bestimmt werden:", err);
+    }
+
+    logoPromise = fetch(logoUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.arrayBuffer();
+        })
+        .then(buffer => {
+            const bytes = new Uint8Array(buffer);
+            cachedLogoAsset = { bytes, width: 1610, height: 1889 };
+            return cachedLogoAsset;
+        })
+        .catch(err => {
+            console.warn("[INVOICES] Logo konnte nicht geladen werden:", err);
+            cachedLogoAsset = { bytes: null, width: 0, height: 0 };
+            return cachedLogoAsset;
+        })
+        .finally(() => {
+            logoPromise = null;
+        });
+
+    return logoPromise;
+}
+
+function createPdfObjects(contentStream, { logo = null } = {}) {
     const encoder = new TextEncoder();
     const contentBytes = encoder.encode(contentStream);
-    const length = contentBytes.length;
-
     const width = 595.28;
     const height = 841.89;
+    const hasLogo = Boolean(logo?.bytes?.length && logo?.name);
+    const logoObjectNumber = hasLogo ? 7 : null;
+
+    const resources = [`/Font << /F1 5 0 R /F2 6 0 R >>`];
+    if (hasLogo && logoObjectNumber) {
+        resources.push(`/XObject << /${logo.name} ${logoObjectNumber} 0 R >>`);
+    }
 
     const objects = [
-        "<< /Type /Catalog /Pages 2 0 R >>",
-        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width.toFixed(2)} ${height.toFixed(2)}] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>`,
-        `<< /Length ${length} >>\nstream\n${contentStream}endstream`,
-        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+        { type: "text", value: "<< /Type /Catalog /Pages 2 0 R >>" },
+        { type: "text", value: "<< /Type /Pages /Kids [3 0 R] /Count 1 >>" },
+        { type: "text", value: `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width.toFixed(2)} ${height.toFixed(2)}] /Contents 4 0 R /Resources << ${resources.join(' ')} >> >>` },
+        { type: "stream", data: contentBytes },
+        { type: "text", value: "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>" },
+        { type: "text", value: "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>" },
     ];
+
+    if (hasLogo && logoObjectNumber) {
+        const dict = `<< /Type /XObject /Subtype /Image /Width ${logo.width} /Height ${logo.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${logo.bytes.length} >>`;
+        objects.push({ type: "binaryStream", dict, data: logo.bytes });
+    }
 
     const chunks = [];
     const offsets = [0];
     let offset = 0;
 
-    function append(str) {
+    function appendText(str) {
         const bytes = encoder.encode(str);
         chunks.push(bytes);
         offset += bytes.length;
     }
 
-    append("%PDF-1.4\n");
+    function appendBinary(bytes) {
+        chunks.push(bytes);
+        offset += bytes.length;
+    }
+
+    appendText("%PDF-1.4\n");
 
     objects.forEach((obj, index) => {
         offsets.push(offset);
-        append(`${index + 1} 0 obj\n`);
-        append(obj);
-        append("\nendobj\n");
+        appendText(`${index + 1} 0 obj\n`);
+        if (obj.type === "text") {
+            appendText(`${obj.value}\nendobj\n`);
+        } else if (obj.type === "stream") {
+            appendText(`<< /Length ${obj.data.length} >>\nstream\n`);
+            appendBinary(obj.data);
+            appendText("\nendstream\nendobj\n");
+        } else if (obj.type === "binaryStream") {
+            appendText(`${obj.dict}\nstream\n`);
+            appendBinary(obj.data);
+            appendText("\nendstream\nendobj\n");
+        }
     });
 
     const xrefOffset = offset;
 
-    append(`xref\n0 ${objects.length + 1}\n`);
-    append("0000000000 65535 f \n");
+    appendText(`xref\n0 ${objects.length + 1}\n`);
+    appendText("0000000000 65535 f \n");
     for (let i = 1; i < offsets.length; i += 1) {
-        append(`${String(offsets[i]).padStart(10, "0")} 00000 n \n`);
+        appendText(`${String(offsets[i]).padStart(10, "0")} 00000 n \n`);
     }
-    append(`trailer << /Size ${objects.length + 1} /Root 1 0 R >>\n`);
-    append(`startxref\n${xrefOffset}\n%%EOF`);
+    appendText(`trailer << /Size ${objects.length + 1} /Root 1 0 R >>\n`);
+    appendText(`startxref\n${xrefOffset}\n%%EOF`);
 
     const totalLength = chunks.reduce((sum, bytes) => sum + bytes.length, 0);
     const output = new Uint8Array(totalLength);
@@ -202,94 +274,195 @@ function buildPdfContent({
     totalAmount,
     totalCards,
     paymentMethod,
-}) {
-    const margin = 48;
+    paymentLabel,
+}, { logo = null } = {}) {
+    const margin = 56;
     const width = 595.28;
     const height = 841.89;
-    const innerWidth = width - margin * 2;
+    const contentWidth = width - margin * 2;
+    const headerHeight = 150;
+    const baseLine = 16;
+    const detailLine = 12;
 
-    const lineHeight = 16;
-    const detailLineHeight = 12;
+    const COLORS = {
+        background: hexToRgbString('#f6f8fd'),
+        headerDark: hexToRgbString('#0b2a80'),
+        headerLight: hexToRgbString('#1747c7'),
+        gold: hexToRgbString('#f5b342'),
+        text: hexToRgbString('#14213d'),
+        muted: hexToRgbString('#5e6d88'),
+        line: hexToRgbString('#c7d2e8'),
+        summaryBg: hexToRgbString('#eef2ff'),
+        summaryBorder: hexToRgbString('#cbd5f5'),
+        white: '1 1 1',
+    };
 
     const content = [];
-    let cursorY = height - margin;
 
-    function writeText(text, x, y, { font = "F1", size = 12, align = "left" } = {}) {
+    function hexToRgbString(hex) {
+        const clean = hex.replace('#', '');
+        const value = Number.parseInt(clean, 16);
+        const r = ((value >> 16) & 0xff) / 255;
+        const g = ((value >> 8) & 0xff) / 255;
+        const b = (value & 0xff) / 255;
+        return `${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)}`;
+    }
+
+    function writeText(text, x, y, { font = 'F1', size = 12, align = 'left', color = COLORS.text } = {}) {
         const safe = escapePdfText(text);
         let posX = x;
-        if (align === "right") {
+        if (align === 'right') {
             const approx = approximateTextWidth(safe, size);
             posX = x - approx;
+        } else if (align === 'center') {
+            const approx = approximateTextWidth(safe, size);
+            posX = x - approx / 2;
         }
-        content.push("BT");
+        content.push('BT');
         content.push(`/${font} ${size.toFixed(2)} Tf`);
+        content.push(`${color} rg`);
         content.push(`1 0 0 1 ${posX.toFixed(2)} ${y.toFixed(2)} Tm`);
         content.push(`(${safe}) Tj`);
-        content.push("ET");
+        content.push('ET');
     }
 
-    function addLine(text, options = {}) {
-        writeText(text, margin, cursorY, options);
-        cursorY -= lineHeight;
+    function fillRect(x, y, w, h, color) {
+        content.push('q');
+        content.push(`${color} rg`);
+        content.push(`${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re`);
+        content.push('f');
+        content.push('Q');
     }
 
-    writeText("Sandersdorfer Karnevalsverein e. V.", margin, cursorY, { font: "F2", size: 16 });
-    cursorY -= lineHeight * 1.5;
-    writeText("Rechnung", margin, cursorY, { font: "F2", size: 22 });
-    cursorY -= lineHeight * 1.8;
+    function drawLine(x1, y1, x2, y2, color, widthValue = 1) {
+        content.push('q');
+        content.push(`${color} RG`);
+        content.push(`${widthValue.toFixed(2)} w`);
+        content.push(`${x1.toFixed(2)} ${y1.toFixed(2)} m`);
+        content.push(`${x2.toFixed(2)} ${y2.toFixed(2)} l`);
+        content.push('S');
+        content.push('Q');
+    }
 
+    function drawImage(name, x, y, drawWidth, drawHeight) {
+        content.push('q');
+        content.push(`${drawWidth.toFixed(2)} 0 0 ${drawHeight.toFixed(2)} ${x.toFixed(2)} ${y.toFixed(2)} cm`);
+        content.push(`/${name} Do`);
+        content.push('Q');
+    }
+
+    const headerBottom = height - headerHeight;
+    fillRect(0, headerBottom, width, headerHeight, COLORS.headerDark);
+    fillRect(0, headerBottom + headerHeight * 0.45, width, headerHeight * 0.55, COLORS.headerLight);
+    fillRect(0, headerBottom - 6, width, 6, COLORS.gold);
+    fillRect(margin, margin, contentWidth, headerBottom - margin - 24, COLORS.background);
+
+    const hasLogo = Boolean(logo?.name && logo?.width && logo?.height);
+    if (hasLogo) {
+        const aspect = logo.height > 0 ? logo.height / logo.width : 1;
+        let drawWidth = 100;
+        let drawHeight = drawWidth * aspect;
+        const maxHeight = headerHeight - 32;
+        if (drawHeight > maxHeight) {
+            drawHeight = maxHeight;
+            drawWidth = drawHeight / aspect;
+        }
+        const logoX = margin;
+        const logoY = headerBottom + (headerHeight - drawHeight) / 2;
+        drawImage(logo.name, logoX, logoY, drawWidth, drawHeight);
+    }
+
+    const headerTextLeft = hasLogo ? margin + 120 : margin + 24;
+    const headerTitleY = headerBottom + headerHeight - 36;
+    writeText('Sandersdorfer Karnevalsverein e. V.', headerTextLeft, headerTitleY, { font: 'F2', size: 18, color: COLORS.white });
+    writeText('Rechnung', headerTextLeft, headerTitleY - 28, { font: 'F2', size: 30, color: COLORS.white });
+
+    let cursorY = headerBottom - 30;
     const displayDate = formatDisplayDate(createdAt);
-    addLine(`Datum: ${displayDate}`);
-    addLine(`Rechnungsnummer: ${invoiceNumber}`);
+    writeText(`Rechnungsdatum: ${displayDate}`, margin, cursorY, { size: 12, color: COLORS.muted });
+    writeText(`Rechnungsnummer: ${invoiceNumber}`, margin + contentWidth, cursorY, { size: 12, color: COLORS.muted, align: 'right' });
+    cursorY -= baseLine * 1.4;
 
-    cursorY -= lineHeight * 0.25;
-    writeText("Rechnungsadresse:", margin, cursorY, { font: "F2", size: 12 });
-    cursorY -= lineHeight;
-    addLine("Sandersdorfer Karnevalsverein e. V.", { size: 12 });
-    addLine("Am Sportzentrum 19", { size: 12 });
-    addLine("06792 Sandersdorf-Brehna", { size: 12 });
-
-    cursorY -= lineHeight * 0.25;
-    writeText("Positionen", margin, cursorY, { font: "F2", size: 12 });
-    cursorY -= lineHeight;
+    drawLine(margin, cursorY + 8, margin + contentWidth, cursorY + 8, COLORS.line, 0.5);
+    cursorY -= 12;
 
     const col1 = margin;
-    const colQty = margin + innerWidth * 0.55;
-    const colUnit = margin + innerWidth * 0.75;
-    const colTotal = margin + innerWidth * 0.92;
+    const colQty = margin + contentWidth * 0.52;
+    const colUnit = margin + contentWidth * 0.72;
+    const colTotal = margin + contentWidth * 0.9;
 
-    writeText("Beschreibung", col1, cursorY, { font: "F2", size: 10 });
-    writeText("Karten", colQty, cursorY, { font: "F2", size: 10, align: "right" });
-    writeText("Einzelpreis", colUnit, cursorY, { font: "F2", size: 10, align: "right" });
-    writeText("Gesamt", colTotal, cursorY, { font: "F2", size: 10, align: "right" });
-    cursorY -= lineHeight * 0.8;
+    writeText('Position', col1, cursorY, { font: 'F2', size: 11, color: COLORS.muted });
+    writeText('Karten', colQty, cursorY, { font: 'F2', size: 11, align: 'right', color: COLORS.muted });
+    writeText('Einzelpreis', colUnit, cursorY, { font: 'F2', size: 11, align: 'right', color: COLORS.muted });
+    writeText('Gesamt', colTotal, cursorY, { font: 'F2', size: 11, align: 'right', color: COLORS.muted });
+    cursorY -= baseLine;
+    drawLine(margin, cursorY + 6, margin + contentWidth, cursorY + 6, COLORS.line, 0.4);
+    cursorY -= 8;
 
-    for (const line of lines) {
-        const { name, detail, quantity, unitPriceFormatted, totalFormatted } = line;
-        writeText(name, col1, cursorY, { size: 12 });
-        writeText(String(quantity), colQty, cursorY, { size: 12, align: "right" });
-        writeText(unitPriceFormatted, colUnit, cursorY, { size: 12, align: "right" });
-        writeText(totalFormatted, colTotal, cursorY, { size: 12, align: "right" });
-        cursorY -= detailLineHeight;
-        if (detail) {
-            writeText(detail, col1 + 6, cursorY, { size: 9 });
-            cursorY -= lineHeight * 0.7;
-        } else {
-            cursorY -= lineHeight * 0.5;
-        }
+    const safeLines = Array.isArray(lines) ? lines : [];
+    if (!safeLines.length) {
+        writeText('Keine Positionen vorhanden.', col1, cursorY, { size: 12, color: COLORS.muted });
+        cursorY -= baseLine * 1.4;
+    } else {
+        safeLines.forEach((line, index) => {
+            const name = line?.name || 'Position';
+            const quantity = Number.isFinite(line?.quantity) ? line.quantity : (line?.quantity ?? '');
+            const detail = line?.detail || '';
+            const unitPrice = line?.unitPriceFormatted || '';
+            const lineTotal = line?.totalFormatted || '';
+
+            writeText(String(name), col1, cursorY, { size: 12, color: COLORS.text });
+            writeText(quantity === '' ? '' : String(quantity), colQty, cursorY, { size: 12, align: 'right', color: COLORS.text });
+            writeText(unitPrice, colUnit, cursorY, { size: 12, align: 'right', color: COLORS.text });
+            writeText(lineTotal, colTotal, cursorY, { size: 12, align: 'right', color: COLORS.text });
+            cursorY -= detailLine;
+            if (detail) {
+                writeText(detail, col1 + 6, cursorY, { size: 10, color: COLORS.muted });
+                cursorY -= baseLine * 0.9;
+            } else {
+                cursorY -= baseLine * 0.6;
+            }
+            if (index < safeLines.length - 1) {
+                drawLine(margin, cursorY + 6, margin + contentWidth, cursorY + 6, COLORS.line, 0.25);
+            }
+        });
     }
 
-    cursorY -= lineHeight * 0.5;
-    writeText(`Gesamt Karten: ${totalCards}`, margin, cursorY, { font: "F2", size: 12 });
-    cursorY -= lineHeight;
-    writeText(`Gesamtbetrag: ${formatEuro(totalAmount)}`, margin, cursorY, { font: "F2", size: 12 });
-    cursorY -= lineHeight;
-    const paymentLabel = PAYMENT_METHODS.get(paymentMethod) || paymentMethod || "Bar";
-    writeText(`Zahlart: ${paymentLabel}`, margin, cursorY, { size: 12 });
-    cursorY -= lineHeight * 1.2;
-    writeText("Hinweis: Diese Rechnung gilt nicht als Eintrittskarte.", margin, cursorY, { size: 11 });
+    cursorY -= baseLine * 0.6;
 
-    return content.join("\n") + "\n";
+    const summaryHeight = 78;
+    const summaryPadding = 18;
+    const summaryBottom = cursorY - summaryHeight;
+    fillRect(margin, summaryBottom, contentWidth, summaryHeight, COLORS.summaryBg);
+    drawLine(margin, summaryBottom, margin + contentWidth, summaryBottom, COLORS.summaryBorder, 0.7);
+    drawLine(margin, summaryBottom + summaryHeight, margin + contentWidth, summaryBottom + summaryHeight, COLORS.summaryBorder, 0.3);
+
+    const summaryTitleY = summaryBottom + summaryHeight - summaryPadding;
+    const resolvedPaymentLabel = (paymentLabel && paymentLabel.trim()) || getPaymentLabel(paymentMethod) || '';
+    const cardsLabel = Number.isFinite(totalCards)
+        ? (totalCards === 1 ? '1 Karte insgesamt' : `${totalCards} Karten insgesamt`)
+        : '';
+
+    writeText('Gesamtbetrag', margin + summaryPadding, summaryTitleY, { size: 11, color: COLORS.muted });
+    writeText(formatEuro(totalAmount), margin + summaryPadding, summaryTitleY - 22, { font: 'F2', size: 20, color: COLORS.headerDark });
+    if (cardsLabel) {
+        writeText(cardsLabel, margin + contentWidth - summaryPadding, summaryTitleY, { size: 11, color: COLORS.muted, align: 'right' });
+    }
+    if (resolvedPaymentLabel) {
+        writeText(`Zahlart ${resolvedPaymentLabel}`, margin + contentWidth - summaryPadding, summaryTitleY - 22, { size: 12, color: COLORS.text, align: 'right' });
+    }
+
+    cursorY = summaryBottom - baseLine * 1.2;
+    writeText('Hinweis: Diese Rechnung gilt nicht als Eintrittskarte.', margin, cursorY, { size: 11, color: COLORS.muted });
+    cursorY -= baseLine * 1.2;
+    writeText('Vielen Dank für Ihren Besuch!', margin, cursorY, { size: 12, color: COLORS.headerDark });
+
+    const footerSeparatorY = margin + 26;
+    drawLine(margin, footerSeparatorY, margin + contentWidth, footerSeparatorY, COLORS.line, 0.5);
+    writeText('Verkäufer: Sandersdorfer Karnevalsverein e. V.', margin + contentWidth / 2, footerSeparatorY - 16, { size: 10, color: COLORS.muted, align: 'center' });
+    writeText('Am Sportzentrum 19 · 06792 Sandersdorf-Brehna', margin + contentWidth / 2, footerSeparatorY - 30, { size: 10, color: COLORS.muted, align: 'center' });
+
+    return content.join('\n') + '\n';
 }
 
 function crc32(bytes) {
@@ -477,11 +650,17 @@ export async function createInvoiceFromCart(entries, { paymentMethod = "cash" } 
         throw new Error("Keine gültigen Positionen für die Rechnung");
     }
 
+    const resolvedPaymentLabel = getPaymentLabel(paymentMethod);
+    const logoAsset = await loadLogoImage();
+    const logoForPdf = logoAsset?.bytes?.length
+        ? { name: "LG", width: logoAsset.width, height: logoAsset.height, bytes: logoAsset.bytes }
+        : null;
+
     const sharePayload = {
         invoiceNumber,
         createdAt: createdAt.toISOString(),
         paymentMethod,
-        paymentLabel: getPaymentLabel(paymentMethod),
+        paymentLabel: resolvedPaymentLabel,
         totalAmount: summary.totalAmount,
         totalCards: summary.totalCards,
         currency: "EUR",
@@ -504,9 +683,10 @@ export async function createInvoiceFromCart(entries, { paymentMethod = "cash" } 
         totalAmount: summary.totalAmount,
         totalCards: summary.totalCards,
         paymentMethod,
-    });
+        paymentLabel: resolvedPaymentLabel,
+    }, { logo: logoForPdf });
 
-    const pdfBytes = createPdfObjects(contentStream);
+    const pdfBytes = createPdfObjects(contentStream, { logo: logoForPdf });
     const base64 = bytesToBase64(pdfBytes);
     const dataUrl = `data:application/pdf;base64,${base64}`;
     const fileName = `Rechnung_${invoiceNumber}.pdf`;
@@ -516,6 +696,7 @@ export async function createInvoiceFromCart(entries, { paymentMethod = "cash" } 
         createdAt: createdAt.toISOString(),
         invoiceNumber,
         paymentMethod,
+        paymentLabel: resolvedPaymentLabel,
         totalAmount: summary.totalAmount,
         totalCards: summary.totalCards,
         currency: "EUR",
@@ -585,7 +766,7 @@ export function decodeInvoiceShareToken(token) {
     return decodeSharePayload(token);
 }
 
-export function buildPdfFromPayload(payload) {
+export async function buildPdfFromPayload(payload) {
     if (!payload) return null;
     const createdAt = payload.createdAt ? new Date(payload.createdAt) : new Date();
     const invoiceNumber = payload.invoiceNumber || "SKV-Rechnung";
@@ -603,6 +784,10 @@ export function buildPdfFromPayload(payload) {
     const totalAmount = Number.isFinite(payload.totalAmount) ? payload.totalAmount : 0;
     const totalCards = Number.isFinite(payload.totalCards) ? payload.totalCards : 0;
     const paymentMethod = payload.paymentMethod || "cash";
+    const logoAsset = await loadLogoImage();
+    const logoForPdf = logoAsset?.bytes?.length
+        ? { name: "LG", width: logoAsset.width, height: logoAsset.height, bytes: logoAsset.bytes }
+        : null;
 
     const contentStream = buildPdfContent({
         createdAt,
@@ -611,7 +796,8 @@ export function buildPdfFromPayload(payload) {
         totalAmount,
         totalCards,
         paymentMethod,
-    });
+        paymentLabel: payload.paymentLabel || getPaymentLabel(paymentMethod),
+    }, { logo: logoForPdf });
 
-    return createPdfObjects(contentStream);
+    return createPdfObjects(contentStream, { logo: logoForPdf });
 }

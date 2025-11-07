@@ -9,7 +9,7 @@ import { openBookingSearchModal } from "./features/searchModal.js"; // optional
 import { setupInternalPlanSync, openInternalPlanTab} from "./features/internalPlanSync.js";
 import { setupExternalPlanSync, openExternalPlanTab } from "./features/externalPlanSync.js";
 import { setupCustomerDisplaySync, openCustomerDisplayTab, signalNextCustomer } from "./features/customerDisplaySync.js";
-import { downloadInvoicesZip, onInvoicesChange, getLatestInvoice } from "./features/invoices.js";
+import { downloadInvoicesZip } from "./features/invoices.js";
 import {
     getCardPriceValue,
     onCardPriceChange,
@@ -724,8 +724,6 @@ updateCardPriceDisplay();
 // Warenkorb-Button im Header
 const cartToggle = document.getElementById("cart-toggle");
 const cartBadge = document.getElementById("cart-badge");
-const customerFlowActions = document.getElementById("customer-flow-actions");
-const latestInvoiceDownloadBtn = document.getElementById("btn-download-latest-invoice");
 const nextCustomerBtn = document.getElementById("btn-next-customer");
 
 const updateCartBadge = entries => {
@@ -747,33 +745,6 @@ cartToggle?.addEventListener("click", () => {
 
 onCartChange(updateCartBadge);
 updateCartBadge();
-
-function updateCustomerFlowActions(invoice) {
-    if (!customerFlowActions || !latestInvoiceDownloadBtn) {
-        return;
-    }
-    if (!invoice) {
-        customerFlowActions.hidden = true;
-        latestInvoiceDownloadBtn.removeAttribute("href");
-        latestInvoiceDownloadBtn.removeAttribute("download");
-        latestInvoiceDownloadBtn.removeAttribute("aria-disabled");
-        return;
-    }
-    customerFlowActions.hidden = false;
-    if (invoice.dataUrl) {
-        latestInvoiceDownloadBtn.href = invoice.dataUrl;
-        latestInvoiceDownloadBtn.download = invoice.fileName || "Rechnung.pdf";
-        latestInvoiceDownloadBtn.removeAttribute("aria-disabled");
-    } else {
-        latestInvoiceDownloadBtn.removeAttribute("href");
-        latestInvoiceDownloadBtn.removeAttribute("download");
-        latestInvoiceDownloadBtn.setAttribute("aria-disabled", "true");
-    }
-}
-
-function resetCustomerFlowActions() {
-    updateCustomerFlowActions(null);
-}
 
 function closeAllModals() {
     document.dispatchEvent(new CustomEvent("customerFlow:close-modals"));
@@ -799,13 +770,6 @@ function closeAllModals() {
     });
 }
 
-resetCustomerFlowActions();
-
-const initialInvoice = getLatestInvoice();
-if (initialInvoice) {
-    updateCustomerFlowActions(initialInvoice);
-}
-
 // Hauptbuttons (IDs vorausgesetzt)
 const $ = id => document.getElementById(id);
 $("btn-book")              ?.addEventListener("click", berechneReservierung);
@@ -822,14 +786,8 @@ $("btn-download-invoices")?.addEventListener("click", downloadInvoicesZip);
 
 nextCustomerBtn?.addEventListener("click", () => {
     closeAllModals();
-    resetCustomerFlowActions();
+    document.dispatchEvent(new CustomEvent("customerFlow:next-customer"));
     signalNextCustomer();
-});
-
-onInvoicesChange(event => {
-    if (event?.reason === "created" && event.invoice) {
-        updateCustomerFlowActions(event.invoice);
-    }
 });
 
 // NEU: Tische automatisch hinzufügen/entfernen
