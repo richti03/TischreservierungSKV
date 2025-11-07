@@ -4,8 +4,9 @@ export const EVENT_TYPES = ["Lumpenball", "Fasching", "Narrengipfel", "Sonstiges
 export const DEFAULT_EVENT_TYPE = EVENT_TYPES[0];
 
 const ESCAPED_EVENT_TYPES = EVENT_TYPES.map(type => type.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-const EVENT_NAME_PATTERN = new RegExp(`^(\\d{4}-\\d{2}-\\d{2})-(${ESCAPED_EVENT_TYPES.join("|")})$`);
-const RESERVATION_FILENAME_PATTERN = new RegExp(`${EVENT_NAME_PATTERN.source}\\.json$`);
+const EVENT_NAME_PATTERN_BODY = `(\\d{4}-\\d{2}-\\d{2})-(${ESCAPED_EVENT_TYPES.join("|")})`;
+const EVENT_NAME_PATTERN = new RegExp(`^${EVENT_NAME_PATTERN_BODY}$`);
+const RESERVATION_FILENAME_PATTERN = new RegExp(`^${EVENT_NAME_PATTERN_BODY}\\.json$`);
 
 function normalizeDateInput(value) {
     if (!value) {
