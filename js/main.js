@@ -8,8 +8,18 @@ import { onReservationTableClick } from "./events/actions.js";
 import { openBookingSearchModal } from "./features/searchModal.js"; // optional
 import { setupInternalPlanSync, openInternalPlanTab} from "./features/internalPlanSync.js";
 import { setupExternalPlanSync, openExternalPlanTab } from "./features/externalPlanSync.js";
-import { getCardPriceValue, onCardPriceChange, setCardPriceValue } from "./core/state.js";
-import { createEvent, onEventsChange, setActiveEvent, renameEvent } from "./core/events.js";
+import { getCardPriceValue, onCardPriceChange, setCardPriceValue, pickJSONFile } from "./core/state.js";
+import {
+    createEvent,
+    onEventsChange,
+    setActiveEvent,
+    renameEvent,
+    EVENT_TYPES,
+    DEFAULT_EVENT_TYPE,
+    buildEventName,
+    parseEventName,
+    parseReservationsFilename
+} from "./core/events.js";
 import { onCartChange, getCartEntries } from "./features/cart.js";
 import { openCartModal } from "./features/cartModal.js";
 
@@ -100,8 +110,6 @@ const eventNamePreview = document.getElementById("event-name-preview");
 
 let latestEventsSnapshot = { events: [], activeEventId: null };
 let lastRenderedEventId = null;
-const EVENT_TYPES = ["Lumpenball", "Fasching", "Narrengipfel", "Sonstiges"];
-const DEFAULT_EVENT_TYPE = EVENT_TYPES[0];
 let isEventNameDialogVisible = false;
 let resolveEventNameDialog = null;
 
@@ -112,19 +120,6 @@ const rerenderActiveEvent = () => {
     updateCardPriceDisplay();
 };
 
-const formatEventName = (date, type) => `${date}-${type}`;
-
-const parseEventNameParts = name => {
-    const trimmed = typeof name === "string" ? name.trim() : "";
-    const match = trimmed.match(/^(\d{4}-\d{2}-\d{2})-([A-Za-zÄÖÜäöüß]+)$/u);
-    if (!match) {
-        return null;
-    }
-    const [, date, type] = match;
-    const normalizedType = EVENT_TYPES.includes(type) ? type : DEFAULT_EVENT_TYPE;
-    return { date, type: normalizedType };
-};
-
 const updateEventNamePreview = () => {
     if (!eventNamePreview) {
         return;
@@ -132,7 +127,8 @@ const updateEventNamePreview = () => {
     const dateValue = eventNameDateInput?.value;
     const typeValue = eventNameTypeSelect?.value;
     if (dateValue && typeValue) {
-        eventNamePreview.textContent = formatEventName(dateValue, typeValue);
+        const name = buildEventName(dateValue, typeValue);
+        eventNamePreview.textContent = name ? `${name}.json` : "—";
     } else {
         eventNamePreview.textContent = "—";
     }
@@ -173,7 +169,7 @@ function openEventNameDialog({ mode = "create", initialName = "", initialDate, i
         return Promise.resolve(null);
     }
 
-    const parsed = parseEventNameParts(initialName);
+    const parsed = parseEventName(initialName);
     const today = new Date();
     const isoToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
     const dateValue = initialDate || parsed?.date || isoToday;
@@ -231,7 +227,11 @@ eventNameForm?.addEventListener("submit", event => {
         return;
     }
     const finalType = EVENT_TYPES.includes(typeValue) ? typeValue : DEFAULT_EVENT_TYPE;
-    const name = formatEventName(dateValue, finalType);
+    const name = buildEventName(dateValue, finalType);
+    if (!name) {
+        eventNameDateInput?.focus({ preventScroll: true });
+        return;
+    }
     closeEventNameDialog({ name, date: dateValue, type: finalType });
 });
 
@@ -300,17 +300,26 @@ const renderEventTabs = snapshot => {
 
 async function startEventCreation({ importAfterCreate = false } = {}) {
     closeEventMenu();
+    if (importAfterCreate) {
+        pickJSONFile((obj, filename) => {
+            const meta = parseReservationsFilename(filename || "");
+            if (!meta) {
+                alert("ungültige Datei");
+                return;
+            }
+            const created = createEvent({ name: meta.eventName });
+            if (!created) {
+                return;
+            }
+            importReservationsJSON({ presetData: obj, presetFilename: meta.filename });
+        });
+        return;
+    }
     const result = await openEventNameDialog({ mode: "create" });
     if (!result || !result.name) {
         return;
     }
-    const created = createEvent({ name: result.name });
-    if (!created) {
-        return;
-    }
-    if (importAfterCreate) {
-        importReservationsJSON();
-    }
+    createEvent({ name: result.name });
 }
 
 eventAddButton?.addEventListener("click", event => {

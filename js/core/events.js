@@ -1,5 +1,98 @@
 import { createEmptyEventState, loadEventState, setLastReservationsFilename } from "./state.js";
 
+export const EVENT_TYPES = ["Lumpenball", "Fasching", "Narrengipfel", "Sonstiges"];
+export const DEFAULT_EVENT_TYPE = EVENT_TYPES[0];
+
+const ESCAPED_EVENT_TYPES = EVENT_TYPES.map(type => type.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+const EVENT_NAME_PATTERN_BODY = `(\\d{4}-\\d{2}-\\d{2})-(${ESCAPED_EVENT_TYPES.join("|")})`;
+const EVENT_NAME_PATTERN = new RegExp(`^${EVENT_NAME_PATTERN_BODY}$`);
+const RESERVATION_FILENAME_PATTERN = new RegExp(`^${EVENT_NAME_PATTERN_BODY}\\.json$`);
+
+function normalizeDateInput(value) {
+    if (!value) {
+        return null;
+    }
+    if (value instanceof Date) {
+        if (Number.isNaN(value.valueOf())) {
+            return null;
+        }
+        return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+    }
+    if (typeof value !== "string") {
+        return null;
+    }
+    const trimmed = value.trim();
+    const match = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (!match) {
+        return null;
+    }
+    const [, yearPart, monthPart, dayPart] = match;
+    const year = Number.parseInt(yearPart, 10);
+    const month = Number.parseInt(monthPart, 10);
+    const day = Number.parseInt(dayPart, 10);
+    if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+        return null;
+    }
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
+        return null;
+    }
+    return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function isValidDateString(value) {
+    if (typeof value !== "string") {
+        return false;
+    }
+    const trimmed = value.trim();
+    const normalized = normalizeDateInput(trimmed);
+    return normalized != null && normalized === trimmed;
+}
+
+export function buildEventName(date, type) {
+    const normalizedDate = normalizeDateInput(date);
+    if (!normalizedDate) {
+        return null;
+    }
+    const normalizedType = EVENT_TYPES.includes(type) ? type : DEFAULT_EVENT_TYPE;
+    return `${normalizedDate}-${normalizedType}`;
+}
+
+export function parseEventName(name) {
+    if (typeof name !== "string") {
+        return null;
+    }
+    const trimmed = name.trim();
+    const match = trimmed.match(EVENT_NAME_PATTERN);
+    if (!match) {
+        return null;
+    }
+    const [, date, type] = match;
+    return { date, type };
+}
+
+export function parseReservationsFilename(filename) {
+    if (typeof filename !== "string") {
+        return null;
+    }
+    const trimmed = filename.trim();
+    const match = trimmed.match(RESERVATION_FILENAME_PATTERN);
+    if (!match) {
+        return null;
+    }
+    const [, date, type] = match;
+    const eventName = `${date}-${type}`;
+    return { date, type, eventName, filename: `${eventName}.json` };
+}
+
+export function isValidEventName(name) {
+    return parseEventName(name) != null;
+}
+
+export function isValidReservationsFilename(filename) {
+    return parseReservationsFilename(filename) != null;
+}
+
 const listeners = new Set();
 let events = [];
 let activeEventId = null;
@@ -19,8 +112,8 @@ function normalizeEventNameForFilename(name) {
 }
 
 function defaultReservationsFilenameForName(name) {
-    const base = normalizeEventNameForFilename(name);
-    return base ? `${base}-reservierungen.json` : null;
+    const parsed = parseEventName(name);
+    return parsed ? `${parsed.date}-${parsed.type}.json` : null;
 }
 
 function syncDefaultReservationsFilename(event) {
@@ -50,9 +143,11 @@ function generateEventId() {
 }
 
 function allocateDefaultName() {
-    const name = `Veranstaltung ${defaultEventCounter}`;
+    const today = new Date();
+    today.setDate(today.getDate() + (defaultEventCounter - 1));
+    const isoDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
     defaultEventCounter += 1;
-    return name;
+    return buildEventName(isoDate, DEFAULT_EVENT_TYPE) || `Veranstaltung ${Date.now()}`;
 }
 
 export function getNextDefaultEventName() {
@@ -122,7 +217,7 @@ export function createEvent(options = {}) {
 
     const event = {
         id: generateEventId(),
-        name: providedName || autoName,
+        name: isValidEventName(providedName) ? providedName : autoName,
         state,
     };
 
@@ -151,7 +246,7 @@ export function renameEvent(id, name) {
         return false;
     }
     const trimmed = typeof name === "string" ? name.trim() : "";
-    if (!trimmed || trimmed === event.name) {
+    if (!trimmed || trimmed === event.name || !isValidEventName(trimmed)) {
         return false;
     }
     event.name = trimmed;
