@@ -1,5 +1,6 @@
 // Bootstrapping & Events
 
+import { ensureEventStateLoaded } from "./core/state.js";
 import { printTischArray, updateFooter, renderReservationsForSelectedTable } from "./ui/tableView.js";
 import { berechneReservierung } from "./features/booking.js";
 import { changePlätze, tischHinzufuegen, tischEntfernen } from "./features/tablesCrud.js";
@@ -16,95 +17,95 @@ import { initializeSettingsPanel } from "./ui/settingsPanel.js";
 import { initializeEventManagement } from "./ui/eventManagement.js";
 import { initializeCartHeader } from "./ui/cartHeader.js";
 
-// --- Initialisierungen ----------------------------------------------------
+async function bootstrap() {
+    await ensureEventStateLoaded();
 
-const settingsPanelControls = initializeSettingsPanel();
-const { updateCardPriceDisplay = () => {} } = settingsPanelControls || {};
+    const settingsPanelControls = initializeSettingsPanel();
+    const { updateCardPriceDisplay = () => {} } = settingsPanelControls || {};
 
-const rerenderActiveEvent = () => {
-    printTischArray();
-    updateFooter();
-    renderReservationsForSelectedTable();
-    updateCardPriceDisplay();
-};
+    const rerenderActiveEvent = () => {
+        printTischArray();
+        updateFooter();
+        renderReservationsForSelectedTable();
+        updateCardPriceDisplay();
+    };
 
-initializeEventManagement({ rerenderActiveEvent });
-initializeTableSelect();
-initializeCartHeader();
+    initializeEventManagement({ rerenderActiveEvent });
+    initializeTableSelect();
+    initializeCartHeader();
 
-// --- Einstellungen / Synchronisation -------------------------------------
-setupInternalPlanSync();
-setupExternalPlanSync();
-setupCustomerDisplaySync();
+    setupInternalPlanSync();
+    setupExternalPlanSync();
+    setupCustomerDisplaySync();
 
-// --- Hilfsfunktionen ------------------------------------------------------
-function closeAllModals() {
-    document.dispatchEvent(new CustomEvent("customerFlow:close-modals"));
-    const modalNodes = document.querySelectorAll(".modal");
-    modalNodes.forEach(modal => {
-        modal.classList.add("hidden");
-        modal.setAttribute("aria-hidden", "true");
-    });
-    const paymentDialog = document.getElementById("paymentMethodDialog");
-    if (paymentDialog) {
-        paymentDialog.classList.add("hidden");
-        paymentDialog.setAttribute("aria-hidden", "true");
-    }
-    const overlayIds = ["event-name-dialog", "event-start-overlay"];
-    overlayIds.forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (typeof el.hidden === "boolean") {
-            el.hidden = true;
-        } else {
-            el.setAttribute("hidden", "");
+    function closeAllModals() {
+        document.dispatchEvent(new CustomEvent("customerFlow:close-modals"));
+        const modalNodes = document.querySelectorAll(".modal");
+        modalNodes.forEach(modal => {
+            modal.classList.add("hidden");
+            modal.setAttribute("aria-hidden", "true");
+        });
+        const paymentDialog = document.getElementById("paymentMethodDialog");
+        if (paymentDialog) {
+            paymentDialog.classList.add("hidden");
+            paymentDialog.setAttribute("aria-hidden", "true");
         }
+        const overlayIds = ["event-name-dialog", "event-start-overlay"];
+        overlayIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (typeof el.hidden === "boolean") {
+                el.hidden = true;
+            } else {
+                el.setAttribute("hidden", "");
+            }
+        });
+    }
+
+    const $ = id => document.getElementById(id);
+    $("btn-book")?.addEventListener("click", berechneReservierung);
+    $("btn-change-seats")?.addEventListener("click", changePlätze);
+    $("btn-export-seats")?.addEventListener("click", exportSeatsJSON);
+    $("btn-import-seats")?.addEventListener("click", importSeatsJSON);
+    $("btn-export-res")?.addEventListener("click", exportReservationsJSON);
+    $("btn-import-res")?.addEventListener("click", importReservationsJSON);
+    $("btn-search-bookings")?.addEventListener("click", () => openBookingSearchModal());
+    $("btn-open-internal-plan")?.addEventListener("click", openInternalPlanTab);
+    $("btn-open-external-plan")?.addEventListener("click", openExternalPlanTab);
+    $("btn-open-customer-display")?.addEventListener("click", openCustomerDisplayTab);
+    $("btn-download-invoices")?.addEventListener("click", downloadInvoicesZip);
+
+    const nextCustomerBtn = document.getElementById("btn-next-customer");
+    nextCustomerBtn?.addEventListener("click", () => {
+        closeAllModals();
+        document.dispatchEvent(new CustomEvent("customerFlow:next-customer"));
+        signalNextCustomer();
     });
+
+    $("btn-add-table")?.addEventListener("click", tischHinzufuegen);
+    $("btn-remove-table")?.addEventListener("click", tischEntfernen);
+
+    const tbodyEl = document.querySelector("#reservationview table tbody");
+    if (tbodyEl) {
+        tbodyEl.addEventListener("click", onReservationTableClick);
+        console.log("[INIT] Event-Delegation am Tabellen-Body aktiv.");
+    } else {
+        console.warn("[INIT] Tabellen-Body (#reservationview table tbody) nicht gefunden.");
+    }
+
+    window.berechneReservierung = window.berechneReservierung || berechneReservierung;
+    window.changePlätze = window.changePlätze || changePlätze;
+    window.exportSeatsJSON = window.exportSeatsJSON || exportSeatsJSON;
+    window.importSeatsJSON = window.importSeatsJSON || importSeatsJSON;
+    window.exportReservationsJSON = window.exportReservationsJSON || exportReservationsJSON;
+    window.importReservationsJSON = window.importReservationsJSON || importReservationsJSON;
+    window.tischHinzufuegen = window.tischHinzufuegen || tischHinzufuegen; // <— wichtig
+    window.tischEntfernen = window.tischEntfernen || tischEntfernen;   // <— wichtig
+    window.openBookingSearchModal = window.openBookingSearchModal || openBookingSearchModal;
+
+    rerenderActiveEvent();
 }
 
-// --- UI-Bindings ----------------------------------------------------------
-const $ = id => document.getElementById(id);
-$("btn-book")?.addEventListener("click", berechneReservierung);
-$("btn-change-seats")?.addEventListener("click", changePlätze);
-$("btn-export-seats")?.addEventListener("click", exportSeatsJSON);
-$("btn-import-seats")?.addEventListener("click", importSeatsJSON);
-$("btn-export-res")?.addEventListener("click", exportReservationsJSON);
-$("btn-import-res")?.addEventListener("click", importReservationsJSON);
-$("btn-search-bookings")?.addEventListener("click", () => openBookingSearchModal());
-$("btn-open-internal-plan")?.addEventListener("click", openInternalPlanTab);
-$("btn-open-external-plan")?.addEventListener("click", openExternalPlanTab);
-$("btn-open-customer-display")?.addEventListener("click", openCustomerDisplayTab);
-$("btn-download-invoices")?.addEventListener("click", downloadInvoicesZip);
-
-const nextCustomerBtn = document.getElementById("btn-next-customer");
-nextCustomerBtn?.addEventListener("click", () => {
-    closeAllModals();
-    document.dispatchEvent(new CustomEvent("customerFlow:next-customer"));
-    signalNextCustomer();
+bootstrap().catch(err => {
+    console.error("[BOOT] Fehler beim Initialisieren der Anwendung:", err);
 });
-
-$("btn-add-table")?.addEventListener("click", tischHinzufuegen);
-$("btn-remove-table")?.addEventListener("click", tischEntfernen);
-
-// Event Delegation für Tabellen-Aktionen
-const tbodyEl = document.querySelector("#reservationview table tbody");
-if (tbodyEl) {
-    tbodyEl.addEventListener("click", onReservationTableClick);
-    console.log("[INIT] Event-Delegation am Tabellen-Body aktiv.");
-} else {
-    console.warn("[INIT] Tabellen-Body (#reservationview table tbody) nicht gefunden.");
-}
-
-// Legacy-Bridge für inline onclick="..."
-window.berechneReservierung = window.berechneReservierung || berechneReservierung;
-window.changePlätze = window.changePlätze || changePlätze;
-window.exportSeatsJSON = window.exportSeatsJSON || exportSeatsJSON;
-window.importSeatsJSON = window.importSeatsJSON || importSeatsJSON;
-window.exportReservationsJSON = window.exportReservationsJSON || exportReservationsJSON;
-window.importReservationsJSON = window.importReservationsJSON || importReservationsJSON;
-window.tischHinzufuegen = window.tischHinzufuegen || tischHinzufuegen; // <— wichtig
-window.tischEntfernen = window.tischEntfernen || tischEntfernen;   // <— wichtig
-window.openBookingSearchModal = window.openBookingSearchModal || openBookingSearchModal;
-
-// Initiales Rendering
-rerenderActiveEvent();

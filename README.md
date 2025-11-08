@@ -29,6 +29,7 @@ Eine vollständig clientseitige Applikation zur Verwaltung von Tischreservierung
 - **Browser-Support:** Aktuelle Chromium-/Firefox-Versionen; Safari ≥ 15 empfohlen (Fallback auf `localStorage`).
 - **Barrierefreiheit:** Fokus-Management im Einstellungs-Panel, Tastatursteuerung für Tische/Modale, WAI-ARIA-Rollen für Dialoge.
 - **Deployment:** Auslieferung als ausführbare Spring-Boot-JAR möglich (z. B. auf einem beliebigen Server oder lokal via `java -jar`).
+- **Komfortfunktionen (Server):** Automatisches Öffnen des Standardbrowsers und Auslieferung der Default-Eventdaten über `/api/event-state`.
 
 ## Schnellstart
 1. Repository klonen oder herunterladen.
@@ -41,17 +42,24 @@ Eine vollständig clientseitige Applikation zur Verwaltung von Tischreservierung
    mvn clean package
    java -jar target/tischreservierungskv-0.0.1-SNAPSHOT.jar
    ```
-3. Einen Browser öffnen und `http://localhost:8080` aufrufen.
+3. Der Server öffnet nach dem Start automatisch den Standardbrowser (sofern das Betriebssystem dies zulässt). Sollte dies nicht möglich sein, rufen Sie `http://localhost:8080` manuell auf.
 4. Dem Start-Overlay folgen und eine neue Veranstaltung anlegen oder eine vorhandene JSON importieren.
 
-> **Hinweis:** Die Business-Logik verbleibt weiterhin vollständig im Browser. Der Spring-Boot-Server dient ausschließlich der Auslieferung der statischen Ressourcen.
+> **Hinweis:** Die Business-Logik verbleibt weitgehend im Browser. Der Spring-Boot-Server liefert die statischen Ressourcen aus und stellt die Standard-Tischkonfiguration via JSON-Endpunkt bereit.
 
 ## Projektstruktur
 ```text
 ├── pom.xml              # Maven-Konfiguration für die Spring-Boot-Anwendung
 ├── src/
 │   ├── main/java/com/example/tischreservierungskv/
-│   │   └── TischreservierungSkvApplication.java  # Spring-Boot-Einstiegspunkt
+│   │   ├── BrowserLauncher.java                 # Öffnet automatisch den Browser nach Serverstart
+│   │   ├── TischreservierungSkvApplication.java  # Spring-Boot-Einstiegspunkt
+│   │   └── state/
+│   │       ├── EventStateController.java        # REST-API für initiale Eventdaten
+│   │       ├── EventStateService.java           # Serverseitige Verwaltung der Standardtabellen
+│   │       └── dto/
+│   │           ├── EventStateResponse.java
+│   │           └── TableDefinition.java
 │   └── main/resources/static/
 │       ├── css/          # Zentrales Stylesheet für App und Komponenten
 │       ├── img/          # Logos & Favicons
@@ -133,7 +141,7 @@ flowchart LR
 ## State- und Event-Management
 Der zentrale State ist in `js/core/state.js` definiert. Wichtige Bestandteile:
 
-- `createEmptyEventState()` erzeugt eine konsistente Ausgangsbasis inklusive Standardtischen (`DEFAULT_TABLES`).
+- `createEmptyEventState()` erzeugt eine konsistente Ausgangsbasis; die tatsächlichen Standardtische liefert nun der Spring-Boot-Endpunkt `/api/event-state`.
 - Getter/Setter (`getCardPriceValue`, `setCardPriceValue`, `setSeatsByTableNumber`, …) kapseln Zugriffe auf den Zustand.
 - Listener (`onCardPriceChange`, `onEventStateDirty`) sorgen dafür, dass UI und Synchronisation unmittelbar auf Änderungen reagieren.
 - `markEventStateDirty()` markiert Aktualisierungen, damit Exporte und Sync-Kanäle erkennen, wann Daten neu geladen werden müssen.
