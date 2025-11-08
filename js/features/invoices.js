@@ -43,24 +43,27 @@ function sanitizeText(input) {
     if (input == null) return "";
     return String(input)
         .replace(/[\r\n]+/g, " ")
-        .replace(/ß/g, "ss")
-        .replace(/Ä/g, "Ae")
-        .replace(/Ö/g, "Oe")
-        .replace(/Ü/g, "Ue")
-        .replace(/ä/g, "ae")
-        .replace(/ö/g, "oe")
-        .replace(/ü/g, "ue")
-        .normalize("NFKD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^\u0020-\u007E]+/g, "")
+        .replace(/[\u0000-\u001F\u007F]/g, "")
         .trim();
 }
 
 function escapePdfText(value) {
-    return sanitizeText(value)
-        .replace(/\\/g, "\\\\")
-        .replace(/\(/g, "\\(")
-        .replace(/\)/g, "\\)");
+    const sanitized = sanitizeText(value);
+    let output = "";
+    for (let i = 0; i < sanitized.length; i += 1) {
+        const char = sanitized[i];
+        const code = char.charCodeAt(0);
+        if (char === "\\" || char === "(" || char === ")") {
+            output += `\\${char}`;
+        } else if (code >= 128 && code <= 255) {
+            output += `\\${code.toString(8).padStart(3, "0")}`;
+        } else if (code > 255) {
+            output += "?";
+        } else {
+            output += char;
+        }
+    }
+    return output;
 }
 
 function formatEuro(value) {
@@ -300,7 +303,6 @@ function buildPdfContent({
         text: hexToRgbString('#1f2937'),
         muted: hexToRgbString('#64748b'),
         line: hexToRgbString('#d7e3ff'),
-        row: hexToRgbString('#eef2ff'),
         white: '1 1 1',
     };
 
@@ -399,18 +401,12 @@ function buildPdfContent({
         writeText('Keine Positionen vorhanden.', col1, cursorY, { size: 12, color: COLORS.muted });
         cursorY -= baseLine;
     } else {
-        safeLines.forEach((line, index) => {
+        safeLines.forEach(line => {
             const name = line?.name || 'Position';
             const quantity = Number.isFinite(line?.quantity) ? line.quantity : (line?.quantity ?? '');
             const detail = line?.detail || '';
             const unitPrice = line?.unitPriceFormatted || '';
             const lineTotal = line?.totalFormatted || '';
-            const rowHeight = detail ? baseLine + detailLine : baseLine;
-
-            if (index % 2 === 1) {
-                const fillY = cursorY - rowHeight + 6;
-                fillRect(margin, fillY, contentWidth, rowHeight + 2, COLORS.row);
-            }
 
             writeText(String(name), col1, cursorY, { size: 12, color: COLORS.text });
             writeText(quantity === '' ? '' : String(quantity), colQty, cursorY, { size: 12, align: 'right', color: COLORS.text });
@@ -437,16 +433,16 @@ function buildPdfContent({
         : '';
 
     writeText('Gesamtbetrag', margin, cursorY, { size: 11, color: COLORS.muted });
-    cursorY -= detailLine;
-    writeText(formatEuro(totalAmount), margin, cursorY, { font: 'F2', size: 22, color: COLORS.primaryDark });
+    const amountY = cursorY - baseLine;
+    writeText(formatEuro(totalAmount), margin, amountY, { font: 'F2', size: 24, color: COLORS.primaryDark });
     if (cardsLabel) {
-        writeText(cardsLabel, margin + contentWidth, cursorY + detailLine, { size: 11, color: COLORS.muted, align: 'right' });
+        writeText(cardsLabel, margin + contentWidth, amountY + detailLine, { size: 11, color: COLORS.muted, align: 'right' });
     }
     if (resolvedPaymentLabel) {
-        writeText(`Zahlart ${resolvedPaymentLabel}`, margin + contentWidth, cursorY, { size: 12, color: COLORS.text, align: 'right' });
+        writeText(`Zahlart ${resolvedPaymentLabel}`, margin + contentWidth, amountY, { size: 12, color: COLORS.text, align: 'right' });
     }
 
-    cursorY -= baseLine * 1.4;
+    cursorY = amountY - baseLine * 1.2;
     writeText('Hinweis: Diese Rechnung gilt nicht als Eintrittskarte.', margin, cursorY, { size: 11, color: COLORS.muted });
     cursorY -= baseLine;
     writeText('Vielen Dank für Ihren Besuch!', margin, cursorY, { size: 12, color: COLORS.primaryDark });
@@ -456,7 +452,7 @@ function buildPdfContent({
     writeText('Sandersdorfer Karnevalsverein e. V.', margin + contentWidth / 2, footerY - 16, { size: 10, color: COLORS.muted, align: 'center' });
     writeText('Am Sportzentrum 19 · 06792 Sandersdorf-Brehna', margin + contentWidth / 2, footerY - 30, { size: 10, color: COLORS.muted, align: 'center' });
 
-    return content.join('') + '';
+    return content.join('\n');
 }
 
 
