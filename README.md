@@ -24,37 +24,47 @@ Eine vollständig clientseitige Applikation zur Verwaltung von Tischreservierung
 - **Komfortfunktionen** wie JSON-Import/-Export, Cache-Handling, Warenkorb-gestützter Verkauf und Rechnungsgenerierung (`js/features/cart*.js`, `js/features/invoices.js`).
 
 ## Technische Eckdaten
-- **Technologien:** Vanilla JavaScript (ES Modules), HTML5, CSS3 ohne Build-Tooling.
+- **Technologien:** Spring Boot 3 (Java 17) zur Bereitstellung der statischen Frontend-Ressourcen sowie Vanilla JavaScript (ES Modules), HTML5 und CSS3 im Browser.
 - **Persistenz:** `localStorage` für Caches, `BroadcastChannel` für Live-Sync, `Blob`-Downloads für Exporte.
 - **Browser-Support:** Aktuelle Chromium-/Firefox-Versionen; Safari ≥ 15 empfohlen (Fallback auf `localStorage`).
 - **Barrierefreiheit:** Fokus-Management im Einstellungs-Panel, Tastatursteuerung für Tische/Modale, WAI-ARIA-Rollen für Dialoge.
-- **Deployment:** Statisches Hosting ausreichend (z. B. GitHub Pages, Netlify). Keine Server-seitigen Komponenten nötig.
+- **Deployment:** Auslieferung als ausführbare Spring-Boot-JAR möglich (z. B. auf einem beliebigen Server oder lokal via `java -jar`).
 
 ## Schnellstart
 1. Repository klonen oder herunterladen.
-2. Projektordner öffnen und `index.html` in einem modernen Browser laden.
-3. Optional: einen lokalen Webserver starten, um das automatische Laden von Assets zu optimieren, z. B.:
+2. Projektordner öffnen und die Abhängigkeiten mit Maven auflösen sowie die Anwendung starten:
    ```bash
-   npx serve .
+   mvn spring-boot:run
    ```
+   Alternativ lässt sich eine ausführbare JAR erzeugen:
+   ```bash
+   mvn clean package
+   java -jar target/tischreservierungskv-0.0.1-SNAPSHOT.jar
+   ```
+3. Einen Browser öffnen und `http://localhost:8080` aufrufen.
 4. Dem Start-Overlay folgen und eine neue Veranstaltung anlegen oder eine vorhandene JSON importieren.
 
-> **Hinweis:** Die Anwendung benötigt keine Build-Chain oder Backend. Alle Daten werden in `localStorage`, `BroadcastChannel` und im Arbeitsspeicher des Browsers verwaltet.
+> **Hinweis:** Die Business-Logik verbleibt weiterhin vollständig im Browser. Der Spring-Boot-Server dient ausschließlich der Auslieferung der statischen Ressourcen.
 
 ## Projektstruktur
 ```text
-├── css/                 # Zentrales Stylesheet für App und Komponenten
-├── img/                 # Logos & Favicons
-├── js/
-│   ├── core/            # State- und Event-Management, globale Utilities
-│   ├── events/          # DOM-Ereignis-Handler und Delegation
-│   ├── features/        # Fachlogik (Booking, Import/Export, Sync, Rechnungen …)
-│   ├── ui/              # Präsentationslogik und UI-spezifische Controller
-│   └── main.js          # Einstiegspunkt / Bootstrapping
-├── sync/                # Externe und interne Zusatzansichten
-├── how-to.html          # Ausführliche Anwender-Anleitung (neu)
-├── index.html           # Hauptoberfläche
-└── invoice.html         # Rechnungsvorlage
+├── pom.xml              # Maven-Konfiguration für die Spring-Boot-Anwendung
+├── src/
+│   ├── main/java/com/example/tischreservierungskv/
+│   │   └── TischreservierungSkvApplication.java  # Spring-Boot-Einstiegspunkt
+│   └── main/resources/static/
+│       ├── css/          # Zentrales Stylesheet für App und Komponenten
+│       ├── img/          # Logos & Favicons
+│       ├── js/
+│       │   ├── core/     # State- und Event-Management, globale Utilities
+│       │   ├── events/   # DOM-Ereignis-Handler und Delegation
+│       │   ├── features/ # Fachlogik (Booking, Import/Export, Sync, Rechnungen …)
+│       │   ├── ui/       # Präsentationslogik und UI-spezifische Controller
+│       │   └── main.js   # Einstiegspunkt / Bootstrapping
+│       ├── sync/         # Externe und interne Zusatzansichten
+│       ├── how-to.html   # Ausführliche Anwender-Anleitung (neu)
+│       ├── index.html    # Hauptoberfläche
+│       └── invoice.html  # Rechnungsvorlage
 ```
 
 ## Architektur im Überblick
