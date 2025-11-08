@@ -1,117 +1,251 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Rechnung herunterladen – Sandersdorfer Karnevalsverein e.V.</title>
     <style>
+        :root {
+            color-scheme: light;
+            --skv-blue: #4169e1;
+            --skv-blue-dark: #1f3f94;
+            --skv-black: #0b1120;
+            --skv-muted: #475569;
+            --card-width: min(480px, 92vw);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
-            font-family: "Segoe UI", system-ui, sans-serif;
-            background: #f1f5f9;
-            color: #0f172a;
+            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, #f8f9ff 0%, #eef2ff 100%);
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            padding: 24px;
+            color: var(--skv-black);
         }
 
         .download-card {
-            width: min(420px, 92vw);
+            width: var(--card-width);
             background: #fff;
-            border-radius: 18px;
-            padding: 32px 28px;
-            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.18);
+            border-radius: 20px;
+            box-shadow: 0 30px 60px rgba(17, 25, 40, 0.18);
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            text-align: center;
+            gap: 24px;
         }
 
-        .download-card h1 {
+        .download-header {
+            background: var(--skv-blue);
+            padding: 28px 32px 24px;
+            color: #fff;
+        }
+
+        .download-header h1 {
+            margin: 0 0 8px;
+            font-size: clamp(1.5rem, 4vw, 1.85rem);
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .download-header p {
             margin: 0;
-            font-size: 24px;
-            color: #4169E1;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            color: rgba(255, 255, 255, 0.85);
         }
 
-        .download-card p {
-            margin: 0;
-            font-size: 15px;
-            color: #475569;
+        .download-body {
+            padding: 0 32px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
         }
 
-        .download-card strong {
-            color: #0f172a;
+        .download-info {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--skv-muted);
         }
 
         .download-actions {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-top: 12px;
+            gap: 14px;
         }
 
         .download-btn {
             display: inline-flex;
             justify-content: center;
             align-items: center;
-            padding: 12px 18px;
-            border-radius: 10px;
-            background: #4169E1;
+            gap: 10px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            background: var(--skv-blue);
             color: #fff;
-            text-decoration: none;
+            font-size: 1.05rem;
             font-weight: 600;
-            font-size: 16px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            box-shadow: 0 18px 32px rgba(65, 105, 225, 0.35);
         }
 
         .download-btn:hover,
-        .download-btn:focus {
+        .download-btn:focus-visible {
             transform: translateY(-2px);
-            box-shadow: 0 16px 30px rgba(65, 105, 225, 0.35);
+            background: var(--skv-blue-dark);
+            box-shadow: 0 24px 40px rgba(31, 63, 148, 0.35);
+        }
+
+        .download-meta {
+            font-size: 0.95rem;
+            color: var(--skv-black);
+            background: rgba(65, 105, 225, 0.08);
+            border: 1px solid rgba(65, 105, 225, 0.18);
+            border-radius: 14px;
+            padding: 14px 16px;
+            line-height: 1.5;
+        }
+
+        .download-meta strong {
+            color: var(--skv-blue-dark);
+            font-weight: 700;
         }
 
         .error {
             color: #dc2626;
             font-weight: 600;
         }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 16px;
+            }
+
+            .download-body {
+                padding: 0 24px 24px;
+            }
+
+            .download-header {
+                padding: 24px;
+            }
+        }
     </style>
 </head>
 <body>
 <div class="download-card" id="download-card">
-    <h1>Rechnung wird vorbereitet …</h1>
-    <p id="download-info">Bitte einen Moment Geduld.</p>
-    <div class="download-actions" id="download-actions" hidden>
-        <a id="download-btn" class="download-btn" href="#" download>Rechnung herunterladen</a>
-        <p id="download-meta"></p>
-    </div>
+    <header class="download-header">
+        <h1 id="download-title">Rechnung wird vorbereitet</h1>
+        <p id="download-subtitle">Bitte warten Sie einen Moment, wir erstellen Ihre Unterlagen.</p>
+    </header>
+    <main class="download-body">
+        <p class="download-info" id="download-info">
+            Sobald die Rechnung bereitsteht, können Sie den Download starten. Vielen Dank für Ihre Geduld!
+        </p>
+        <div class="download-actions" id="download-actions" hidden>
+            <a id="download-btn" class="download-btn" href="#" download>
+                Rechnung herunterladen
+            </a>
+            <div class="download-meta" id="download-meta" role="status" aria-live="polite"></div>
+        </div>
+    </main>
 </div>
 <script type="module">
     import { decodeInvoiceShareToken, buildPdfFromPayload } from './js/features/invoices.js';
 
+    const title = document.getElementById('download-title');
+    const subtitle = document.getElementById('download-subtitle');
     const info = document.getElementById('download-info');
     const actions = document.getElementById('download-actions');
     const button = document.getElementById('download-btn');
     const meta = document.getElementById('download-meta');
-    const card = document.getElementById('download-card');
 
     function showError(message) {
-        card.querySelector('h1').textContent = 'Rechnung nicht verfügbar';
+        title.textContent = 'Rechnung nicht verfügbar';
+        subtitle.textContent = 'Der angeforderte Download konnte nicht gestartet werden.';
         info.innerHTML = `<span class="error">${message}</span>`;
         actions.hidden = true;
+    }
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('de-DE', {
+            style: 'currency',
+            currency: 'EUR',
+        }).format(Number.isFinite(value) ? value : 0);
+    }
+
+    function toNumberOrNull(value) {
+        if (Number.isFinite(value)) {
+            return Number(value);
+        }
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function renderMeta(payload) {
+        meta.textContent = '';
+        meta.replaceChildren();
+        const fragments = [];
+
+        const totalCards = toNumberOrNull(payload.totalCards);
+        if (totalCards !== null) {
+            const span = document.createElement('span');
+            const cardLabel = totalCards === 1 ? '1 Karte' : `${totalCards} Karten`;
+            span.textContent = `${cardLabel} gesamt`;
+            fragments.push(span);
+        }
+
+        const totalAmount = toNumberOrNull(payload.totalAmount);
+        if (totalAmount !== null) {
+            const span = document.createElement('span');
+            span.append('Gesamtbetrag ');
+            const strong = document.createElement('strong');
+            strong.textContent = formatCurrency(totalAmount);
+            span.append(strong);
+            fragments.push(span);
+        }
+
+        const paymentLabel = (payload.paymentLabel || payload.paymentMethod || '').toString().trim();
+        if (paymentLabel) {
+            const span = document.createElement('span');
+            span.textContent = `Zahlart ${paymentLabel}`;
+            fragments.push(span);
+        }
+
+        if (!fragments.length) {
+            meta.textContent = 'Rechnung erfolgreich vorbereitet.';
+            return;
+        }
+
+        const nodes = [];
+        fragments.forEach((fragment, index) => {
+            nodes.push(fragment);
+            if (index < fragments.length - 1) {
+                nodes.push(document.createTextNode(' · '));
+            }
+        });
+        meta.replaceChildren(...nodes);
     }
 
     async function init() {
         const token = window.location.hash ? window.location.hash.slice(1) : '';
         if (!token) {
-            showError('Ungültiger QR-Code.');
+            showError('Ungültiger QR-Code oder abgelaufener Link.');
             return;
         }
+
         const payload = decodeInvoiceShareToken(token);
         if (!payload) {
             showError('Rechnungsdaten konnten nicht geladen werden.');
             return;
         }
+
         let pdfBytes;
         try {
             pdfBytes = await buildPdfFromPayload(payload);
@@ -120,29 +254,36 @@
             showError('Rechnung konnte nicht generiert werden.');
             return;
         }
+
         if (!pdfBytes || !pdfBytes.length) {
             showError('Rechnung konnte nicht generiert werden.');
             return;
         }
+
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         const fileName = `Rechnung_${payload.invoiceNumber || 'SKV'}.pdf`;
 
-        card.querySelector('h1').textContent = 'Rechnung bereit zum Download';
-        info.textContent = 'Vielen Dank! Sie können die Rechnung jetzt speichern.';
+        title.textContent = 'Rechnung bereit zum Download';
+        subtitle.textContent = 'Vielen Dank! Sie können die Rechnung jetzt sichern.';
+        info.textContent = 'Falls der automatische Download nicht startet, nutzen Sie bitte den folgenden Button.';
+
+        renderMeta(payload);
+
         actions.hidden = false;
         button.href = url;
         button.download = fileName;
-        meta.textContent = `${payload.totalCards || 0} Karten · Gesamtbetrag ${new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(payload.totalAmount || 0)} · Zahlart ${payload.paymentLabel || payload.paymentMethod || 'Bar'}`;
 
         setTimeout(() => {
             const link = document.createElement('a');
             link.href = url;
             link.download = fileName;
+            link.rel = 'noopener';
+            link.target = '_self';
             document.body.appendChild(link);
             link.click();
             link.remove();
-        }, 500);
+        }, 600);
 
         window.addEventListener('beforeunload', () => {
             URL.revokeObjectURL(url);
