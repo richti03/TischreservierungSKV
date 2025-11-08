@@ -2,29 +2,12 @@
 // Core State & Utils (DOM-frei)
 // ---------------------------------------------
 
-const DEFAULT_TABLES = [
+const FALLBACK_TABLES = [
     //[nummer, plätze, position, gangDaneben]
-    [0, 76, "standing", null],
-    [1, 18, "left", null],
-    [2, 18, "left", null],
-    [3, 18, "left", null],
-    [4, 18, "left", null],
-    [5, 18, "left", null],
-    [6, 18, "middle", null],
-    [7, 18, "middle", null],
-    [8, 24, "middle", null],
-    [9, 24, "middle", null],
-    [10, 24, "middle", null],
-    [11, 24, "middle", null],
-    [12, 18, "middle", null],
-    [13, 18, "middle", null],
-    [14, 12, "right", null],
-    [15, 18, "right", null],
-    [16, 18, "right", "oben"],
-    [17, 18, "right", null]
+    [0, 0, "standing", null]
 ];
 
-function cloneTables(src = DEFAULT_TABLES) {
+function cloneTables(src = FALLBACK_TABLES) {
     return src.map(row => Array.isArray(row) ? [...row] : row);
 }
 
@@ -42,6 +25,132 @@ export function createEmptyEventState() {
 }
 
 let currentEventState = createEmptyEventState();
+
+let eventStateInitPromise = null;
+
+function normalizeTableRow(row) {
+    if (Array.isArray(row)) {
+        const [number, seats, position = "middle", aisleNeighbor = null] = row;
+        const num = Number(number);
+        const seatCount = Number(seats);
+        if (!Number.isInteger(num) || !Number.isInteger(seatCount)) {
+            return null;
+        }
+        const pos = typeof position === "string" ? position : "middle";
+        return [num, seatCount, pos, aisleNeighbor ?? null];
+    }
+    if (row && typeof row === "object") {
+        const rawNumber = row.number ?? row.nr ?? row.table ?? row.id;
+        const rawSeats = row.seats ?? row.places ?? row.plaetze;
+        const num = Number(rawNumber);
+        const seatCount = Number(rawSeats);
+        if (!Number.isInteger(num) || !Number.isInteger(seatCount)) {
+            return null;
+        }
+        const position = typeof row.position === "string" ? row.position : "middle";
+        const aisle = row.aisleNeighbor ?? row.gangDaneben ?? null;
+        return [num, seatCount, position, aisle == null ? null : aisle];
+    }
+    return null;
+}
+
+function normalizeTablesFromPayload(rows) {
+    const normalized = [];
+    if (Array.isArray(rows)) {
+        for (const row of rows) {
+            const normalizedRow = normalizeTableRow(row);
+            if (normalizedRow) {
+                normalized.push(normalizedRow);
+            }
+        }
+    }
+    if (!normalized.length) {
+        return cloneTables();
+    }
+    normalized.sort((a, b) => a[0] - b[0]);
+    const standingIndex = normalized.findIndex(entry => entry[0] === 0);
+    if (standingIndex > 0) {
+        const [standing] = normalized.splice(standingIndex, 1);
+        normalized.unshift(standing);
+    }
+    return normalized;
+}
+
+function cloneReservationsMap(source) {
+    if (!source || typeof source !== "object") {
+        return {};
+    }
+    const result = {};
+    for (const [key, value] of Object.entries(source)) {
+        if (!Array.isArray(value)) {
+            continue;
+        }
+        result[key] = value.map(item => ({ ...(item || {}) }));
+    }
+    return result;
+}
+
+function buildStateFromPayload(payload) {
+    const state = createEmptyEventState();
+    if (!payload || typeof payload !== "object") {
+        return state;
+    }
+    const tables = normalizeTablesFromPayload(payload.tisch);
+    state.tisch = cloneTables(tables);
+    if (typeof payload.alleAktionen === "string") {
+        state.alleAktionen = payload.alleAktionen;
+    }
+    if (typeof payload.alleExportCodes === "string") {
+        state.alleExportCodes = payload.alleExportCodes;
+    }
+    state.reservationsByTable = cloneReservationsMap(payload.reservationsByTable);
+    if (Number.isFinite(payload.cardPriceValue)) {
+        state.cardPriceValue = payload.cardPriceValue;
+    }
+    if (typeof payload.externalEventName === "string") {
+        state.externalEventName = payload.externalEventName;
+    }
+    if (Number.isInteger(payload.lastBookingSeq)) {
+        state.lastBookingSeq = payload.lastBookingSeq;
+    }
+    if (payload.lastReservationsFilename == null || typeof payload.lastReservationsFilename === "string") {
+        state.lastReservationsFilename = payload.lastReservationsFilename ?? null;
+    }
+    return state;
+}
+
+async function fetchEventStateFromServer() {
+    if (typeof fetch !== "function") {
+        throw new Error("Fetch API not available");
+    }
+    const response = await fetch("/api/event-state", {
+        headers: { "Accept": "application/json" },
+        cache: "no-store"
+    });
+    if (!response.ok) {
+        throw new Error(`Unexpected status ${response.status}`);
+    }
+    return response.json();
+}
+
+export async function ensureEventStateLoaded() {
+    if (!eventStateInitPromise) {
+        eventStateInitPromise = (async () => {
+            try {
+                const payload = await fetchEventStateFromServer();
+                const state = buildStateFromPayload(payload);
+                loadEventState(state);
+                console.log(`[STATE] Initialdaten vom Server geladen (${state.tisch.length} Tische).`);
+            } catch (err) {
+                console.warn("[STATE] Konnte Initialdaten nicht laden, nutze Fallback.", err);
+                loadEventState(createEmptyEventState());
+            }
+            return getCurrentEventState();
+        })();
+    }
+    return eventStateInitPromise;
+}
+
 
 export function getCurrentEventState() {
     return currentEventState;
@@ -383,4 +492,3 @@ export function pickJSONFile(cb) {
     input.click();
 }
 
-console.log("[INIT] App gestartet. Ausgangsdaten (Tische):", JSON.parse(JSON.stringify(tisch)));
