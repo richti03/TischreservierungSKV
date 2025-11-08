@@ -164,10 +164,10 @@ async function loadLogoImage() {
         return cachedLogoAsset;
     }
 
-    let logoUrl = "img/SKV-Wappen.jpg";
+    let logoUrl = "img/SKV-Wappen.png";
     try {
         if (typeof window !== "undefined" && window.location) {
-            logoUrl = new URL("img/SKV-Wappen.jpg", window.location.href).toString();
+            logoUrl = new URL("img/SKV-Wappen.png", window.location.href).toString();
         }
     } catch (err) {
         console.warn("[INVOICES] Logo-URL konnte nicht bestimmt werden:", err);
