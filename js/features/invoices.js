@@ -318,13 +318,14 @@ function buildPdfContent({
     const content = [];
 
     function writeText(text, x, y, { font = 'F1', size = 12, align = 'left', color = COLORS.text } = {}) {
-        const safe = escapePdfText(text);
+        const clean = sanitizeText(text);
+        const safe = escapePdfText(clean);
         let posX = x;
         if (align === 'right') {
-            const approx = approximateTextWidth(safe, size);
+            const approx = approximateTextWidth(clean, size);
             posX = x - approx;
         } else if (align === 'center') {
-            const approx = approximateTextWidth(safe, size);
+            const approx = approximateTextWidth(clean, size);
             posX = x - approx / 2;
         }
         content.push('BT');
