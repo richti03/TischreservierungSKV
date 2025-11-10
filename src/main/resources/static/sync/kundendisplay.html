@@ -172,52 +172,63 @@
 
         #invoice-view {
             position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, #4169E1, #1f3f94);
-            color: #fff;
-            box-shadow: 0 20px 42px rgba(31, 63, 148, 0.35);
+            background: #fff;
+            color: var(--skv-blue-dark);
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.16);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: clamp(220px, 35vh, 340px);
         }
 
         .invoice-thanks-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 18px;
+            gap: clamp(12px, 2vw, 20px);
             position: relative;
             z-index: 1;
             text-align: center;
+            padding: clamp(12px, 3vw, 24px);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 2px solid rgba(65, 105, 225, 0.18);
+            box-shadow: 0 14px 32px rgba(65, 105, 225, 0.18);
         }
 
         .invoice-thanks {
             text-align: center;
-            font-size: clamp(32px, 6vw, 54px);
+            font-size: clamp(32px, 6vw, 56px);
             letter-spacing: 0.18em;
-            color: #fff;
+            color: var(--skv-blue-dark);
             text-transform: uppercase;
-            text-shadow: 0 12px 28px rgba(31, 63, 148, 0.35);
+            text-shadow: 0 10px 24px rgba(65, 105, 225, 0.22);
             margin: 0;
         }
 
         .invoice-subtitle {
             margin: 0;
-            font-size: clamp(20px, 3vw, 30px);
-            color: rgba(255, 255, 255, 0.95);
+            font-size: clamp(20px, 3vw, 32px);
+            color: rgba(31, 63, 148, 0.9);
             letter-spacing: 0.14em;
             text-transform: uppercase;
         }
 
         .confetti {
-            position: absolute;
+            position: fixed;
             inset: 0;
             overflow: hidden;
             pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.4s ease;
         }
 
         .confetti-piece {
             position: absolute;
             top: -12%;
-            width: 12px;
-            height: 24px;
+            width: var(--size-w, 12px);
+            height: var(--size-h, 24px);
             border-radius: 4px;
             background: var(--color, #f6c90e);
             opacity: 0;
@@ -228,6 +239,10 @@
             animation-timing-function: linear;
             animation-iteration-count: infinite;
             animation-name: none;
+        }
+
+        .confetti.active {
+            opacity: 1;
         }
 
         .confetti.active .confetti-piece {
@@ -342,21 +357,25 @@
     let channel;
     let currentMode = 'welcome';
 
-    function createConfettiPieces(count = 28) {
+    function createConfettiPieces(count = 160) {
         if (!invoiceConfetti) return;
         invoiceConfetti.innerHTML = '';
-        const colors = ['#f6c90e', '#f08a5d', '#b83b5e', '#6a2c70', '#28c76f', '#00c2ff'];
+        const colors = ['#f6c90e', '#f08a5d', '#b83b5e', '#6a2c70', '#28c76f', '#00c2ff', '#845ec2'];
+        const fragment = document.createDocumentFragment();
         for (let i = 0; i < count; i += 1) {
             const span = document.createElement('span');
             span.className = 'confetti-piece';
-            span.style.setProperty('--x', Math.random().toFixed(2));
-            span.style.setProperty('--delay', (Math.random() * 2.5).toFixed(2));
-            span.style.setProperty('--duration', (4 + Math.random() * 3).toFixed(2));
+            span.style.setProperty('--x', Math.random().toFixed(3));
+            span.style.setProperty('--delay', (Math.random() * 3).toFixed(2));
+            span.style.setProperty('--duration', (3.6 + Math.random() * 4.4).toFixed(2));
             span.style.setProperty('--rotation', `${Math.floor(Math.random() * 360)}deg`);
-            span.style.setProperty('--drift', `${(Math.random() * 50 - 25).toFixed(2)}px`);
+            span.style.setProperty('--drift', `${(Math.random() * 220 - 110).toFixed(2)}px`);
+            span.style.setProperty('--size-w', `${(8 + Math.random() * 18).toFixed(2)}px`);
+            span.style.setProperty('--size-h', `${(14 + Math.random() * 28).toFixed(2)}px`);
             span.style.setProperty('--color', colors[i % colors.length]);
-            invoiceConfetti.appendChild(span);
+            fragment.appendChild(span);
         }
+        invoiceConfetti.appendChild(fragment);
     }
 
     function triggerConfetti() {
@@ -364,6 +383,12 @@
         invoiceConfetti.classList.remove('active');
         void invoiceConfetti.offsetWidth; // restart animation
         invoiceConfetti.classList.add('active');
+    }
+
+    function resetConfetti() {
+        if (!invoiceConfetti) return;
+        invoiceConfetti.classList.remove('active');
+        invoiceConfetti.innerHTML = '';
     }
 
     function ensureChannel() {
@@ -431,6 +456,7 @@
             welcomeView.hidden = false;
             cartView.hidden = true;
             invoiceView.hidden = true;
+            resetConfetti();
             if (displaySubtitle) {
                 displaySubtitle.textContent = 'Schön, dass Sie da sind – gleich sehen Sie Ihre Reservierung im Überblick.';
             }
@@ -438,6 +464,7 @@
             welcomeView.hidden = true;
             cartView.hidden = false;
             invoiceView.hidden = true;
+            resetConfetti();
             if (displaySubtitle) {
                 displaySubtitle.textContent = 'Bitte prüfen Sie Ihre Reservierungen.';
             }
