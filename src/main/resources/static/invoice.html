@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Rechnung herunterladen – Sandersdorfer Karnevalsverein e.V.</title>
+    <title>Danke – Sandersdorfer Karnevalsverein e.V.</title>
     <style>
         :root {
             color-scheme: light;
@@ -11,7 +11,6 @@
             --skv-blue-dark: #1f3f94;
             --skv-black: #0b1120;
             --skv-muted: #475569;
-            --card-width: min(480px, 92vw);
         }
 
         *, *::before, *::after {
@@ -21,279 +20,175 @@
         body {
             margin: 0;
             font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(180deg, #f8f9ff 0%, #eef2ff 100%);
+            background: radial-gradient(circle at top, rgba(65, 105, 225, 0.12), rgba(65, 105, 225, 0.04)),
+                linear-gradient(180deg, #f8f9ff 0%, #eef2ff 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 24px;
+            padding: clamp(16px, 4vw, 48px);
             color: var(--skv-black);
-        }
-
-        .download-card {
-            width: var(--card-width);
-            background: #fff;
-            border-radius: 20px;
-            box-shadow: 0 30px 60px rgba(17, 25, 40, 0.18);
+            position: relative;
             overflow: hidden;
+        }
+
+        main {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 28px;
+            box-shadow: 0 30px 60px rgba(17, 25, 40, 0.2);
+            padding: clamp(32px, 6vw, 64px) clamp(28px, 6vw, 88px);
+            text-align: center;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: clamp(12px, 4vw, 24px);
+            position: relative;
+            z-index: 2;
         }
 
-        .download-header {
-            background: var(--skv-blue);
-            padding: 28px 32px 24px;
-            color: #fff;
-        }
-
-        .download-header h1 {
-            margin: 0 0 8px;
-            font-size: clamp(1.5rem, 4vw, 1.85rem);
-            font-weight: 700;
-            letter-spacing: -0.01em;
-        }
-
-        .download-header p {
+        h1 {
             margin: 0;
-            font-size: 0.95rem;
-            line-height: 1.4;
-            color: rgba(255, 255, 255, 0.85);
-        }
-
-        .download-body {
-            padding: 0 32px 32px;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-        }
-
-        .download-info {
-            font-size: 1rem;
-            line-height: 1.6;
-            color: var(--skv-muted);
-        }
-
-        .download-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .download-btn {
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            padding: 14px 20px;
-            border-radius: 12px;
-            background: var(--skv-blue);
-            color: #fff;
-            font-size: 1.05rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-            box-shadow: 0 18px 32px rgba(65, 105, 225, 0.35);
-        }
-
-        .download-btn:hover,
-        .download-btn:focus-visible {
-            transform: translateY(-2px);
-            background: var(--skv-blue-dark);
-            box-shadow: 0 24px 40px rgba(31, 63, 148, 0.35);
-        }
-
-        .download-meta {
-            font-size: 0.95rem;
-            color: var(--skv-black);
-            background: rgba(65, 105, 225, 0.08);
-            border: 1px solid rgba(65, 105, 225, 0.18);
-            border-radius: 14px;
-            padding: 14px 16px;
-            line-height: 1.5;
-        }
-
-        .download-meta strong {
+            font-size: clamp(2.5rem, 10vw, 4.5rem);
+            letter-spacing: -0.03em;
             color: var(--skv-blue-dark);
-            font-weight: 700;
+            text-transform: uppercase;
         }
 
-        .error {
-            color: #dc2626;
+        p {
+            margin: 0;
+            font-size: clamp(1.35rem, 4vw, 2.25rem);
             font-weight: 600;
+            color: var(--skv-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .confetti-layer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: var(--piece-width, 12px);
+            height: var(--piece-height, 28px);
+            border-radius: 2px;
+            opacity: 0;
+            transform: translate3d(0, 0, 0) rotate(0deg);
+            will-change: transform, opacity;
+            animation-fill-mode: forwards;
+        }
+
+        .confetti-piece::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0));
+            mix-blend-mode: screen;
+            opacity: 0.8;
+        }
+
+        .confetti-piece.left {
+            animation-name: confetti-left;
+        }
+
+        .confetti-piece.right {
+            animation-name: confetti-right;
+        }
+
+        @keyframes confetti-left {
+            0% {
+                transform: translate3d(-15vw, var(--start-y), 0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                transform: translate3d(115vw, var(--end-y), 0) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes confetti-right {
+            0% {
+                transform: translate3d(115vw, var(--start-y), 0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                transform: translate3d(-15vw, var(--end-y), 0) rotate(-720deg);
+                opacity: 0;
+            }
         }
 
         @media (max-width: 520px) {
-            body {
-                padding: 16px;
-            }
-
-            .download-body {
-                padding: 0 24px 24px;
-            }
-
-            .download-header {
-                padding: 24px;
+            main {
+                border-radius: 22px;
             }
         }
     </style>
 </head>
 <body>
-<div class="download-card" id="download-card">
-    <header class="download-header">
-        <h1 id="download-title">Rechnung wird vorbereitet</h1>
-        <p id="download-subtitle">Bitte warten Sie einen Moment, wir erstellen Ihre Unterlagen.</p>
-    </header>
-    <main class="download-body">
-        <p class="download-info" id="download-info">
-            Sobald die Rechnung bereitsteht, können Sie den Download starten. Vielen Dank für Ihre Geduld!
-        </p>
-        <div class="download-actions" id="download-actions" hidden>
-            <a id="download-btn" class="download-btn" href="#" download>
-                Rechnung herunterladen
-            </a>
-            <div class="download-meta" id="download-meta" role="status" aria-live="polite"></div>
-        </div>
-    </main>
-</div>
-<script type="module">
-    import { decodeInvoiceShareToken, buildPdfFromPayload } from './js/features/invoices.js';
+<div class="confetti-layer" id="confetti-layer" aria-hidden="true"></div>
+<main>
+    <h1>DANKE!</h1>
+    <p>SANDORIA HELLAU!</p>
+</main>
+<script>
+    const colors = [
+        "#f97316",
+        "#facc15",
+        "#34d399",
+        "#38bdf8",
+        "#a855f7",
+        "#f472b6",
+        "#fb7185",
+    ];
 
-    const title = document.getElementById('download-title');
-    const subtitle = document.getElementById('download-subtitle');
-    const info = document.getElementById('download-info');
-    const actions = document.getElementById('download-actions');
-    const button = document.getElementById('download-btn');
-    const meta = document.getElementById('download-meta');
+    const confettiLayer = document.getElementById("confetti-layer");
 
-    function showError(message) {
-        title.textContent = 'Rechnung nicht verfügbar';
-        subtitle.textContent = 'Der angeforderte Download konnte nicht gestartet werden.';
-        info.innerHTML = `<span class="error">${message}</span>`;
-        actions.hidden = true;
-    }
-
-    function formatCurrency(value) {
-        return new Intl.NumberFormat('de-DE', {
-            style: 'currency',
-            currency: 'EUR',
-        }).format(Number.isFinite(value) ? value : 0);
-    }
-
-    function toNumberOrNull(value) {
-        if (Number.isFinite(value)) {
-            return Number(value);
-        }
-        const parsed = Number(value);
-        return Number.isFinite(parsed) ? parsed : null;
-    }
-
-    function renderMeta(payload) {
-        meta.textContent = '';
-        meta.replaceChildren();
-        const fragments = [];
-
-        const totalCards = toNumberOrNull(payload.totalCards);
-        if (totalCards !== null) {
-            const span = document.createElement('span');
-            const cardLabel = totalCards === 1 ? '1 Karte' : `${totalCards} Karten`;
-            span.textContent = `${cardLabel} gesamt`;
-            fragments.push(span);
-        }
-
-        const totalAmount = toNumberOrNull(payload.totalAmount);
-        if (totalAmount !== null) {
-            const span = document.createElement('span');
-            span.append('Gesamtbetrag ');
-            const strong = document.createElement('strong');
-            strong.textContent = formatCurrency(totalAmount);
-            span.append(strong);
-            fragments.push(span);
-        }
-
-        const paymentLabel = (payload.paymentLabel || payload.paymentMethod || '').toString().trim();
-        if (paymentLabel) {
-            const span = document.createElement('span');
-            span.textContent = `Zahlart ${paymentLabel}`;
-            fragments.push(span);
-        }
-
-        if (!fragments.length) {
-            meta.textContent = 'Rechnung erfolgreich vorbereitet.';
-            return;
-        }
-
-        const nodes = [];
-        fragments.forEach((fragment, index) => {
-            nodes.push(fragment);
-            if (index < fragments.length - 1) {
-                nodes.push(document.createTextNode(' · '));
-            }
+    function createConfettiPiece(direction) {
+        const piece = document.createElement("span");
+        piece.className = `confetti-piece ${direction}`;
+        const width = 6 + Math.random() * 10;
+        const height = 12 + Math.random() * 18;
+        piece.style.setProperty("--piece-width", `${width}px`);
+        piece.style.setProperty("--piece-height", `${height}px`);
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.setProperty("--start-y", `${Math.random() * 100}vh`);
+        piece.style.setProperty("--end-y", `${Math.random() * 100}vh`);
+        const duration = 2.2 + Math.random() * 1.6;
+        piece.style.animationDuration = `${duration}s`;
+        piece.style.animationDelay = `${Math.random() * 0.4}s`;
+        confettiLayer.appendChild(piece);
+        piece.addEventListener("animationend", () => {
+            piece.remove();
         });
-        meta.replaceChildren(...nodes);
+        return piece;
     }
 
-    async function init() {
-        const token = window.location.hash ? window.location.hash.slice(1) : '';
-        if (!token) {
-            showError('Ungültiger QR-Code oder abgelaufener Link.');
-            return;
+    function launchConfettiBurst() {
+        const piecesPerSide = 28;
+        for (let i = 0; i < piecesPerSide; i += 1) {
+            createConfettiPiece("left");
+            createConfettiPiece("right");
         }
-
-        const payload = decodeInvoiceShareToken(token);
-        if (!payload) {
-            showError('Rechnungsdaten konnten nicht geladen werden.');
-            return;
-        }
-
-        let pdfBytes;
-        try {
-            pdfBytes = await buildPdfFromPayload(payload);
-        } catch (err) {
-            console.error('[INVOICE] PDF konnte nicht erzeugt werden:', err);
-            showError('Rechnung konnte nicht generiert werden.');
-            return;
-        }
-
-        if (!pdfBytes || !pdfBytes.length) {
-            showError('Rechnung konnte nicht generiert werden.');
-            return;
-        }
-
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        const fileName = `Rechnung_${payload.invoiceNumber || 'SKV'}.pdf`;
-
-        title.textContent = 'Rechnung bereit zum Download';
-        subtitle.textContent = 'Vielen Dank! Sie können die Rechnung jetzt sichern.';
-        info.textContent = 'Falls der automatische Download nicht startet, nutzen Sie bitte den folgenden Button.';
-
-        renderMeta(payload);
-
-        actions.hidden = false;
-        button.href = url;
-        button.download = fileName;
-
-        setTimeout(() => {
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            link.rel = 'noopener';
-            link.target = '_self';
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        }, 600);
-
-        window.addEventListener('beforeunload', () => {
-            URL.revokeObjectURL(url);
-        }, { once: true });
     }
 
-    init().catch(err => {
-        console.error('[INVOICE] Unbehandelter Fehler beim Laden der Rechnung:', err);
-        showError('Rechnung konnte nicht generiert werden.');
-    });
+    launchConfettiBurst();
+    setInterval(launchConfettiBurst, 1500);
 </script>
 </body>
 </html>
