@@ -213,7 +213,7 @@ sequenceDiagram
 Vier spezialisierte Module sorgen für Live-Daten in Zusatz-Tabs:
 - `internalPlanSync.js` (internes Team-Display) – farbkodierte Auslastung, Reservierungsdetails und Split-Hinweise.
 - `externalPlanSync.js` (öffentliche Ansicht) – reduzierte Darstellung freier Plätze für Besucher:innen.
-- `customerDisplaySync.js` (Kundendisplay) – Fortschrittsanzeige inkl. QR-Code für Rechnungsdownload, reagiert auf `customerFlow:*`-Events.
+- `customerDisplaySync.js` (Kundendisplay) – Fortschrittsanzeige mit DANKE-Screen und Konfetti, reagiert auf `customerFlow:*`-Events.
 - `sync/baseSync.js` (Hilfsfunktionen) – kapselt Broadcast-/Storage-Transport, Deduplizierung (`seenMessageIds`) und Heartbeats.
 
 Ablauf (schematisch):
@@ -246,7 +246,8 @@ sequenceDiagram
 
 ### Rechnungs-Downloads
 - `downloadInvoicesZip()` bündelt erzeugte PDFs in einer ZIP-Datei (mittels `JSZip`-Fallback). Enthält Dateinamen `SKV-<Event>-<InvoiceNo>.pdf`.
-- Einzelrechnungen stehen nach jedem Verkauf im Abschlussdialog (`post-sale-modal`) zur Verfügung. Ein QR-Code-Link wird parallel über das Kundendisplay verteilt.
+- Einzelrechnungen stehen nach jedem Verkauf im Abschlussdialog (`post-sale-modal`) zur Verfügung.
+- Beim Abschluss eines Verkaufs speichert der Server die PDF automatisch unter `Rechnungen/<YYYY-MM-DD>-<Veranstaltungsname>/`.
 
 ## UI-Komponenten
 - **Settings-Panel (`js/ui/settingsPanel.js`)**: Steuert Öffnen/Schließen, Escape-Key-Unterstützung, Fokusmanagement sowie die Kartenpreis-Logik. Der Header enthält einen Hilfebutton zur How-To-Seite.
@@ -258,7 +259,7 @@ sequenceDiagram
   - Einstiegspunkte sind die `data-action="move"`-Buttons in der Reservierungstabelle, dem Warenkorb und der Suchansicht (`openMoveModal(sourceNr, preselectId)`).
   - Das Modul erzwingt einen dreistufigen Ablauf: Auswahl der Quellenreservierungen, Wahl des Ziel-Tischs (bzw. Gegenspielers beim Tausch) und eine Vorschauprüfung. Erst wenn die Vorschau freie Plätze bestätigt (`previewOk`), wird `applyMove()` aktiviert.
   - Beim Modus „Verschieben“ wird `setSeatsByTableNumber()` nur auf dem Zieltisch erhöht, während Quelle/Gesamtbilanz via `ensureBucket()` und `markEventStateDirty()` synchronisiert werden. Im Modus „Tauschen“ werden beide Seiten gespiegelt geprüft; verkaufte Reservierungen (`rec.sold`) sind generell gesperrt.
-- **Invoice-Generator (`js/features/invoices.js`)**: Erstellt PDF-Inhalte, verschickt Share-Token an das Kundendisplay und aktualisiert ZIP-Downloads.
+- **Invoice-Generator (`js/features/invoices.js`)**: Erstellt PDF-Inhalte, speichert sie über die REST-Schnittstelle im Dateiordner und aktualisiert ZIP-Downloads.
 
 ### Buttons & Aktionen (Kurzreferenz)
 
@@ -268,7 +269,7 @@ sequenceDiagram
 | **Sitzplatzanzahl ändern** | Öffnet das Tische-&-Sitzplätze-Modal zur Kapazitätsplanung | `features/tablesCrud.js`
 | **Buchungen suchen** | Globales Suchmodal über alle Events inkl. Aktionen | `features/searchModal.js`
 | **Internen/Externen Saalplan öffnen** | Startet Zusatz-HTML mit Live-Sync | `features/internalPlanSync.js` / `externalPlanSync.js`
-| **Kundendisplay öffnen** | Kundenansicht + QR-Code-Share | `features/customerDisplaySync.js`
+| **Kundendisplay öffnen** | Kundenansicht mit DANKE-Screen & Konfetti | `features/customerDisplaySync.js`
 | **Rechnungen als ZIP herunterladen** | Bündelt vorhandene Rechnungen in ZIP | `features/invoices.js`
 | **Nächster Kunde** | Schließt Modale, setzt Kundendisplay zurück | `features/customerDisplaySync.js`
 | **Warenkorb öffnen** | Zeigt aktuelle Reservierungen im Verkauf | `features/cartModal.js`

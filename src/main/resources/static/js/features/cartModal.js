@@ -145,7 +145,7 @@ function openPostSaleModal(invoice, { sold = 0, totalCards = 0, paymentMethod = 
     if (paymentLabel) {
         parts.push(`Zahlart ${paymentLabel}`);
     }
-    parts.push("QR-Code am Kundendisplay verfügbar");
+    parts.push("Kundendisplay: DANKE! SANDORIA HELLAU!");
 
     if (postSaleDetailsEl) {
         postSaleDetailsEl.textContent = parts.join(" · ");
