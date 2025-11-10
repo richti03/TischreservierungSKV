@@ -25,10 +25,6 @@ async function persistInvoiceOnServer({
     eventDate = "",
     eventType = "",
 }) {
-    if (typeof fetch !== "function") {
-        throw new Error("Rechnung konnte nicht gespeichert werden (Browser unterstützt Fetch nicht).");
-    }
-
     const payload = {
         invoiceNumber,
         fileName,
@@ -37,6 +33,13 @@ async function persistInvoiceOnServer({
         eventDate: eventDate || null,
         eventType: eventType || null,
     };
+
+    if (typeof fetch !== "function") {
+        if (typeof XMLHttpRequest !== "function") {
+            throw new Error("Rechnung konnte nicht gespeichert werden (Browser unterstützt keine geeignete Netzwerk-Schnittstelle).");
+        }
+        return persistInvoiceWithXhr(payload);
+    }
 
     let response;
     try {
@@ -69,6 +72,53 @@ async function persistInvoiceOnServer({
     } catch (err) {
         return null;
     }
+}
+
+function parseJsonSafely(value) {
+    if (!value) return null;
+    if (typeof value === "object") {
+        return value;
+    }
+    try {
+        return JSON.parse(value);
+    } catch (err) {
+        return null;
+    }
+}
+
+function buildErrorFromResponse(status, body) {
+    const message = body?.message || body?.error || body?.detail;
+    if (message) {
+        return new Error(message);
+    }
+    return new Error(status >= 500
+        ? "Rechnung konnte nicht gespeichert werden (Serverfehler)."
+        : "Rechnung konnte nicht gespeichert werden.");
+}
+
+function persistInvoiceWithXhr(payload) {
+    return new Promise((resolve, reject) => {
+        try {
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/api/invoices", true);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState !== 4) return;
+                const responseBody = parseJsonSafely(xhr.responseText);
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve(responseBody);
+                } else {
+                    reject(buildErrorFromResponse(xhr.status, responseBody));
+                }
+            };
+            xhr.onerror = () => {
+                reject(new Error("Rechnung konnte nicht gespeichert werden (Netzwerkfehler)."));
+            };
+            xhr.send(JSON.stringify(payload));
+        } catch (err) {
+            reject(new Error("Rechnung konnte nicht gespeichert werden (Browserfehler).", { cause: err }));
+        }
+    });
 }
 
 function determineInvoiceContext(entries, createdAt) {

@@ -1,5 +1,6 @@
 package com.example.tischreservierungskv.invoice;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -18,7 +19,13 @@ import java.util.Base64;
 public class InvoiceStorageService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
-    private static final Path BASE_DIRECTORY = Paths.get("Rechnungen");
+
+    private final Path baseDirectory;
+
+    public InvoiceStorageService(@Value("${tischreservierung.invoices.base-directory:Rechnungen}") String baseDirectory) {
+        String directory = StringUtils.hasText(baseDirectory) ? baseDirectory.trim() : "Rechnungen";
+        this.baseDirectory = Paths.get(directory).toAbsolutePath().normalize();
+    }
 
     public Path saveInvoice(InvoiceSaveRequest request) throws IOException {
         if (request == null) {
@@ -37,12 +44,12 @@ public class InvoiceStorageService {
 
         LocalDate folderDate = resolveEventDate(request.getEventDate());
         String folderType = resolveEventType(request.getEventType());
-        Path targetDirectory = BASE_DIRECTORY.resolve(buildFolderName(folderDate, folderType));
+        Path targetDirectory = baseDirectory.resolve(buildFolderName(folderDate, folderType));
         Files.createDirectories(targetDirectory);
 
         Path targetFile = targetDirectory.resolve(safeFileName);
         Files.write(targetFile, pdfBytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        return BASE_DIRECTORY.relativize(targetFile);
+        return baseDirectory.relativize(targetFile);
     }
 
     private byte[] decodeBase64(String value) {
