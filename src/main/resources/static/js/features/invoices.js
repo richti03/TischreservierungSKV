@@ -15,6 +15,106 @@ const PAYMENT_METHODS = new Map([
 const invoices = [];
 const invoiceListeners = new Set();
 
+const DEFAULT_EVENT_TYPE = "Veranstaltung";
+
+async function persistInvoiceOnServer({
+    invoiceNumber,
+    fileName,
+    base64,
+    eventName = "",
+    eventDate = "",
+    eventType = "",
+}) {
+    if (typeof fetch !== "function") {
+        throw new Error("Rechnung konnte nicht gespeichert werden (Browser unterstützt Fetch nicht).");
+    }
+
+    const payload = {
+        invoiceNumber,
+        fileName,
+        pdfBase64: base64,
+        eventName: eventName || null,
+        eventDate: eventDate || null,
+        eventType: eventType || null,
+    };
+
+    let response;
+    try {
+        response = await fetch("/api/invoices", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
+    } catch (err) {
+        throw new Error("Rechnung konnte nicht gespeichert werden (keine Serververbindung).", { cause: err });
+    }
+
+    if (!response.ok) {
+        let message = "Rechnung konnte nicht gespeichert werden.";
+        try {
+            const data = await response.json();
+            if (data?.message) {
+                message = data.message;
+            }
+        } catch (err) {
+            // ignore parsing errors and use default message
+        }
+        throw new Error(message);
+    }
+
+    try {
+        return await response.json();
+    } catch (err) {
+        return null;
+    }
+}
+
+function determineInvoiceContext(entries, createdAt) {
+    const context = {
+        eventName: "",
+        eventDate: "",
+        eventType: DEFAULT_EVENT_TYPE,
+    };
+
+    if (!Array.isArray(entries) || entries.length === 0) {
+        if (createdAt instanceof Date && !Number.isNaN(createdAt.valueOf())) {
+            context.eventDate = formatIsoDate(createdAt);
+        }
+        return context;
+    }
+
+    const firstEntry = entries.find(entry => entry?.eventName || entry?.eventDisplayName) || entries[0];
+    if (firstEntry?.eventName) {
+        context.eventName = String(firstEntry.eventName).trim();
+        const parsed = parseEventName(context.eventName);
+        if (parsed?.date) {
+            context.eventDate = parsed.date;
+        }
+        if (parsed?.type) {
+            context.eventType = parsed.type;
+        }
+    }
+
+    if (!context.eventDate && createdAt instanceof Date && !Number.isNaN(createdAt.valueOf())) {
+        context.eventDate = formatIsoDate(createdAt);
+    }
+
+    if ((!context.eventType || context.eventType === DEFAULT_EVENT_TYPE) && firstEntry?.eventDisplayName) {
+        const display = String(firstEntry.eventDisplayName).trim();
+        if (display) {
+            context.eventType = display;
+        }
+    }
+
+    if (!context.eventType) {
+        context.eventType = DEFAULT_EVENT_TYPE;
+    }
+
+    return context;
+}
+
 const WIN_ANSI_OVERRIDES = new Map([
     [0x20AC, 0x80], // Euro sign
 ]);
@@ -658,6 +758,8 @@ export async function createInvoiceFromCart(entries, { paymentMethod = "cash" } 
         throw new Error("Keine gültigen Positionen für die Rechnung");
     }
 
+    const context = determineInvoiceContext(entries, createdAt);
+
     const resolvedPaymentLabel = getPaymentLabel(paymentMethod);
     const logoAsset = await loadLogoImage();
     const logoForPdf = logoAsset?.bytes?.length
@@ -699,6 +801,15 @@ export async function createInvoiceFromCart(entries, { paymentMethod = "cash" } 
     const dataUrl = `data:application/pdf;base64,${base64}`;
     const fileName = `Rechnung_${invoiceNumber}.pdf`;
 
+    const storageInfo = await persistInvoiceOnServer({
+        invoiceNumber,
+        fileName,
+        base64,
+        eventName: context.eventName,
+        eventDate: context.eventDate,
+        eventType: context.eventType,
+    });
+
     const invoice = {
         id: `inv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
         createdAt: createdAt.toISOString(),
@@ -715,6 +826,11 @@ export async function createInvoiceFromCart(entries, { paymentMethod = "cash" } 
         dataUrl,
         shareToken,
         sharePayload,
+        eventDate: context.eventDate,
+        eventType: context.eventType,
+        eventName: context.eventName,
+        storagePath: storageInfo?.relativePath || null,
+        storageFileName: storageInfo?.fileName || fileName,
     };
 
     if (typeof window !== "undefined" && window.location) {

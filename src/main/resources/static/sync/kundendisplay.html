@@ -170,69 +170,79 @@
             color: var(--skv-muted);
         }
 
-        .invoice-thanks {
-            text-align: center;
-            font-size: clamp(28px, 5vw, 40px);
-            letter-spacing: 0.12em;
+        #invoice-view {
+            position: relative;
+            overflow: hidden;
         }
 
-        .invoice-subtitle {
-            margin: 8px 0 24px;
-            font-size: clamp(15px, 2.4vw, 18px);
-            color: var(--skv-muted);
-            text-align: center;
-        }
-
-        .invoice-qr {
+        .invoice-thanks-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-
-        .invoice-qr img {
-            width: clamp(200px, 32vw, 260px);
-            height: clamp(200px, 32vw, 260px);
-            object-fit: cover;
-            border-radius: 12px;
-            background: #fff;
-            box-shadow: 0 18px 32px rgba(31, 63, 148, 0.25);
-        }
-
-        .invoice-qr-note {
-            font-size: 13px;
-            color: var(--skv-muted);
-            letter-spacing: 0.1em;
-        }
-
-        .invoice-details {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 20px 32px;
-            margin: 0;
-            padding: 0;
-        }
-
-        .invoice-details__item {
-            min-width: 140px;
+            gap: 18px;
+            position: relative;
+            z-index: 1;
             text-align: center;
         }
 
-        .invoice-details__item dt {
-            margin: 0 0 6px;
-            font-size: 12px;
-            letter-spacing: 0.1em;
+        .invoice-thanks {
+            text-align: center;
+            font-size: clamp(32px, 6vw, 54px);
+            letter-spacing: 0.18em;
+            color: #fff;
             text-transform: uppercase;
-            color: var(--skv-muted);
+            text-shadow: 0 12px 28px rgba(31, 63, 148, 0.35);
+            margin: 0;
         }
 
-        .invoice-details__item dd {
+        .invoice-subtitle {
             margin: 0;
-            font-size: clamp(18px, 3vw, 24px);
-            font-weight: 600;
-            color: var(--skv-blue-dark);
+            font-size: clamp(20px, 3vw, 30px);
+            color: rgba(255, 255, 255, 0.95);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .confetti {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            top: -12%;
+            width: 12px;
+            height: 24px;
+            border-radius: 4px;
+            background: var(--color, #f6c90e);
+            opacity: 0;
+            left: calc(var(--x, 0.5) * 100%);
+            transform: rotate(var(--rotation, 0deg));
+            animation-duration: calc(var(--duration, 5) * 1s);
+            animation-delay: calc(var(--delay, 0) * 1s);
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+            animation-name: none;
+        }
+
+        .confetti.active .confetti-piece {
+            animation-name: confetti-fall;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translate3d(0, -120%, 0) rotate(var(--rotation, 0deg));
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            100% {
+                transform: translate3d(var(--drift, 0px), 120vh, 0) rotate(calc(var(--rotation, 0deg) + 360deg));
+                opacity: 0;
+            }
         }
 
         [hidden] {
@@ -250,13 +260,12 @@
                 height: 96px;
             }
 
-            .cart-summary,
-            .invoice-details {
-                justify-content: flex-start;
+            .invoice-thanks {
+                letter-spacing: 0.14em;
             }
 
-            .invoice-thanks {
-                letter-spacing: 0.08em;
+            .invoice-subtitle {
+                font-size: clamp(18px, 4vw, 24px);
             }
         }
     </style>
@@ -300,27 +309,11 @@
             <p class="cart-note">Die Rechnung gilt nicht als Eintrittskarte.</p>
         </section>
         <section id="invoice-view" class="display-card" hidden>
-            <h2 class="invoice-thanks">DANKE!</h2>
-            <p class="invoice-subtitle">Scannen Sie den QR-Code, um Ihre Rechnung herunterzuladen.</p>
-            <div class="invoice-qr" id="invoice-qr" hidden>
-                <img id="invoice-qr-image" src="" alt="QR-Code zum Rechnungsdownload"/>
-                <span class="invoice-qr-note" id="invoice-qr-note">(Rechnung)</span>
+            <div class="invoice-thanks-wrapper">
+                <h2 class="invoice-thanks">DANKE!</h2>
+                <p class="invoice-subtitle">SANDORIA HELLAU!</p>
             </div>
-            <dl class="invoice-details">
-                <div class="invoice-details__item">
-                    <dt>Gesamtbetrag</dt>
-                    <dd id="invoice-total-text">—</dd>
-                </div>
-                <div class="invoice-details__item">
-                    <dt>Karten</dt>
-                    <dd id="invoice-count-text">—</dd>
-                </div>
-                <div class="invoice-details__item">
-                    <dt>Zahlart</dt>
-                    <dd id="invoice-payment-text">—</dd>
-                </div>
-            </dl>
-            <p class="cart-note">Die Rechnung gilt nicht als Eintrittskarte.</p>
+            <div class="confetti" id="invoice-confetti" aria-hidden="true"></div>
         </section>
     </main>
 </div>
@@ -341,14 +334,34 @@
     const cartLines = document.getElementById('cart-lines');
     const cartTotal = document.getElementById('cart-total');
     const cartCount = document.getElementById('cart-count');
-    const invoiceQr = document.getElementById('invoice-qr');
-    const invoiceQrImage = document.getElementById('invoice-qr-image');
-    const invoiceTotalText = document.getElementById('invoice-total-text');
-    const invoiceCountText = document.getElementById('invoice-count-text');
-    const invoicePaymentText = document.getElementById('invoice-payment-text');
+    const invoiceConfetti = document.getElementById('invoice-confetti');
 
     let channel;
     let currentMode = 'welcome';
+
+    function createConfettiPieces(count = 28) {
+        if (!invoiceConfetti) return;
+        invoiceConfetti.innerHTML = '';
+        const colors = ['#f6c90e', '#f08a5d', '#b83b5e', '#6a2c70', '#28c76f', '#00c2ff'];
+        for (let i = 0; i < count; i += 1) {
+            const span = document.createElement('span');
+            span.className = 'confetti-piece';
+            span.style.setProperty('--x', Math.random().toFixed(2));
+            span.style.setProperty('--delay', (Math.random() * 2.5).toFixed(2));
+            span.style.setProperty('--duration', (4 + Math.random() * 3).toFixed(2));
+            span.style.setProperty('--rotation', `${Math.floor(Math.random() * 360)}deg`);
+            span.style.setProperty('--drift', `${(Math.random() * 50 - 25).toFixed(2)}px`);
+            span.style.setProperty('--color', colors[i % colors.length]);
+            invoiceConfetti.appendChild(span);
+        }
+    }
+
+    function triggerConfetti() {
+        if (!invoiceConfetti) return;
+        invoiceConfetti.classList.remove('active');
+        void invoiceConfetti.offsetWidth; // restart animation
+        invoiceConfetti.classList.add('active');
+    }
 
     function ensureChannel() {
         if (channel || typeof BroadcastChannel === 'undefined') {
@@ -430,8 +443,10 @@
             cartView.hidden = true;
             invoiceView.hidden = false;
             if (displaySubtitle) {
-                displaySubtitle.textContent = 'Scannen Sie den Code, um Ihre Rechnung zu erhalten.';
+                displaySubtitle.textContent = 'SANDORIA HELLAU!';
             }
+            createConfettiPieces();
+            triggerConfetti();
         }
     }
 
@@ -468,58 +483,6 @@
         });
     }
 
-    function renderInvoice(invoice) {
-        const totalAmount = Number.isFinite(invoice?.totalAmount) ? invoice.totalAmount : null;
-        invoiceTotalText.textContent = totalAmount != null ? euroFormatter.format(totalAmount) : '—';
-
-        const cards = Number.isFinite(invoice?.totalCards) ? invoice.totalCards : null;
-        if (cards != null) {
-            invoiceCountText.textContent = cards === 1 ? '1 Karte' : `${cards} Karten`;
-        } else {
-            invoiceCountText.textContent = '—';
-        }
-
-        const paymentLabel = invoice?.paymentLabel || invoice?.paymentMethodLabel || '';
-        if (paymentLabel) {
-            invoicePaymentText.textContent = paymentLabel;
-        } else if (invoice?.paymentMethod) {
-            invoicePaymentText.textContent = invoice.paymentMethod === 'card' ? 'Kartenzahlung' : 'Barzahlung';
-        } else {
-            invoicePaymentText.textContent = '—';
-        }
-
-        const shareLink = invoice?.shareUrl || (invoice?.shareToken ? buildShareUrl(invoice.shareToken) : '');
-        const hasQr = Boolean(shareLink);
-        if (hasQr) {
-            invoiceQr.hidden = false;
-            invoiceQrImage.src = buildQrSrc(shareLink);
-            invoiceQrImage.alt = 'QR-Code zur Rechnung';
-            invoiceQrImage.onerror = () => {
-                invoiceQrImage.alt = 'QR-Code konnte nicht geladen werden';
-            };
-        } else {
-            invoiceQr.hidden = true;
-            invoiceQrImage.src = '';
-        }
-    }
-
-    function buildShareUrl(token) {
-        const base = new URL(window.location.href);
-        base.hash = '';
-        base.search = '';
-        base.pathname = base.pathname.replace(/[^/]+$/, 'invoice.html');
-        return `${base.href.replace(/#.*$/, '')}#${token}`;
-    }
-
-    function buildQrSrc(url) {
-        const base = 'https://api.qrserver.com/v1/create-qr-code/';
-        const params = new URLSearchParams({
-            size: '320x320',
-            data: url,
-        });
-        return `${base}?${params.toString()}`;
-    }
-
     function applyState(state) {
         if (!state) return;
         if (state.mode === 'welcome') {
@@ -532,7 +495,6 @@
             return;
         }
         if (state.mode === 'invoice') {
-            renderInvoice(state.invoice || {});
             setMode('invoice');
             return;
         }
@@ -541,6 +503,7 @@
 
     ensureChannel();
     initFromStorage();
+    createConfettiPieces();
 </script>
 </body>
 </html>
